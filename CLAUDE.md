@@ -70,6 +70,7 @@ Fully bundled SPA — no router, no other pages. `frontend/` is the Vite root. E
 - `frontend/pages/live-race/mockData.js` — placeholder driver/pit-stop data plus `genTrace`/`toPolyline`/`fmtClock` helpers
 - `frontend/pages/live-race/useRaceCenterData.js` — derives display-ready driver rows, selected-driver telemetry traces, and strategy bar geometry
 - `frontend/pages/live-race/{TopBar,TabNav,OverviewTab,TimingTab,StrategyTab,TelemetryTab}.jsx` — one component per section; each tab is plain HTML/SVG with inline styles (no Canvas, no Three.js)
+- `frontend/pages/live-race/useResizableWidth.js` + `ResizeHandle.jsx` — shared drag-to-resize primitive. Overview (leaderboard + telemetry columns), Strategy (pit log column), and Telemetry (driver list column) each use it via CSS Grid templates built from state (e.g. `` `${width}px 10px 1fr` ``); resize state is local to each tab and resets when you navigate away and back (tabs unmount on switch). Timing has no columns to resize.
 
 **All data is currently placeholder/generated, not wired to the backend yet.** Next step: wire `useRaceCenterData` to real `/api` endpoints (standings, session, telemetry, pitstops) in place of `mockData.js`.
 
