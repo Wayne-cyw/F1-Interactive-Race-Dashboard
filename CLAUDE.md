@@ -85,3 +85,4 @@ Fully bundled SPA — no router, no other pages. `frontend/` is the Vite root. E
 ### Key Gotchas
 - **FastF1 first load**: The first time a session loads, FastF1 fetches from the F1 data API — can take 30–60 seconds. Subsequent loads read from `backend/cache/`.
 - **Track coordinates**: `/api/track` returns FastF1 GPS-derived `{x, y}` coordinates in meters (values can reach ±5000) — relevant if/when the Overview tab's track map is wired to real data instead of the mockup's fixed SVG path.
+- **`<body>` margin reset**: `frontend/index.html` has an inline `<style>` resetting `html, body` margin to 0. Deleting `styles.css` (see above) removed the app's only CSS reset — without it the browser's default 8px body margin adds 16px of phantom scroll height, which is exactly what made the single-viewport layout overflow until this was found. Don't remove this reset without re-checking that every tab still fits one viewport.
