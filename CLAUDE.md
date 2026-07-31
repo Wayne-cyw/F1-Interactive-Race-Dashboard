@@ -30,7 +30,11 @@ npm run lint
 
 ## Development Workflow
 
-- **Branching**: Before starting any feature or change, create a new branch off `main`. Name it `feature/{content}`, where `{content}` is a short kebab-case description of the work (e.g. `feature/live-race-alerts`, `feature/standings-cache-fix`).
+- **Branching**: Before starting any feature or change, create a new branch off `main`. Name it `{type}/{content}`, where `{content}` is a short kebab-case description of the work and `{type}` is one of:
+  - `feature` — new functionality or behavior changes (e.g. `feature/live-race-alerts`)
+  - `restructure` — architecture/refactor work with no intended behavior change (e.g. `restructure/backend-clean-architecture`)
+  - `fix` — bug fixes (e.g. `fix/standings-cache-stale-year`)
+  - `chore` — tooling, deps, docs, config (e.g. `chore/update-eslint-config`)
 - **Committing**: Break work into sub-tasks. Commit and push after each sub-task is finished — don't batch unrelated changes into one commit, and don't leave finished sub-tasks unpushed.
 - **Pull requests**: When the overall feature/change is complete, open a PR on GitHub targeting `main`. Do not merge it — the user reviews and merges PRs themselves.
 
