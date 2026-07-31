@@ -3,8 +3,9 @@ from datetime import datetime
 import pytest
 
 from entities.calendar import RaceEvent
+from entities.session import SessionTypeInfo
 from frameworks_drivers.web.app import create_app
-from tests.fakes import FakeClock, FakeSeasonRepository
+from tests.fakes import FakeClock, FakeSeasonRepository, FakeSessionRepository
 
 
 @pytest.fixture
@@ -44,3 +45,11 @@ def test_races_route_returns_races_for_year(client_factory):
             {"round": 1, "name": "Bahrain Grand Prix", "country": "Bahrain", "location": "Sakhir", "date": "2026-03-01"}
         ],
     }
+
+
+def test_session_types_route_returns_available_types(client_factory):
+    types = [SessionTypeInfo(code="R", name="Race")]
+    app = client_factory(session_repo=FakeSessionRepository(session_types=types))
+    resp = app.test_client().get("/api/session-types/2026/1")
+    assert resp.status_code == 200
+    assert resp.get_json() == {"status": "success", "sessions": [{"code": "R", "name": "Race"}]}

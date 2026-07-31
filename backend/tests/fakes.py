@@ -1,8 +1,10 @@
 from datetime import datetime
 
 from entities.calendar import RaceEvent
+from entities.session import SessionTypeInfo
 from interface_adapters.gateways.clock import Clock
 from interface_adapters.gateways.season_repository import SeasonRepository
+from interface_adapters.gateways.session_repository import SessionRepository
 
 
 class FakeClock(Clock):
@@ -19,3 +21,11 @@ class FakeSeasonRepository(SeasonRepository):
 
     def get_races(self, year: int) -> list[RaceEvent]:
         return self._races
+
+
+class FakeSessionRepository(SessionRepository):
+    def __init__(self, session_types: list[SessionTypeInfo] | None = None):
+        self._session_types = session_types or []
+
+    def get_available_session_types(self, year: int, race_round: int) -> list[SessionTypeInfo]:
+        return self._session_types

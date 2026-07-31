@@ -9,16 +9,20 @@ from frameworks_drivers.fastf1_gateway.gateway import FastF1Gateway
 from frameworks_drivers.system_clock import SystemClock
 from interface_adapters.controllers.races_controller import RacesController
 from interface_adapters.controllers.seasons_controller import SeasonsController
+from interface_adapters.controllers.session_types_controller import SessionTypesController
 from interface_adapters.gateways.clock import Clock
 from interface_adapters.gateways.season_repository import SeasonRepository
+from interface_adapters.gateways.session_repository import SessionRepository
 from use_cases.get_races import GetRacesUseCase
 from use_cases.get_seasons import GetSeasonsUseCase
+from use_cases.get_session_types import GetSessionTypesUseCase
 
 
 def create_app(
     *,
     clock: Clock | None = None,
     season_repo: SeasonRepository | None = None,
+    session_repo: SessionRepository | None = None,
     log_dir: str | None = None,
 ) -> Flask:
     app = Flask(__name__)
@@ -31,6 +35,7 @@ def create_app(
     enable_disk_cache()
     gateway = FastF1Gateway()
     season_repo = season_repo or gateway
+    session_repo = session_repo or gateway
 
     @app.route("/")
     def home():
@@ -60,6 +65,13 @@ def create_app(
         "/api/races/<int:year>",
         endpoint="races",
         view_func=RacesController(races_use_case).handle,
+    )
+
+    session_types_use_case = GetSessionTypesUseCase(session_repo)
+    app.add_url_rule(
+        "/api/session-types/<int:year>/<int:race_round>",
+        endpoint="session_types",
+        view_func=SessionTypesController(session_types_use_case).handle,
     )
 
     @app.errorhandler(SessionNotFoundError)
