@@ -1,23 +1,30 @@
+import { useState } from 'react'
 import Leaderboard from './Leaderboard'
 import ResizeHandle from './ResizeHandle'
 import { useResizableHeight } from './useResizableHeight'
 import { useResizableWidth } from './useResizableWidth'
 
+// Tall enough for 3 sector-delta rows (~14px each, 6px gaps) plus the
+// scroll box's own bottom padding, so the panel can never be shrunk below
+// showing all three without scrolling.
+const SECTOR_DELTAS_MIN_HEIGHT = 64
+
 export default function OverviewTab({ drivers, selected, onSelectDriver, speedPoly }) {
     const [leaderboardWidth, onLeaderboardResize] = useResizableWidth(440, { min: 320, max: 640, edge: 'right' })
     const [telemetryWidth, onTelemetryResize] = useResizableWidth(360, { min: 280, max: 520, edge: 'left' })
-    const [sectorDeltasHeight, onSectorDeltasResize] = useResizableHeight(54, { min: 40, max: 280, edge: 'top' })
+    const [sectorDeltasHeight, onSectorDeltasResize] = useResizableHeight(SECTOR_DELTAS_MIN_HEIGHT, { min: SECTOR_DELTAS_MIN_HEIGHT, max: 280, edge: 'top' })
+    const [sectorDeltasCollapsed, setSectorDeltasCollapsed] = useState(false)
 
     return (
         <>
-            <div style={{ display: 'grid', gridTemplateColumns: `${leaderboardWidth}px 10px 1fr 10px ${telemetryWidth}px`, flex: 1 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: `${leaderboardWidth}px 10px 1fr 10px ${telemetryWidth}px`, flex: 1, minHeight: 0 }}>
                 <Leaderboard drivers={drivers} onSelectDriver={onSelectDriver} width={leaderboardWidth} />
 
                 <ResizeHandle onMouseDown={onLeaderboardResize} />
 
-                <div style={{ padding: '16px 32px' }}>
+                <div style={{ padding: '16px 32px', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                     <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 10 }}>TRACK MAP</div>
-                    <svg viewBox="0 0 560 320" style={{ width: '100%', height: 260 }}>
+                    <svg viewBox="0 0 560 320" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', flex: 1, minHeight: 0 }}>
                         <path d="M60 260 C40 200 60 140 120 120 C160 108 180 60 240 55 C300 50 320 90 380 85 C440 80 460 40 500 60 C530 75 520 130 470 150 C420 170 430 210 390 230 C340 255 300 220 250 235 C190 252 130 300 60 260 Z" fill="none" stroke="#e3e0d8" strokeWidth="14" strokeLinecap="round" />
                         {drivers.map(d => (
                             <circle key={d.id} cx={d.mx} cy={d.my} r={d.dotR} fill={d.color} stroke="#faf9f6" strokeWidth="2" />
@@ -56,21 +63,32 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, speedPo
                 </div>
             </div>
 
-            <div style={{ padding: '10px 32px 0', borderTop: '1px solid #e6e3dc', background: '#fff', display: 'flex', flexDirection: 'column' }}>
-                <ResizeHandle onMouseDown={onSectorDeltasResize} orientation="horizontal" />
-                <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 8 }}>SECTOR DELTAS</div>
-                <div style={{ height: sectorDeltasHeight, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 6 }}>
-                    {drivers.filter(d => d.top5).map(d => (
-                        <div key={d.id} style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: 10, alignItems: 'center', flexShrink: 0 }}>
-                            <span style={{ fontSize: 11, color: '#403c36' }}>{d.name}</span>
-                            <div style={{ display: 'flex', gap: 2, height: 7 }}>
-                                <div style={{ width: '33%', background: d.s1c, borderRadius: 2 }} />
-                                <div style={{ width: '34%', background: d.s2c, borderRadius: 2 }} />
-                                <div style={{ width: '33%', background: d.s3c, borderRadius: 2 }} />
-                            </div>
-                        </div>
-                    ))}
+            <div style={{ padding: '10px 32px 0', background: '#fff', display: 'flex', flexDirection: 'column' }}>
+                {!sectorDeltasCollapsed && <ResizeHandle onMouseDown={onSectorDeltasResize} orientation="horizontal" />}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>SECTOR DELTAS</div>
+                    <button
+                        onClick={() => setSectorDeltasCollapsed(c => !c)}
+                        aria-label={sectorDeltasCollapsed ? 'Expand sector deltas' : 'Collapse sector deltas'}
+                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 11, color: '#a8a49b', padding: 4 }}
+                    >
+                        {sectorDeltasCollapsed ? '▸' : '▾'}
+                    </button>
                 </div>
+                {!sectorDeltasCollapsed && (
+                    <div style={{ height: sectorDeltasHeight, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 6 }}>
+                        {drivers.filter(d => d.top5).map(d => (
+                            <div key={d.id} style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: 10, alignItems: 'center', flexShrink: 0 }}>
+                                <span style={{ fontSize: 11, color: '#403c36' }}>{d.name}</span>
+                                <div style={{ display: 'flex', gap: 2, height: 7 }}>
+                                    <div style={{ width: '33%', background: d.s1c, borderRadius: 2 }} />
+                                    <div style={{ width: '34%', background: d.s2c, borderRadius: 2 }} />
+                                    <div style={{ width: '33%', background: d.s3c, borderRadius: 2 }} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </>
     )
