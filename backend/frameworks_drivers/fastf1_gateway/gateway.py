@@ -4,9 +4,12 @@ import fastf1
 import pandas as pd
 
 from entities.calendar import RaceEvent
+from entities.errors import SessionNotFoundError
 from entities.session import DriverResult, Lap, SessionData, SessionInfo, SessionTypeInfo
+from entities.weather import WeatherData
 from interface_adapters.gateways.season_repository import SeasonRepository
 from interface_adapters.gateways.session_repository import SessionRepository
+from interface_adapters.gateways.weather_repository import WeatherRepository
 
 _SESSION_TYPE_NAMES = {
     "FP1": "Practice 1",
@@ -19,7 +22,7 @@ _SESSION_TYPE_NAMES = {
 }
 
 
-class FastF1Gateway(SeasonRepository, SessionRepository):
+class FastF1Gateway(SeasonRepository, SessionRepository, WeatherRepository):
     @lru_cache(maxsize=200)
     def _load_session(self, year: int, race_round: int, session_type: str = "R"):
         session = fastf1.get_session(year, race_round, session_type)
@@ -102,3 +105,19 @@ class FastF1Gateway(SeasonRepository, SessionRepository):
         )
         total_laps = int(laps_df["LapNumber"].max()) if len(laps_df) > 0 and "LapNumber" in laps_df.columns else 0
         return SessionData(session_info=session_info, laps=laps, results=results, total_laps=total_laps)
+
+    def get_weather(self, year: int, race_round: int) -> WeatherData:
+        session = self._load_session(year, race_round, "R")
+        weather_df = getattr(session, "weather_data", None)
+        if weather_df is None or weather_df.empty:
+            raise SessionNotFoundError("No weather data available")
+        latest = weather_df.iloc[-1]
+        return WeatherData(
+            air_temp=float(latest["AirTemp"]) if pd.notna(latest.get("AirTemp")) else None,
+            track_temp=float(latest["TrackTemp"]) if pd.notna(latest.get("TrackTemp")) else None,
+            humidity=float(latest["Humidity"]) if pd.notna(latest.get("Humidity")) else None,
+            pressure=float(latest["Pressure"]) if pd.notna(latest.get("Pressure")) else None,
+            rainfall=bool(latest["Rainfall"]) if pd.notna(latest.get("Rainfall")) else False,
+            wind_speed=float(latest["WindSpeed"]) if pd.notna(latest.get("WindSpeed")) else None,
+            wind_direction=float(latest["WindDirection"]) if pd.notna(latest.get("WindDirection")) else None,
+        )

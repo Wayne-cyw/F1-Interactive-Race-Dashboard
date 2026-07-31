@@ -1,10 +1,13 @@
 from datetime import datetime
 
 from entities.calendar import RaceEvent
+from entities.errors import SessionNotFoundError
 from entities.session import SessionData, SessionTypeInfo
+from entities.weather import WeatherData
 from interface_adapters.gateways.clock import Clock
 from interface_adapters.gateways.season_repository import SeasonRepository
 from interface_adapters.gateways.session_repository import SessionRepository
+from interface_adapters.gateways.weather_repository import WeatherRepository
 
 
 class FakeClock(Clock):
@@ -37,3 +40,14 @@ class FakeSessionRepository(SessionRepository):
 
     def get_session_data(self, year: int, race_round: int, session_type: str) -> "SessionData":
         return self._session_data
+
+
+class FakeWeatherRepository(WeatherRepository):
+    def __init__(self, weather: WeatherData | None = None, raise_not_found: bool = False):
+        self._weather = weather
+        self._raise_not_found = raise_not_found
+
+    def get_weather(self, year: int, race_round: int) -> WeatherData:
+        if self._raise_not_found:
+            raise SessionNotFoundError("No weather data available")
+        return self._weather

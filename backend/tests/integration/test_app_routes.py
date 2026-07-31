@@ -4,8 +4,9 @@ import pytest
 
 from entities.calendar import RaceEvent
 from entities.session import DriverResult, Lap, SessionData, SessionInfo, SessionTypeInfo
+from entities.weather import WeatherData
 from frameworks_drivers.web.app import create_app
-from tests.fakes import FakeClock, FakeSeasonRepository, FakeSessionRepository
+from tests.fakes import FakeClock, FakeSeasonRepository, FakeSessionRepository, FakeWeatherRepository
 
 
 @pytest.fixture
@@ -69,3 +70,18 @@ def test_session_route_returns_laps_and_results(client_factory):
     assert body["session"] == {"name": "Bahrain Grand Prix", "country": "Bahrain", "location": "Sakhir", "session_type": "R"}
     assert body["results"][0]["team_color"] == "#3671C6"
     assert body["total_laps"] == 57
+
+
+def test_weather_route_returns_latest_reading(client_factory):
+    weather = WeatherData(air_temp=28.5, track_temp=41.2, humidity=55.0, pressure=1013.0, rainfall=False, wind_speed=2.1, wind_direction=180.0)
+    app = client_factory(weather_repo=FakeWeatherRepository(weather=weather))
+    resp = app.test_client().get("/api/weather/2026/1")
+    assert resp.status_code == 200
+    assert resp.get_json()["weather"]["air_temp"] == 28.5
+
+
+def test_weather_route_returns_404_when_unavailable(client_factory):
+    app = client_factory(weather_repo=FakeWeatherRepository(raise_not_found=True))
+    resp = app.test_client().get("/api/weather/2026/1")
+    assert resp.status_code == 404
+    assert resp.get_json() == {"status": "error", "message": "No weather data available"}
