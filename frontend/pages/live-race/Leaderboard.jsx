@@ -7,7 +7,7 @@ export default function Leaderboard({ drivers, onSelectDriver, width }) {
     const columns = compact ? '1fr 64px' : '26px 1fr 64px 76px 54px'
 
     return (
-        <div style={{ padding: '16px 0' }}>
+        <div style={{ padding: '16px 0', overflowY: 'auto', minHeight: 0 }}>
             <div style={{ padding: '0 32px 8px', fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>LEADERBOARD</div>
             {drivers.map(d => (
                 <div
