@@ -70,7 +70,8 @@ Fully bundled SPA — no router, no other pages. `frontend/` is the Vite root. E
 - `frontend/pages/live-race/mockData.js` — placeholder driver/pit-stop data plus `genTrace`/`toPolyline`/`fmtClock` helpers
 - `frontend/pages/live-race/useRaceCenterData.js` — derives display-ready driver rows, selected-driver telemetry traces, and strategy bar geometry
 - `frontend/pages/live-race/{TopBar,TabNav,OverviewTab,TimingTab,StrategyTab,TelemetryTab}.jsx` — one component per section; each tab is plain HTML/SVG with inline styles (no Canvas, no Three.js)
-- `frontend/pages/live-race/useResizableWidth.js` + `ResizeHandle.jsx` — shared drag-to-resize primitive. Overview (leaderboard + telemetry columns), Strategy (pit log column), and Telemetry (driver list column) each use it via CSS Grid templates built from state (e.g. `` `${width}px 10px 1fr` ``); resize state is local to each tab and resets when you navigate away and back (tabs unmount on switch). Timing has no columns to resize.
+- `frontend/pages/live-race/Leaderboard.jsx` — used by OverviewTab; below `COMPACT_WIDTH_THRESHOLD` (380px) it drops the position, last-lap, and tire+age columns, showing only driver name + gap. Driven by the same width state as its resize handle, so it responds live while dragging.
+- `frontend/pages/live-race/useResizableWidth.js` / `useResizableHeight.js` + `ResizeHandle.jsx` (`orientation="vertical"|"horizontal"`) — shared drag-to-resize primitives. Overview (leaderboard + telemetry columns, plus the Sector Deltas panel's height), Strategy (pit log column), and Telemetry (driver list column) all use them; resize state is local to each tab and resets when you navigate away and back (tabs unmount on switch). Timing has no resizable panels.
 
 **All data is currently placeholder/generated, not wired to the backend yet.** Next step: wire `useRaceCenterData` to real `/api` endpoints (standings, session, telemetry, pitstops) in place of `mockData.js`.
 
