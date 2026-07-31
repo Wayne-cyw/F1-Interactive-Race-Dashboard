@@ -7,13 +7,13 @@ export default function Leaderboard({ drivers, onSelectDriver, width }) {
     const columns = compact ? '1fr 64px' : '26px 1fr 64px 76px 54px'
 
     return (
-        <div style={{ padding: '24px 0' }}>
-            <div style={{ padding: '0 32px 12px', fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>LEADERBOARD</div>
+        <div style={{ padding: '16px 0' }}>
+            <div style={{ padding: '0 32px 8px', fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>LEADERBOARD</div>
             {drivers.map(d => (
                 <div
                     key={d.id}
                     onClick={() => onSelectDriver(d.id)}
-                    style={{ display: 'grid', gridTemplateColumns: columns, gap: 10, padding: '10px 32px', alignItems: 'center', cursor: 'pointer', background: d.rowBg, borderLeft: `3px solid ${d.rowAccent}` }}
+                    style={{ display: 'grid', gridTemplateColumns: columns, gap: 10, padding: '7px 32px', alignItems: 'center', cursor: 'pointer', background: d.rowBg, borderLeft: `3px solid ${d.rowAccent}` }}
                 >
                     {!compact && <div style={{ fontWeight: 700, color: d.posColor }}>{d.pos}</div>}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>

@@ -18,7 +18,7 @@ export default function TopBar({ races, selectedRaceId, onSelectRace, currentLap
     const weatherInfo = WEATHER_LABEL[weather] || WEATHER_LABEL.dry
 
     return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 32px', borderBottom: '1px solid #e6e3dc', background: '#fff', flexWrap: 'wrap', gap: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 32px', borderBottom: '1px solid #e6e3dc', background: '#fff', flexWrap: 'wrap', gap: 14 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 18 }}>
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'baseline', gap: 8 }}>
                     <select

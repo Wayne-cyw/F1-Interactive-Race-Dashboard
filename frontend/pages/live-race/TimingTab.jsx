@@ -2,7 +2,7 @@ const COLUMNS = '36px 1.4fr 90px 90px 90px 70px 70px 70px 70px 60px'
 
 export default function TimingTab({ drivers, onSelectDriver }) {
     return (
-        <div style={{ padding: '24px 32px', flex: 1 }}>
+        <div style={{ padding: '16px 32px', flex: 1 }}>
             <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 12 }}>FULL TIMING SHEET</div>
             <div style={{ display: 'grid', gridTemplateColumns: COLUMNS, gap: 8, padding: '8px 12px', fontSize: 11, color: '#a8a49b', fontWeight: 600, borderBottom: '1px solid #e6e3dc' }}>
                 <div>POS</div><div>DRIVER</div><div>GAP</div><div>BEST</div><div>LAST</div><div>S1</div><div>S2</div><div>S3</div><div>TIRE</div><div>PITS</div>

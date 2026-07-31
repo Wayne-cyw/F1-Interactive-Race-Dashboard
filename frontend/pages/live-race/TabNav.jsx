@@ -7,7 +7,7 @@ const TABS = [
 
 export default function TabNav({ activeTab, onChange }) {
     return (
-        <div style={{ display: 'flex', gap: 6, padding: '12px 32px', background: '#fff', borderBottom: '1px solid #e6e3dc' }}>
+        <div style={{ display: 'flex', gap: 6, padding: '8px 32px', background: '#fff', borderBottom: '1px solid #e6e3dc' }}>
             {TABS.map(({ key, label }) => {
                 const active = activeTab === key
                 return (
