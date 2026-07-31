@@ -21,6 +21,9 @@ __pycache__
 backend/cache
 backend/logs
 
+# Internal planning docs (not for GitHub)
+docs/superpowers/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
