@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Dashboard - Live Race</title>
+    
+    <!-- External Libraries -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="../styles.css">
+    
+    <style>
+        /* Live Race Specific Styles */
+        .live-layout {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+        }
+        
+        .live-main {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .live-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .track-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--burgundy-dark);
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 700px;
+        }
+        
+        /* Alert Notifications */
+        .alert-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+        }
+        
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            border-left: 4px solid;
+            background: var(--bg-secondary);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            animation: slideInRight 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .alert.overtake {
+            border-left-color: #FFBA08;
+        }
+        
+        .alert.pitstop {
+            border-left-color: #FF6600;
+        }
+        
+        .alert.vsc {
+            border-left-color: #FFFF00;
+            background: rgba(255, 255, 0, 0.1);
+        }
+        
+        .alert.safety-car {
+            border-left-color: #FF0000;
+            background: rgba(255, 0, 0, 0.1);
+        }
+        
+        .alert-icon {
+            font-size: 24px;
+            min-width: 24px;
+        }
+        
+        .alert-content {
+            flex: 1;
+        }
+        
+        .alert-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        
+        .alert-message {
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .weather-compact {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            font-size: 14px;
+        }
+        
+        .weather-compact-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+        }
+        
+        .weather-compact-item i {
+            color: var(--orange);
+            font-size: 16px;
+        }
+        
+        .standings-compact {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .standings-compact-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            margin-bottom: 5px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            border-left: 3px solid;
+        }
+        
+        .pitstop-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .pitstop-compact {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            margin-bottom: 8px;
+            background: var(--bg-primary);
+            border-left: 3px solid var(--orange);
+            border-radius: 4px;
+        }
+        
+        @media (max-width: 1200px) {
+            .live-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-toggle" onclick="window.Utils.toggleSidebar()">
+                <i class="fas fa-chevron-left"></i>
+            </div>
+            
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-flag-checkered"></i>
+                    <span class="nav-text">F1 DASH</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="../index.html" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span class="nav-text">Race Analysis</span>
+                </a>
+                
+                <a href="standings.html" class="nav-item">
+                    <i class="fas fa-trophy"></i>
+                    <span class="nav-text">Standings</span>
+                </a>
+                
+                <a href="teams.html" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span class="nav-text">Teams</span>
+                </a>
+                
+                <a href="live.html" class="nav-item active">
+                    <i class="fas fa-signal"></i>
+                    <span class="nav-text">Live Race</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <span class="nav-text">
+                    F1 Dashboard v3.0<br />
+                    Ultimate Edition
+                </span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div id="root"></div>
+        </div>
+    </div>
+
+    <!-- Utility Functions -->
+    <script type="text/babel" src="../utils/helpers.js?v=3.0"></script>
+    
+    <!-- Live Components -->
+    <script type="text/babel" src="../components/LiveComponents.js?v=3.0"></script>
+    
+    <!-- Live Race Page Script -->
+    <script type="text/babel" src="live.js?v=3.0"></script>
+</body>
+</html>

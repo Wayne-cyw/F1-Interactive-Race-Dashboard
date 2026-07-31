@@ -1,0 +1,5 @@
+fastf1==3.7.0
+Flask==3.1.2
+flask-cors==6.0.2
+flask-compress==1.23
+pandas==2.2.3
