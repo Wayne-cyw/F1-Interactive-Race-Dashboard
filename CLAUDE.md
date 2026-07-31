@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Full-stack F1 race analytics dashboard. Flask backend powered by FastF1 serves race data; React frontend visualizes it across 4 pages (Race Analysis, Standings, Teams, Live Race).
+Full-stack F1 race analytics dashboard. Flask backend powered by FastF1 serves race data; React frontend is a single "Race Center" page (Overview / Timing / Strategy / Telemetry tabs).
 
 ## Commands
 
@@ -61,30 +61,25 @@ Key endpoints:
 | `GET /api/weather/<year>/<race>` | Air temp, track temp, humidity, rainfall |
 | `GET /api/pitstops/<year>/<race>` | Pit stop history |
 
-### Frontend (Vite + Three.js)
-Fully bundled SPA. `frontend/` is the Vite root. Entry: `main.jsx` → `App.jsx` → React Router.
+### Frontend (Vite + React, single page)
+Fully bundled SPA — no router, no other pages. `frontend/` is the Vite root. Entry: `main.jsx` → `App.jsx` → `pages/LiveRace.jsx`. Dependencies are plain `react`/`react-dom` only — Three.js, chart.js, and react-router-dom were all removed along with the pages/components that used them (see below).
 
 **Key files:**
-- `frontend/App.jsx` — Router shell. `Background3D` always mounts on every route (including `/live`)
-- `frontend/three/` — `Background3D.jsx` (persistent star field + floating ember particles across all pages) and `Hero3D.jsx` (decorative 3D strip on Dashboard/Standings/Teams). The live-race-specific components (`Track3DCanvas`, `Track3D`, `Cars3D`, `CameraController`, `TrackContext`) were removed when `/live` was redesigned — see Race Center below.
-- `frontend/utils/helpers.js` — ES module exports; `API_URL = '/api'` (Vite dev proxy routes to Flask)
-
-### Live Race → Race Center (`frontend/pages/LiveRace.jsx`)
-`/live` is a 2D, tab-based "Race Center" (Overview / Timing / Strategy / Telemetry), not a 3D visualization — the old Three.js live-race view was replaced entirely. Layout and interaction were ported from a design mockup; **all data is currently placeholder/generated** (`frontend/pages/live-race/mockData.js`), not wired to the backend yet.
-
+- `frontend/App.jsx` — renders `<LiveRace />` directly, nothing else
+- `frontend/pages/LiveRace.jsx` — the entire app: page-level state (active tab, selected driver, session clock) and composition of the sections below
 - `frontend/pages/live-race/mockData.js` — placeholder driver/pit-stop data plus `genTrace`/`toPolyline`/`fmtClock` helpers
 - `frontend/pages/live-race/useRaceCenterData.js` — derives display-ready driver rows, selected-driver telemetry traces, and strategy bar geometry
 - `frontend/pages/live-race/{TopBar,TabNav,OverviewTab,TimingTab,StrategyTab,TelemetryTab}.jsx` — one component per section; each tab is plain HTML/SVG with inline styles (no Canvas, no Three.js)
-- The page uses its own light theme (`#faf9f6` background, oklch accent colors, Inter + JetBrains Mono fonts loaded only while this page is mounted) — deliberately scoped to this page only; the rest of the app keeps its existing dark theme
-- Next step (not yet done): wire `useRaceCenterData` to real `/api` endpoints (standings, session, telemetry, pitstops) in place of `mockData.js`
+
+**All data is currently placeholder/generated, not wired to the backend yet.** Next step: wire `useRaceCenterData` to real `/api` endpoints (standings, session, telemetry, pitstops) in place of `mockData.js`.
+
+**Removed (no longer part of the app):** the Dashboard/Standings/Teams pages, `TopNav`/`Sidebar` navigation, `Background3D`/`Hero3D` (Three.js decorative backgrounds), `Charts.jsx` (chart.js wrapper), and the pre-Vite legacy HTML files (`live.html`, `standings.html`, `teams.html`, `debug.html`, `test.html`). The backend's other endpoints (`/api/races`, `/api/standings`, `/api/teams`, etc.) still exist and work — they just have no frontend consumer at the moment.
 
 ### Design System
-- Colors: `#000000` base, `#DC0000` red, `#FFBA08` yellow, `#FF6600` orange
-- Fonts: Orbitron (headers), Rajdhani (body) — loaded via Google Fonts CDN
-- Theme: Black/red F1 aesthetic; target adds glassmorphism (`.glass-panel` with `backdrop-filter: blur(12px)`) over the Three.js background canvas
+- Colors: `#faf9f6` background, `#191b1e` text, oklch-based accents (blue ~230 hue, green ~155 hue, red ~25 hue, purple ~300 hue); tire compound colors S/M/H = `#c23b3b`/`#d9a300`/`#6b6862`
+- Fonts: Inter (UI text), JetBrains Mono (session clock, timing figures) — loaded dynamically only while the page is mounted (see `useRaceCenterFonts` in `LiveRace.jsx`)
+- All corner radii (buttons, badges, tiles, chart panels) are a consistent `10px`
 
 ### Key Gotchas
-- **R3F version**: `@react-three/fiber` 9.5.0 is installed, which requires React `>=19 <19.3`. Currently on React 19.2.0 — compatible.
 - **FastF1 first load**: The first time a session loads, FastF1 fetches from the F1 data API — can take 30–60 seconds. Subsequent loads read from `backend/cache/`.
-- **Track coordinates**: `/api/track` returns FastF1 GPS-derived `{x, y}` coordinates in meters (values can reach ±5000). Must normalize to scene space before passing to `TubeGeometry`.
-- **WebGL contexts**: Only one `<Canvas>` element exists — `Background3D`, mounted on every route. Never create per-chart WebGL canvases.
+- **Track coordinates**: `/api/track` returns FastF1 GPS-derived `{x, y}` coordinates in meters (values can reach ±5000) — relevant if/when the Overview tab's track map is wired to real data instead of the mockup's fixed SVG path.
