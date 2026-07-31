@@ -11,7 +11,7 @@ export default function StrategyTab({ drivers, pitLog }) {
                             <div style={{ width: 4, height: 14, background: d.color, borderRadius: 2 }} />
                             <span style={{ fontSize: 12.5, fontWeight: 600 }}>{d.name}</span>
                         </div>
-                        <div style={{ position: 'relative', height: 20, background: '#f2f0ea', borderRadius: 4, overflow: 'hidden' }}>
+                        <div style={{ position: 'relative', height: 20, background: '#f2f0ea', borderRadius: 10, overflow: 'hidden' }}>
                             {d.stints.map((s, i) => (
                                 <div key={i} style={{ position: 'absolute', top: 0, bottom: 0, left: `${s.left}%`, width: `${s.pct}%`, background: s.clr }} />
                             ))}

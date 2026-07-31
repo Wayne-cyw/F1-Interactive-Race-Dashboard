@@ -42,8 +42,8 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, speedPo
                     <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 1 }}>{selected.topSpeed}<span style={{ fontSize: 14, color: '#a8a49b' }}> km/h</span></div>
                     <div style={{ display: 'flex', gap: 14, marginTop: 14, alignItems: 'center' }}>
                         <div style={{ fontSize: 24, fontWeight: 700, color: 'oklch(50% .16 230)' }}>{selected.gear}</div>
-                        {selected.drs && <div style={{ padding: '4px 10px', borderRadius: 16, background: '#f2f8f4', fontSize: 11, color: 'oklch(45% .13 155)', fontWeight: 600 }}>DRS ON</div>}
-                        {!selected.drs && <div style={{ padding: '4px 10px', borderRadius: 16, background: '#f2f0ea', fontSize: 11, color: '#8b8880', fontWeight: 600 }}>DRS OFF</div>}
+                        {selected.drs && <div style={{ padding: '4px 10px', borderRadius: 10, background: '#f2f8f4', fontSize: 11, color: 'oklch(45% .13 155)', fontWeight: 600 }}>DRS ON</div>}
+                        {!selected.drs && <div style={{ padding: '4px 10px', borderRadius: 10, background: '#f2f0ea', fontSize: 11, color: '#8b8880', fontWeight: 600 }}>DRS OFF</div>}
                     </div>
                     <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 9 }}>
                         <div>

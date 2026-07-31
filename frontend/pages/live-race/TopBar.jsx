@@ -25,7 +25,7 @@ export default function TopBar({ raceName, currentLap, totalLaps, sessionClock, 
                 <div style={{ fontSize: 12, color: '#a8a49b', fontFamily: "'JetBrains Mono', monospace" }}>SESSION {sessionClock}</div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: flag.dark ? '7px 18px' : '7px 18px', background: flag.bg, border: `1px solid ${flag.border}`, borderRadius: flag.dark ? 10 : 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 18px', background: flag.bg, border: `1px solid ${flag.border}`, borderRadius: 10 }}>
                 <div style={{ width: 7, height: 7, borderRadius: flag.dark ? 0 : '50%', background: flag.dot }} />
                 <div style={{ fontSize: 12, fontWeight: 600, color: flag.color }}>{flag.label}</div>
             </div>
