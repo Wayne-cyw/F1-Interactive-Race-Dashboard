@@ -65,25 +65,18 @@ Key endpoints:
 Fully bundled SPA. `frontend/` is the Vite root. Entry: `main.jsx` → `App.jsx` → React Router.
 
 **Key files:**
-- `frontend/App.jsx` — Router shell. `Background3D` always mounts except on `/live` (which has its own Canvas)
-- `frontend/three/` — All Three.js / `@react-three/fiber` components:
-  - `Background3D.jsx` — persistent star field + floating ember particles across all pages
-  - `Track3DCanvas.jsx` — Canvas wrapper for the live race (contains Bloom + Vignette post-processing)
-  - `Track3D.jsx` — builds `CatmullRomCurve3` from API coordinates, renders `TubeGeometry` track, 8 spotlights, provides `TrackContext`
-  - `Cars3D.jsx` — 20 emissive car meshes; positions mutated directly in `useFrame` via mesh refs (no React state — maintains 60fps)
-  - `CameraController.jsx` — Overview (`OrbitControls`), Follow (lerp behind selected car), Cinematic (auto-cycle 5 predefined angles)
-  - `TrackContext.js` — React context exposing the `CatmullRomCurve3` to children of `Track3D`
-- `frontend/components/live/` — Individual panel components (AlertsBox, LiveStandings, PitStopTracker, WeatherWidget, TrackStatus)
+- `frontend/App.jsx` — Router shell. `Background3D` always mounts on every route (including `/live`)
+- `frontend/three/` — `Background3D.jsx` (persistent star field + floating ember particles across all pages) and `Hero3D.jsx` (decorative 3D strip on Dashboard/Standings/Teams). The live-race-specific components (`Track3DCanvas`, `Track3D`, `Cars3D`, `CameraController`, `TrackContext`) were removed when `/live` was redesigned — see Race Center below.
 - `frontend/utils/helpers.js` — ES module exports; `API_URL = '/api'` (Vite dev proxy routes to Flask)
 
-### Live Race Animation Engine
-The core animation in `frontend/pages/live.js` (migrating to `LiveRace.jsx`) uses `requestAnimationFrame` to simulate lap-by-lap progression at 0.6 laps/second. Car track position is computed as:
+### Live Race → Race Center (`frontend/pages/LiveRace.jsx`)
+`/live` is a 2D, tab-based "Race Center" (Overview / Timing / Strategy / Telemetry), not a 3D visualization — the old Three.js live-race view was replaced entirely. Layout and interaction were ported from a design mockup; **all data is currently placeholder/generated** (`frontend/pages/live-race/mockData.js`), not wired to the backend yet.
 
-```js
-t = ((currentLap - 1 + progress) / totalLaps + (racePosition - 1) * 0.015) % 1
-```
-
-Where `t ∈ [0,1]` is the parameter along the track curve. In the 3D version, `trackCurve.getPoint(t)` returns the `Vector3` position and `trackCurve.getTangent(t)` orients the car mesh. Car mesh refs are mutated directly in `useFrame` — never via React state — to maintain 60fps.
+- `frontend/pages/live-race/mockData.js` — placeholder driver/pit-stop data plus `genTrace`/`toPolyline`/`fmtClock` helpers
+- `frontend/pages/live-race/useRaceCenterData.js` — derives display-ready driver rows, selected-driver telemetry traces, and strategy bar geometry
+- `frontend/pages/live-race/{TopBar,TabNav,OverviewTab,TimingTab,StrategyTab,TelemetryTab}.jsx` — one component per section; each tab is plain HTML/SVG with inline styles (no Canvas, no Three.js)
+- The page uses its own light theme (`#faf9f6` background, oklch accent colors, Inter + JetBrains Mono fonts loaded only while this page is mounted) — deliberately scoped to this page only; the rest of the app keeps its existing dark theme
+- Next step (not yet done): wire `useRaceCenterData` to real `/api` endpoints (standings, session, telemetry, pitstops) in place of `mockData.js`
 
 ### Design System
 - Colors: `#000000` base, `#DC0000` red, `#FFBA08` yellow, `#FF6600` orange
@@ -94,4 +87,4 @@ Where `t ∈ [0,1]` is the parameter along the track curve. In the 3D version, `
 - **R3F version**: `@react-three/fiber` 9.5.0 is installed, which requires React `>=19 <19.3`. Currently on React 19.2.0 — compatible.
 - **FastF1 first load**: The first time a session loads, FastF1 fetches from the F1 data API — can take 30–60 seconds. Subsequent loads read from `backend/cache/`.
 - **Track coordinates**: `/api/track` returns FastF1 GPS-derived `{x, y}` coordinates in meters (values can reach ±5000). Must normalize to scene space before passing to `TubeGeometry`.
-- **WebGL contexts**: Only two `<Canvas>` elements exist simultaneously — `Background3D` (hidden on `/live`) and `Track3DCanvas` (only on `/live`). Never create per-chart WebGL canvases.
+- **WebGL contexts**: Only one `<Canvas>` element exists — `Background3D`, mounted on every route. Never create per-chart WebGL canvases.
