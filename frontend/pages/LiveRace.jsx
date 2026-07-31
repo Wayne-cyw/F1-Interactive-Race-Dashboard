@@ -5,7 +5,7 @@ import OverviewTab from './live-race/OverviewTab'
 import TimingTab from './live-race/TimingTab'
 import StrategyTab from './live-race/StrategyTab'
 import TelemetryTab from './live-race/TelemetryTab'
-import { fmtClock } from './live-race/mockData'
+import { DEFAULT_RACE_ID, RACES, fmtClock } from './live-race/mockData'
 import { useRaceCenterData } from './live-race/useRaceCenterData'
 
 const FONT_LINK_ID = 'race-center-fonts'
@@ -40,6 +40,7 @@ export default function LiveRace() {
     const [activeTab, setActiveTab] = useState('overview')
     const [selectedDriverId, setSelectedDriverId] = useState(1)
     const [sessionSeconds, setSessionSeconds] = useState(0)
+    const [selectedRaceId, setSelectedRaceId] = useState(DEFAULT_RACE_ID)
 
     // Placeholder race state/weather — a following pass wires these to real
     // track-status and weather data instead of a fixed value.
@@ -60,7 +61,9 @@ export default function LiveRace() {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#faf9f6', color: '#191b1e', fontFamily: 'Inter, system-ui, sans-serif' }}>
             <TopBar
-                raceName="Silverstone Grand Prix"
+                races={RACES}
+                selectedRaceId={selectedRaceId}
+                onSelectRace={setSelectedRaceId}
                 currentLap={42}
                 totalLaps={totalLaps}
                 sessionClock={fmtClock(sessionSeconds)}

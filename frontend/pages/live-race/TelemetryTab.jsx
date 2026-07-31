@@ -10,13 +10,13 @@ function StatTile({ label, value, unit }) {
 export default function TelemetryTab({ drivers, selected, onSelectDriver, speedPolyBig, throttlePolyBig, brakePolyBig, topSpeed, avgSpeed, drsCount }) {
     return (
         <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', flex: 1 }}>
-            <div style={{ padding: '20px 0', borderRight: '1px solid #eeece6' }}>
-                <div style={{ padding: '0 24px 12px', fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>SELECT DRIVER</div>
+            <div style={{ padding: '24px 0', borderRight: '1px solid #eeece6' }}>
+                <div style={{ padding: '0 32px 12px', fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>SELECT DRIVER</div>
                 {drivers.map(d => (
                     <div
                         key={d.id}
                         onClick={() => onSelectDriver(d.id)}
-                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 24px', cursor: 'pointer', background: d.rowBg, borderLeft: `3px solid ${d.rowAccent}` }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 32px', cursor: 'pointer', background: d.rowBg, borderLeft: `3px solid ${d.rowAccent}` }}
                     >
                         <div style={{ width: 4, height: 14, background: d.color, borderRadius: 2 }} />
                         <span style={{ fontSize: 12.5, fontWeight: 600 }}>{d.name}</span>

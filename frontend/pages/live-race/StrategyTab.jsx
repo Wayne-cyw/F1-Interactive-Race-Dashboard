@@ -27,7 +27,7 @@ export default function StrategyTab({ drivers, pitLog }) {
                 </div>
             </div>
 
-            <div style={{ padding: '24px 24px', borderLeft: '1px solid #eeece6' }}>
+            <div style={{ padding: '24px 32px', borderLeft: '1px solid #eeece6' }}>
                 <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 12 }}>PIT STOP LOG</div>
                 {pitLog.map((p, i) => (
                     <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid #f2f0ea' }}>

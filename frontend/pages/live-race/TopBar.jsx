@@ -13,14 +13,36 @@ const WEATHER_LABEL = {
     wet: { color: 'oklch(50% .16 230)', text: 'WET · Rain 82%' },
 }
 
-export default function TopBar({ raceName, currentLap, totalLaps, sessionClock, raceState, weather, trackTemp, airTemp }) {
+export default function TopBar({ races, selectedRaceId, onSelectRace, currentLap, totalLaps, sessionClock, raceState, weather, trackTemp, airTemp }) {
     const flag = FLAG_BADGE[raceState] || FLAG_BADGE.green
     const weatherInfo = WEATHER_LABEL[weather] || WEATHER_LABEL.dry
 
     return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 32px', borderBottom: '1px solid #e6e3dc', background: '#fff', flexWrap: 'wrap', gap: 14 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 18 }}>
-                <div style={{ fontWeight: 700, fontSize: 19 }}>{raceName}</div>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                    <select
+                        value={selectedRaceId}
+                        onChange={e => onSelectRace(e.target.value)}
+                        aria-label="Select race"
+                        style={{
+                            appearance: 'none',
+                            border: 'none',
+                            background: 'transparent',
+                            cursor: 'pointer',
+                            fontWeight: 700,
+                            fontSize: 19,
+                            fontFamily: 'Inter, sans-serif',
+                            color: '#191b1e',
+                            padding: '2px 22px 2px 2px',
+                        }}
+                    >
+                        {races.map(r => (
+                            <option key={r.id} value={r.id}>{r.name} — {r.year}</option>
+                        ))}
+                    </select>
+                    <span style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: 10, color: '#a8a49b' }}>▾</span>
+                </div>
                 <div style={{ fontSize: 13, color: '#8b8880' }}>Lap {currentLap} of {totalLaps}</div>
                 <div style={{ fontSize: 12, color: '#a8a49b', fontFamily: "'JetBrains Mono', monospace" }}>SESSION {sessionClock}</div>
             </div>

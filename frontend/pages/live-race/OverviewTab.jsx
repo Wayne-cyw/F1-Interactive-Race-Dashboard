@@ -2,13 +2,13 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, speedPo
     return (
         <>
             <div style={{ display: 'grid', gridTemplateColumns: '440px 1fr 360px', flex: 1 }}>
-                <div style={{ padding: '20px 0', borderRight: '1px solid #eeece6' }}>
-                    <div style={{ padding: '0 24px 12px', fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>LEADERBOARD</div>
+                <div style={{ padding: '24px 0', borderRight: '1px solid #eeece6' }}>
+                    <div style={{ padding: '0 32px 12px', fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>LEADERBOARD</div>
                     {drivers.map(d => (
                         <div
                             key={d.id}
                             onClick={() => onSelectDriver(d.id)}
-                            style={{ display: 'grid', gridTemplateColumns: '26px 1fr 64px 76px 54px', gap: 10, padding: '10px 24px', alignItems: 'center', cursor: 'pointer', background: d.rowBg, borderLeft: `3px solid ${d.rowAccent}` }}
+                            style={{ display: 'grid', gridTemplateColumns: '26px 1fr 64px 76px 54px', gap: 10, padding: '10px 32px', alignItems: 'center', cursor: 'pointer', background: d.rowBg, borderLeft: `3px solid ${d.rowAccent}` }}
                         >
                             <div style={{ fontWeight: 700, color: d.posColor }}>{d.pos}</div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -22,7 +22,7 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, speedPo
                     ))}
                 </div>
 
-                <div style={{ padding: '20px 24px', borderRight: '1px solid #eeece6' }}>
+                <div style={{ padding: '24px 32px', borderRight: '1px solid #eeece6' }}>
                     <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 10 }}>TRACK MAP</div>
                     <svg viewBox="0 0 560 320" style={{ width: '100%', height: 300 }}>
                         <path d="M60 260 C40 200 60 140 120 120 C160 108 180 60 240 55 C300 50 320 90 380 85 C440 80 460 40 500 60 C530 75 520 130 470 150 C420 170 430 210 390 230 C340 255 300 220 250 235 C190 252 130 300 60 260 Z" fill="none" stroke="#e3e0d8" strokeWidth="14" strokeLinecap="round" />
@@ -37,7 +37,7 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, speedPo
                     </div>
                 </div>
 
-                <div style={{ padding: '20px 24px' }}>
+                <div style={{ padding: '24px 32px' }}>
                     <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 12 }}>TELEMETRY — {selected.name}</div>
                     <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 1 }}>{selected.topSpeed}<span style={{ fontSize: 14, color: '#a8a49b' }}> km/h</span></div>
                     <div style={{ display: 'flex', gap: 14, marginTop: 14, alignItems: 'center' }}>

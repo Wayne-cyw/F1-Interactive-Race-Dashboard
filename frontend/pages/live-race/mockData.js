@@ -1,6 +1,18 @@
 // Placeholder race data for the Race Center redesign, ported from the design mockup.
 // Replace with real API-backed data (drivers/standings/telemetry/pitstops) in a later pass.
 
+// Placeholder race list for the header selector — selecting a different race
+// only changes the header's name/year for now; DRIVERS_RAW/PIT_LOG below stay
+// fixed until real /api/races + /api/session wiring lands.
+export const RACES = [
+    { id: 'bahrain-2026', year: 2026, name: 'Bahrain Grand Prix' },
+    { id: 'silverstone-2026', year: 2026, name: 'Silverstone Grand Prix' },
+    { id: 'monza-2026', year: 2026, name: 'Monza Grand Prix' },
+    { id: 'silverstone-2025', year: 2025, name: 'Silverstone Grand Prix' },
+]
+
+export const DEFAULT_RACE_ID = 'silverstone-2026'
+
 export const TIRE_COLOR = { S: '#c23b3b', M: '#d9a300', H: '#6b6862' }
 
 export const DRIVERS_RAW = [
