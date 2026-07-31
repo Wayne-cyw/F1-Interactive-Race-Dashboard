@@ -9,12 +9,14 @@ from frameworks_drivers.fastf1_gateway.gateway import FastF1Gateway
 from frameworks_drivers.system_clock import SystemClock
 from interface_adapters.controllers.races_controller import RacesController
 from interface_adapters.controllers.seasons_controller import SeasonsController
+from interface_adapters.controllers.session_controller import SessionController
 from interface_adapters.controllers.session_types_controller import SessionTypesController
 from interface_adapters.gateways.clock import Clock
 from interface_adapters.gateways.season_repository import SeasonRepository
 from interface_adapters.gateways.session_repository import SessionRepository
 from use_cases.get_races import GetRacesUseCase
 from use_cases.get_seasons import GetSeasonsUseCase
+from use_cases.get_session import GetSessionUseCase
 from use_cases.get_session_types import GetSessionTypesUseCase
 
 
@@ -72,6 +74,13 @@ def create_app(
         "/api/session-types/<int:year>/<int:race_round>",
         endpoint="session_types",
         view_func=SessionTypesController(session_types_use_case).handle,
+    )
+
+    session_use_case = GetSessionUseCase(session_repo)
+    app.add_url_rule(
+        "/api/session/<int:year>/<int:race_round>/<session_type>",
+        endpoint="session",
+        view_func=SessionController(session_use_case).handle,
     )
 
     @app.errorhandler(SessionNotFoundError)
