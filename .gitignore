@@ -34,3 +34,6 @@ docs/superpowers/
 *.njsproj
 *.sln
 *.sw?
+
+CLAUDE.md
+.claude/
