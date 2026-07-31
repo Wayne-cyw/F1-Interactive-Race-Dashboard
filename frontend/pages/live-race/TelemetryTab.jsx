@@ -1,3 +1,6 @@
+import ResizeHandle from './ResizeHandle'
+import { useResizableWidth } from './useResizableWidth'
+
 function StatTile({ label, value, unit }) {
     return (
         <div style={{ flex: 1, background: '#fff', border: '1px solid #eeece6', borderRadius: 10, padding: '14px 18px' }}>
@@ -8,9 +11,11 @@ function StatTile({ label, value, unit }) {
 }
 
 export default function TelemetryTab({ drivers, selected, onSelectDriver, speedPolyBig, throttlePolyBig, brakePolyBig, topSpeed, avgSpeed, drsCount }) {
+    const [driverListWidth, onDriverListResize] = useResizableWidth(260, { min: 200, max: 420, edge: 'right' })
+
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', flex: 1 }}>
-            <div style={{ padding: '24px 0', borderRight: '1px solid #eeece6' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: `${driverListWidth}px 10px 1fr`, flex: 1 }}>
+            <div style={{ padding: '24px 0' }}>
                 <div style={{ padding: '0 32px 12px', fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>SELECT DRIVER</div>
                 {drivers.map(d => (
                     <div
@@ -23,6 +28,8 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedP
                     </div>
                 ))}
             </div>
+
+            <ResizeHandle onMouseDown={onDriverListResize} />
 
             <div style={{ padding: '24px 32px' }}>
                 <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 6 }}>TELEMETRY DEEP DIVE</div>

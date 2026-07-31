@@ -1,8 +1,13 @@
+import ResizeHandle from './ResizeHandle'
+import { useResizableWidth } from './useResizableWidth'
+
 const CURRENT_LAP_MARKER_PCT = 72.4
 
 export default function StrategyTab({ drivers, pitLog }) {
+    const [pitLogWidth, onPitLogResize] = useResizableWidth(340, { min: 260, max: 480, edge: 'left' })
+
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', flex: 1 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: `1fr 10px ${pitLogWidth}px`, flex: 1 }}>
             <div style={{ padding: '24px 32px' }}>
                 <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 16 }}>TIRE STRATEGY · LAP 42/58</div>
                 {drivers.map(d => (
@@ -27,7 +32,9 @@ export default function StrategyTab({ drivers, pitLog }) {
                 </div>
             </div>
 
-            <div style={{ padding: '24px 32px', borderLeft: '1px solid #eeece6' }}>
+            <ResizeHandle onMouseDown={onPitLogResize} />
+
+            <div style={{ padding: '24px 32px' }}>
                 <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 12 }}>PIT STOP LOG</div>
                 {pitLog.map((p, i) => (
                     <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid #f2f0ea' }}>
