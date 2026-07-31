@@ -3,6 +3,7 @@ from datetime import datetime
 from entities.calendar import RaceEvent
 from entities.errors import SessionNotFoundError
 from entities.session import SessionData, SessionTypeInfo
+from entities.telemetry import TelemetryData
 from entities.weather import WeatherData
 from interface_adapters.gateways.clock import Clock
 from interface_adapters.gateways.season_repository import SeasonRepository
@@ -31,15 +32,24 @@ class FakeSessionRepository(SessionRepository):
         self,
         session_types: list[SessionTypeInfo] | None = None,
         session_data: "SessionData | None" = None,
+        telemetry: "TelemetryData | None" = None,
+        telemetry_error: Exception | None = None,
     ):
         self._session_types = session_types or []
         self._session_data = session_data
+        self._telemetry = telemetry
+        self._telemetry_error = telemetry_error
 
     def get_available_session_types(self, year: int, race_round: int) -> list[SessionTypeInfo]:
         return self._session_types
 
     def get_session_data(self, year: int, race_round: int, session_type: str) -> "SessionData":
         return self._session_data
+
+    def get_telemetry(self, year: int, race_round: int, session_type: str, driver_code: str) -> "TelemetryData":
+        if self._telemetry_error:
+            raise self._telemetry_error
+        return self._telemetry
 
 
 class FakeWeatherRepository(WeatherRepository):

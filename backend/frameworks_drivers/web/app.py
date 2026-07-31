@@ -11,6 +11,7 @@ from interface_adapters.controllers.races_controller import RacesController
 from interface_adapters.controllers.seasons_controller import SeasonsController
 from interface_adapters.controllers.session_controller import SessionController
 from interface_adapters.controllers.session_types_controller import SessionTypesController
+from interface_adapters.controllers.telemetry_controller import TelemetryController
 from interface_adapters.controllers.weather_controller import WeatherController
 from interface_adapters.gateways.clock import Clock
 from interface_adapters.gateways.season_repository import SeasonRepository
@@ -20,6 +21,7 @@ from use_cases.get_races import GetRacesUseCase
 from use_cases.get_seasons import GetSeasonsUseCase
 from use_cases.get_session import GetSessionUseCase
 from use_cases.get_session_types import GetSessionTypesUseCase
+from use_cases.get_telemetry import GetTelemetryUseCase
 from use_cases.get_weather import GetWeatherUseCase
 
 
@@ -93,6 +95,13 @@ def create_app(
         "/api/weather/<int:year>/<int:race_round>",
         endpoint="weather",
         view_func=WeatherController(weather_use_case).handle,
+    )
+
+    telemetry_use_case = GetTelemetryUseCase(session_repo)
+    app.add_url_rule(
+        "/api/telemetry/<int:year>/<int:race_round>/<session_type>/<driver_code>",
+        endpoint="telemetry",
+        view_func=TelemetryController(telemetry_use_case).handle,
     )
 
     @app.errorhandler(SessionNotFoundError)

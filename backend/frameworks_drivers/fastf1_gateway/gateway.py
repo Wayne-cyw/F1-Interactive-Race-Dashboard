@@ -6,6 +6,7 @@ import pandas as pd
 from entities.calendar import RaceEvent
 from entities.errors import SessionNotFoundError
 from entities.session import DriverResult, Lap, SessionData, SessionInfo, SessionTypeInfo
+from entities.telemetry import TelemetryData, TelemetryPoint
 from entities.weather import WeatherData
 from interface_adapters.gateways.season_repository import SeasonRepository
 from interface_adapters.gateways.session_repository import SessionRepository
@@ -105,6 +106,36 @@ class FastF1Gateway(SeasonRepository, SessionRepository, WeatherRepository):
         )
         total_laps = int(laps_df["LapNumber"].max()) if len(laps_df) > 0 and "LapNumber" in laps_df.columns else 0
         return SessionData(session_info=session_info, laps=laps, results=results, total_laps=total_laps)
+
+    def get_telemetry(self, year: int, race_round: int, session_type: str, driver_code: str) -> TelemetryData:
+        session = self._load_session(year, race_round, session_type)
+        driver_laps = session.laps.pick_driver(driver_code)
+        if driver_laps.empty:
+            raise SessionNotFoundError(f"No laps found for {driver_code}")
+        fastest_lap = driver_laps.pick_fastest()
+        if fastest_lap is None or fastest_lap.empty:
+            raise SessionNotFoundError("No valid fastest lap")
+
+        telemetry_df = fastest_lap.get_telemetry()
+        sampled = telemetry_df.iloc[::10]
+        points = [
+            TelemetryPoint(
+                distance=float(p["Distance"]) if pd.notna(p.get("Distance")) else None,
+                speed=float(p["Speed"]) if pd.notna(p.get("Speed")) else None,
+                throttle=float(p["Throttle"]) if pd.notna(p.get("Throttle")) else None,
+                brake=bool(p["Brake"]) if pd.notna(p.get("Brake")) else False,
+                gear=int(p["nGear"]) if pd.notna(p.get("nGear")) else None,
+                rpm=float(p["RPM"]) if pd.notna(p.get("RPM")) else None,
+                drs=int(p["DRS"]) if pd.notna(p.get("DRS")) else 0,
+            )
+            for _, p in sampled.iterrows()
+        ]
+        return TelemetryData(
+            driver=driver_code,
+            lap_number=int(fastest_lap["LapNumber"]),
+            lap_time=fastest_lap["LapTime"].total_seconds(),
+            points=points,
+        )
 
     def get_weather(self, year: int, race_round: int) -> WeatherData:
         session = self._load_session(year, race_round, "R")

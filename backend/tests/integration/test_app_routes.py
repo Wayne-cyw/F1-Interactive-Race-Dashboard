@@ -3,7 +3,9 @@ from datetime import datetime
 import pytest
 
 from entities.calendar import RaceEvent
+from entities.errors import SessionNotFoundError
 from entities.session import DriverResult, Lap, SessionData, SessionInfo, SessionTypeInfo
+from entities.telemetry import TelemetryData, TelemetryPoint
 from entities.weather import WeatherData
 from frameworks_drivers.web.app import create_app
 from tests.fakes import FakeClock, FakeSeasonRepository, FakeSessionRepository, FakeWeatherRepository
@@ -85,3 +87,18 @@ def test_weather_route_returns_404_when_unavailable(client_factory):
     resp = app.test_client().get("/api/weather/2026/1")
     assert resp.status_code == 404
     assert resp.get_json() == {"status": "error", "message": "No weather data available"}
+
+
+def test_telemetry_route_returns_sampled_points(client_factory):
+    data = TelemetryData(driver="VER", lap_number=32, lap_time=91.234, points=[TelemetryPoint(distance=0.0, speed=290.5, throttle=100.0, brake=False, gear=7, rpm=11500.0, drs=1)])
+    app = client_factory(session_repo=FakeSessionRepository(telemetry=data))
+    resp = app.test_client().get("/api/telemetry/2026/1/R/VER")
+    assert resp.status_code == 200
+    assert resp.get_json()["telemetry"][0]["speed"] == 290.5
+
+
+def test_telemetry_route_returns_404_when_no_laps(client_factory):
+    app = client_factory(session_repo=FakeSessionRepository(telemetry_error=SessionNotFoundError("No laps found for XXX")))
+    resp = app.test_client().get("/api/telemetry/2026/1/R/XXX")
+    assert resp.status_code == 404
+    assert resp.get_json() == {"status": "error", "message": "No laps found for XXX"}

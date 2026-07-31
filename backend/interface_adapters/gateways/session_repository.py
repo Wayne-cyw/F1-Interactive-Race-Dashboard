@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from entities.session import SessionData, SessionTypeInfo
+from entities.telemetry import TelemetryData
 
 
 class SessionRepository(ABC):
@@ -10,4 +11,8 @@ class SessionRepository(ABC):
 
     @abstractmethod
     def get_session_data(self, year: int, race_round: int, session_type: str) -> SessionData:
+        ...
+
+    @abstractmethod
+    def get_telemetry(self, year: int, race_round: int, session_type: str, driver_code: str) -> TelemetryData:
         ...
