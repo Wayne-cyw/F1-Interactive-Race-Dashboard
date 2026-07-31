@@ -17,7 +17,7 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, speedPo
 
     return (
         <>
-            <div style={{ display: 'grid', gridTemplateColumns: `${leaderboardWidth}px 10px 1fr 10px ${telemetryWidth}px`, flex: 1, minHeight: 0 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: `${leaderboardWidth}px 10px 1fr 10px ${telemetryWidth}px`, gridTemplateRows: 'minmax(0, 1fr)', flex: 1, minHeight: 0 }}>
                 <Leaderboard drivers={drivers} onSelectDriver={onSelectDriver} width={leaderboardWidth} />
 
                 <ResizeHandle onMouseDown={onLeaderboardResize} />
@@ -39,7 +39,7 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, speedPo
 
                 <ResizeHandle onMouseDown={onTelemetryResize} />
 
-                <div style={{ padding: '16px 32px' }}>
+                <div style={{ padding: '16px 32px', overflowY: 'auto', minHeight: 0 }}>
                     <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 12 }}>TELEMETRY — {selected.name}</div>
                     <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 1 }}>{selected.topSpeed}<span style={{ fontSize: 14, color: '#a8a49b' }}> km/h</span></div>
                     <div style={{ display: 'flex', gap: 14, marginTop: 14, alignItems: 'center' }}>

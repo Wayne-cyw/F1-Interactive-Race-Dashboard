@@ -14,8 +14,8 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedP
     const [driverListWidth, onDriverListResize] = useResizableWidth(260, { min: 200, max: 420, edge: 'right' })
 
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: `${driverListWidth}px 10px 1fr`, flex: 1 }}>
-            <div style={{ padding: '16px 0' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: `${driverListWidth}px 10px 1fr`, gridTemplateRows: 'minmax(0, 1fr)', flex: 1, minHeight: 0 }}>
+            <div style={{ padding: '16px 0', overflowY: 'auto', minHeight: 0 }}>
                 <div style={{ padding: '0 32px 8px', fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>SELECT DRIVER</div>
                 {drivers.map(d => (
                     <div
@@ -31,7 +31,7 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedP
 
             <ResizeHandle onMouseDown={onDriverListResize} />
 
-            <div style={{ padding: '16px 32px' }}>
+            <div style={{ padding: '16px 32px', overflowY: 'auto', minHeight: 0 }}>
                 <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 6 }}>TELEMETRY DEEP DIVE</div>
                 <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 14 }}>
                     {selected.name} <span style={{ fontSize: 13, color: '#a8a49b', fontWeight: 400 }}>{selected.team}</span>

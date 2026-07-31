@@ -59,7 +59,7 @@ export default function LiveRace() {
     } = useRaceCenterData(selectedDriverId)
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#faf9f6', color: '#191b1e', fontFamily: 'Inter, system-ui, sans-serif' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#faf9f6', color: '#191b1e', fontFamily: 'Inter, system-ui, sans-serif' }}>
             <TopBar
                 races={RACES}
                 selectedRaceId={selectedRaceId}
