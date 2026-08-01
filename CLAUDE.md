@@ -17,7 +17,10 @@ source .venv/bin/activate
 pip install -r backend/requirements.txt
 
 # Start Flask API (runs on http://localhost:5000)
-python3 backend/app.py
+python3 backend/run.py
+
+# Run backend tests
+cd backend && python -m pytest -q
 ```
 
 **Frontend:**
@@ -40,10 +43,18 @@ npm run lint
 
 ## Architecture
 
-### Backend (`backend/app.py`)
-Single Flask file. Uses **FastF1** (Python library) to load F1 session data and caches sessions with both `fastf1.Cache` (disk, at `backend/cache/`) and `@lru_cache` (in-memory, up to 200 sessions). First load of a session is slow (FastF1 downloads from the F1 data API); subsequent loads are near-instant from cache.
+### Backend (`backend/`)
+Clean Architecture layering — see `docs/superpowers/specs/2026-07-31-backend-clean-architecture-design.md` for the full design rationale:
+- `entities/` — plain dataclasses (Driver, Session, Standing, Team, Weather, PitStop, Track, RaceEvent) + domain errors. No external dependencies.
+- `use_cases/` — one class per operation (`GetStandingsUseCase`, `GetTelemetryUseCase`, ...), depends only on entities and gateway interfaces.
+- `interface_adapters/` — `gateways/` (repository interface ABCs), `controllers/` (one per use case, thin), `presenters/` (entity → JSON shape, including team color lookup).
+- `frameworks_drivers/` — `web/app.py` (Flask app factory + DI wiring + error handlers), `fastf1_gateway/` (the only place `fastf1` is imported; implements all repository interfaces; caches loaded sessions via `@lru_cache(maxsize=200)` plus `fastf1.Cache` disk cache at `backend/cache/`), `logging_config.py`.
+- `run.py` — entry point (`python3 backend/run.py`).
+- `tests/unit/` — use cases tested against hand-written fakes, no FastF1/Flask involved. `tests/integration/` — Flask test client against the real app factory with fake repositories injected via `create_app(...)` overrides.
 
-All API responses include gzip compression via `flask-compress`. CORS is enabled globally.
+All API responses include gzip compression via `flask-compress`. CORS is enabled globally. HTTP contract (routes, JSON shapes, status codes) is unchanged from the pre-restructure monolith.
+
+**Frontend endpoint usage (checked at cutover, 2026-07-31):** `grep -rn "API_URL\|fetch(" frontend --include="*.jsx" --include="*.js" | grep -v node_modules` no longer returns zero matches — frontend wiring landed after this plan was written. All 11 endpoints below are now actively called by real pages: `/api/seasons`, `/api/races/<year>`, `/api/session-types/<year>/<round>`, `/api/session/<year>/<round>/<type>`, `/api/telemetry/<year>/<round>/<type>/<driver>`, `/api/drivers/<year>/<round>`, and `/api/standings/<year>` from `Dashboard.jsx`/`LiveRace.jsx`/`Standings.jsx`; `/api/teams/<year>` from `Teams.jsx`; `/api/track/<year>/<race>` from `three/Track3D.jsx` (via `Track3DCanvas`); `/api/weather/<year>/<race>` from `components/live/WeatherWidget.jsx`; `/api/pitstops/<year>/<race>` from `components/live/PitStopTracker.jsx` — all rendered inside `LiveRace.jsx`. None of the 11 are safe removal candidates. Note: `frontend/components/LiveComponents.js` also references `/api/pitstops`, `/api/weather`, `/api/track` via hardcoded `http://localhost:5000/api/...` URLs, but that file is not imported anywhere (`window.LiveComponents = {...}` self-assignment only) — it is dead legacy code, not live-app usage. Re-run the grep above before assuming any endpoint's usage has changed.
 
 API base URL: `http://localhost:5000/api` (or `/api` after Vite proxy is configured)
 

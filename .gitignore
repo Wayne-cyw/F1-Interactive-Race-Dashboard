@@ -23,6 +23,7 @@ backend/logs
 
 # Internal planning docs (not for GitHub)
 docs/superpowers/
+.superpowers/
 
 # Editor directories and files
 .vscode/*
