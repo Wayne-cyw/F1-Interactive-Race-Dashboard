@@ -109,11 +109,13 @@ def test_weather_route_returns_404_when_unavailable(client_factory):
 
 
 def test_telemetry_route_returns_sampled_points(client_factory):
-    data = TelemetryData(driver="VER", lap_number=32, lap_time=91.234, points=[TelemetryPoint(distance=0.0, speed=290.5, throttle=100.0, brake=False, gear=7, rpm=11500.0, drs=1)])
+    data = TelemetryData(driver="VER", points=[TelemetryPoint(t=12.5, speed=290.5, throttle=100.0, brake=False, gear=7, rpm=11500.0, drs=1)])
     app = client_factory(session_repo=FakeSessionRepository(telemetry=data))
     resp = app.test_client().get("/api/telemetry/2026/1/R/VER")
     assert resp.status_code == 200
-    assert resp.get_json()["telemetry"][0]["speed"] == 290.5
+    body = resp.get_json()
+    assert body["telemetry"][0]["speed"] == 290.5
+    assert body["telemetry"][0]["t"] == 12.5
 
 
 def test_telemetry_route_returns_404_when_no_laps(client_factory):

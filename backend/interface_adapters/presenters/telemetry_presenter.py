@@ -5,11 +5,9 @@ def present_telemetry(t: TelemetryData) -> dict:
     return {
         "status": "success",
         "driver": t.driver,
-        "lap_number": t.lap_number,
-        "lap_time": t.lap_time,
         "telemetry": [
             {
-                "distance": p.distance,
+                "t": p.t,
                 "speed": p.speed,
                 "throttle": p.throttle,
                 "brake": p.brake,
