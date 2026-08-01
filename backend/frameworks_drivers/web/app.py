@@ -85,76 +85,78 @@ def create_app(
 
     seasons_use_case = GetSeasonsUseCase(clock)
     app.add_url_rule(
-        "/api/seasons", view_func=SeasonsController(seasons_use_case).handle
+        "/api/seasons",
+        endpoint="seasons_route",
+        view_func=SeasonsController(seasons_use_case).handle,
     )
 
     races_use_case = GetRacesUseCase(season_repo)
     app.add_url_rule(
         "/api/races/<int:year>",
-        endpoint="races",
+        endpoint="races_route",
         view_func=RacesController(races_use_case).handle,
     )
 
     session_types_use_case = GetSessionTypesUseCase(session_repo)
     app.add_url_rule(
         "/api/session-types/<int:year>/<int:race_round>",
-        endpoint="session_types",
+        endpoint="session_types_route",
         view_func=SessionTypesController(session_types_use_case).handle,
     )
 
     session_use_case = GetSessionUseCase(session_repo)
     app.add_url_rule(
         "/api/session/<int:year>/<int:race_round>/<session_type>",
-        endpoint="session",
+        endpoint="session_route",
         view_func=SessionController(session_use_case).handle,
     )
 
     weather_use_case = GetWeatherUseCase(weather_repo)
     app.add_url_rule(
         "/api/weather/<int:year>/<int:race_round>",
-        endpoint="weather",
+        endpoint="weather_route",
         view_func=WeatherController(weather_use_case).handle,
     )
 
     telemetry_use_case = GetTelemetryUseCase(session_repo)
     app.add_url_rule(
         "/api/telemetry/<int:year>/<int:race_round>/<session_type>/<driver_code>",
-        endpoint="telemetry",
+        endpoint="telemetry_route",
         view_func=TelemetryController(telemetry_use_case).handle,
     )
 
     pitstops_use_case = GetPitstopsUseCase(pitstop_repo)
     app.add_url_rule(
         "/api/pitstops/<int:year>/<int:race_round>",
-        endpoint="pitstops",
+        endpoint="pitstops_route",
         view_func=PitstopsController(pitstops_use_case).handle,
     )
 
     standings_use_case = GetStandingsUseCase(standings_repo)
     app.add_url_rule(
         "/api/standings/<int:year>",
-        endpoint="standings",
+        endpoint="standings_route",
         view_func=StandingsController(standings_use_case).handle,
     )
 
     teams_use_case = GetTeamsUseCase(team_repo)
     app.add_url_rule(
         "/api/teams/<int:year>",
-        endpoint="teams",
+        endpoint="teams_route",
         view_func=TeamsController(teams_use_case).handle,
     )
 
     track_use_case = GetTrackUseCase(session_repo)
     app.add_url_rule(
         "/api/track/<int:year>/<int:race_round>",
-        endpoint="track",
+        endpoint="track_route",
         view_func=TrackController(track_use_case).handle,
     )
 
     drivers_use_case = GetDriversUseCase(session_repo)
     app.add_url_rule(
         "/api/drivers/<int:year>/<int:race_round>",
-        endpoint="drivers",
+        endpoint="drivers_route",
         view_func=DriversController(drivers_use_case).handle,
     )
 
