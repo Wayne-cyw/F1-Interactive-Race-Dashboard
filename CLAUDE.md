@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Full-stack F1 race analytics dashboard. Flask backend powered by FastF1 serves race data; React frontend visualizes it across 4 pages (Race Analysis, Standings, Teams, Live Race).
+Full-stack F1 race analytics dashboard. Flask backend powered by FastF1 serves race data; React frontend is a single "Race Center" page (Overview / Timing / Strategy / Telemetry tabs).
 
 ## Commands
 
@@ -61,37 +61,29 @@ Key endpoints:
 | `GET /api/weather/<year>/<race>` | Air temp, track temp, humidity, rainfall |
 | `GET /api/pitstops/<year>/<race>` | Pit stop history |
 
-### Frontend (Vite + Three.js)
-Fully bundled SPA. `frontend/` is the Vite root. Entry: `main.jsx` → `App.jsx` → React Router.
+### Frontend (Vite + React, single page)
+Fully bundled SPA — no router, no other pages. `frontend/` is the Vite root. Entry: `main.jsx` → `App.jsx` → `pages/LiveRace.jsx`. Dependencies are plain `react`/`react-dom` only — Three.js, chart.js, and react-router-dom were all removed along with the pages/components that used them (see below).
 
 **Key files:**
-- `frontend/App.jsx` — Router shell. `Background3D` always mounts except on `/live` (which has its own Canvas)
-- `frontend/three/` — All Three.js / `@react-three/fiber` components:
-  - `Background3D.jsx` — persistent star field + floating ember particles across all pages
-  - `Track3DCanvas.jsx` — Canvas wrapper for the live race (contains Bloom + Vignette post-processing)
-  - `Track3D.jsx` — builds `CatmullRomCurve3` from API coordinates, renders `TubeGeometry` track, 8 spotlights, provides `TrackContext`
-  - `Cars3D.jsx` — 20 emissive car meshes; positions mutated directly in `useFrame` via mesh refs (no React state — maintains 60fps)
-  - `CameraController.jsx` — Overview (`OrbitControls`), Follow (lerp behind selected car), Cinematic (auto-cycle 5 predefined angles)
-  - `TrackContext.js` — React context exposing the `CatmullRomCurve3` to children of `Track3D`
-- `frontend/components/live/` — Individual panel components (AlertsBox, LiveStandings, PitStopTracker, WeatherWidget, TrackStatus)
-- `frontend/utils/helpers.js` — ES module exports; `API_URL = '/api'` (Vite dev proxy routes to Flask)
+- `frontend/App.jsx` — renders `<LiveRace />` directly, nothing else
+- `frontend/pages/LiveRace.jsx` — the entire app: page-level state (active tab, selected driver, session clock) and composition of the sections below
+- `frontend/pages/live-race/mockData.js` — placeholder driver/pit-stop data plus `genTrace`/`toPolyline`/`fmtClock` helpers
+- `frontend/pages/live-race/useRaceCenterData.js` — derives display-ready driver rows, selected-driver telemetry traces, and strategy bar geometry
+- `frontend/pages/live-race/{TopBar,TabNav,OverviewTab,TimingTab,StrategyTab,TelemetryTab}.jsx` — one component per section; each tab is plain HTML/SVG with inline styles (no Canvas, no Three.js)
+- `frontend/pages/live-race/Leaderboard.jsx` — used by OverviewTab; below `COMPACT_WIDTH_THRESHOLD` (380px) it drops the position, last-lap, and tire+age columns, showing only driver name + gap. Driven by the same width state as its resize handle, so it responds live while dragging.
+- `frontend/pages/live-race/useResizableWidth.js` / `useResizableHeight.js` + `ResizeHandle.jsx` (`orientation="vertical"|"horizontal"`) — shared drag-to-resize primitives. Overview (leaderboard + telemetry columns, plus the Sector Deltas panel's height), Strategy (pit log column), and Telemetry (driver list column) all use them; resize state is local to each tab and resets when you navigate away and back (tabs unmount on switch). Timing has no resizable panels.
 
-### Live Race Animation Engine
-The core animation in `frontend/pages/live.js` (migrating to `LiveRace.jsx`) uses `requestAnimationFrame` to simulate lap-by-lap progression at 0.6 laps/second. Car track position is computed as:
+**All data is currently placeholder/generated, not wired to the backend yet.** Next step: wire `useRaceCenterData` to real `/api` endpoints (standings, session, telemetry, pitstops) in place of `mockData.js`.
 
-```js
-t = ((currentLap - 1 + progress) / totalLaps + (racePosition - 1) * 0.015) % 1
-```
-
-Where `t ∈ [0,1]` is the parameter along the track curve. In the 3D version, `trackCurve.getPoint(t)` returns the `Vector3` position and `trackCurve.getTangent(t)` orients the car mesh. Car mesh refs are mutated directly in `useFrame` — never via React state — to maintain 60fps.
+**Removed (no longer part of the app):** the Dashboard/Standings/Teams pages, `TopNav`/`Sidebar` navigation, `Background3D`/`Hero3D` (Three.js decorative backgrounds), `Charts.jsx` (chart.js wrapper), and the pre-Vite legacy HTML files (`live.html`, `standings.html`, `teams.html`, `debug.html`, `test.html`). The backend's other endpoints (`/api/races`, `/api/standings`, `/api/teams`, etc.) still exist and work — they just have no frontend consumer at the moment.
 
 ### Design System
-- Colors: `#000000` base, `#DC0000` red, `#FFBA08` yellow, `#FF6600` orange
-- Fonts: Orbitron (headers), Rajdhani (body) — loaded via Google Fonts CDN
-- Theme: Black/red F1 aesthetic; target adds glassmorphism (`.glass-panel` with `backdrop-filter: blur(12px)`) over the Three.js background canvas
+- Colors: `#faf9f6` background, `#191b1e` text, oklch-based accents (blue ~230 hue, green ~155 hue, red ~25 hue, purple ~300 hue); tire compound colors S/M/H = `#c23b3b`/`#d9a300`/`#6b6862`
+- Fonts: Inter (UI text), JetBrains Mono (session clock, timing figures) — loaded dynamically only while the page is mounted (see `useRaceCenterFonts` in `LiveRace.jsx`)
+- All corner radii (buttons, badges, tiles, chart panels) are a consistent `10px`
 
 ### Key Gotchas
-- **R3F version**: `@react-three/fiber` 9.5.0 is installed, which requires React `>=19 <19.3`. Currently on React 19.2.0 — compatible.
 - **FastF1 first load**: The first time a session loads, FastF1 fetches from the F1 data API — can take 30–60 seconds. Subsequent loads read from `backend/cache/`.
-- **Track coordinates**: `/api/track` returns FastF1 GPS-derived `{x, y}` coordinates in meters (values can reach ±5000). Must normalize to scene space before passing to `TubeGeometry`.
-- **WebGL contexts**: Only two `<Canvas>` elements exist simultaneously — `Background3D` (hidden on `/live`) and `Track3DCanvas` (only on `/live`). Never create per-chart WebGL canvases.
+- **Track coordinates**: `/api/track` returns FastF1 GPS-derived `{x, y}` coordinates in meters (values can reach ±5000) — relevant if/when the Overview tab's track map is wired to real data instead of the mockup's fixed SVG path.
+- **`<body>` margin reset**: `frontend/index.html` has an inline `<style>` resetting `html, body` margin to 0. Deleting `styles.css` (see above) removed the app's only CSS reset — without it the browser's default 8px body margin adds 16px of phantom scroll height, which is exactly what made the single-viewport layout overflow until this was found. Don't remove this reset without re-checking that every tab still fits one viewport.
+- **The dashboard is a fixed-size layout, not a scrolling page**: `LiveRace.jsx`'s root uses `height: '100vh'` + `overflow: 'hidden'` (not `minHeight`, which only sets a floor and lets content grow past the viewport — that was tried and didn't work). Every tab's outer container is `flex: 1` with explicit `minHeight: 0` (flex items default to `min-height: auto`, which refuses to shrink below content size and silently inflates ancestors otherwise), and any column-level grid uses `gridTemplateRows: 'minmax(0, 1fr)'` instead of implicit `auto` so the row is sized to available space, not content. Columns whose content can exceed that space (Leaderboard, the Timing sheet, Strategy's two lists, Telemetry's driver list) get `overflowY: 'auto'` + `minHeight: 0` so *they* scroll internally — the page itself never does. This also means dragging a resize handle (e.g. widening Leaderboard, or growing Sector Deltas) reallocates space among siblings within the fixed total; it never changes the overall dashboard size. If you add a new panel or tab, follow this same pattern rather than reintroducing page-level scrolling.
