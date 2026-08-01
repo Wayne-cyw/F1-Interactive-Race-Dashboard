@@ -4,6 +4,7 @@ from entities.calendar import RaceEvent
 from entities.errors import SessionNotFoundError
 from entities.pitstop import PitStopEvent
 from entities.session import DriverResult, SessionData, SessionTypeInfo
+from entities.team import Team
 from entities.telemetry import TelemetryData
 from entities.weather import WeatherData
 from interface_adapters.gateways.clock import Clock
@@ -11,6 +12,7 @@ from interface_adapters.gateways.pitstop_repository import PitstopRepository
 from interface_adapters.gateways.season_repository import SeasonRepository
 from interface_adapters.gateways.session_repository import SessionRepository
 from interface_adapters.gateways.standings_repository import StandingsRepository
+from interface_adapters.gateways.team_repository import TeamRepository
 from interface_adapters.gateways.weather_repository import WeatherRepository
 
 
@@ -84,3 +86,11 @@ class FakeStandingsRepository(StandingsRepository):
 
     def get_round_results(self, year: int, race_round: int) -> list[DriverResult]:
         return self._results_by_round.get(race_round, [])
+
+
+class FakeTeamRepository(TeamRepository):
+    def __init__(self, teams: list[Team] | None = None):
+        self._teams = teams or []
+
+    def get_teams(self, year: int) -> list[Team]:
+        return self._teams

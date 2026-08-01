@@ -8,12 +8,14 @@ from entities.calendar import RaceEvent
 from entities.errors import SessionNotFoundError
 from entities.pitstop import PitStopEvent
 from entities.session import DriverResult, Lap, SessionData, SessionInfo, SessionTypeInfo
+from entities.team import Team, TeamDriver
 from entities.telemetry import TelemetryData, TelemetryPoint
 from entities.weather import WeatherData
 from interface_adapters.gateways.pitstop_repository import PitstopRepository
 from interface_adapters.gateways.season_repository import SeasonRepository
 from interface_adapters.gateways.session_repository import SessionRepository
 from interface_adapters.gateways.standings_repository import StandingsRepository
+from interface_adapters.gateways.team_repository import TeamRepository
 from interface_adapters.gateways.weather_repository import WeatherRepository
 
 _SESSION_TYPE_NAMES = {
@@ -27,7 +29,14 @@ _SESSION_TYPE_NAMES = {
 }
 
 
-class FastF1Gateway(SeasonRepository, SessionRepository, WeatherRepository, PitstopRepository, StandingsRepository):
+class FastF1Gateway(
+    SeasonRepository,
+    SessionRepository,
+    WeatherRepository,
+    PitstopRepository,
+    StandingsRepository,
+    TeamRepository,
+):
     @lru_cache(maxsize=200)
     def _load_session(self, year: int, race_round: int, session_type: str = "R"):
         session = fastf1.get_session(year, race_round, session_type)
@@ -188,3 +197,16 @@ class FastF1Gateway(SeasonRepository, SessionRepository, WeatherRepository, Pits
         session = self._load_session(year, race_round, "R")
         results_df = session.results
         return [self._driver_result_from_row(r) for _, r in results_df.iterrows()]
+
+    def get_teams(self, year: int) -> list[Team]:
+        session = self._load_session(year, 1, "R")
+        results = session.results
+        teams: dict[str, Team] = {}
+        order: list[str] = []
+        for _, r in results.iterrows():
+            team_name = r["TeamName"]
+            if team_name not in teams:
+                teams[team_name] = Team(name=team_name, drivers=[])
+                order.append(team_name)
+            teams[team_name].drivers.append(TeamDriver(code=r["Abbreviation"], name=r["FullName"]))
+        return [teams[name] for name in order]

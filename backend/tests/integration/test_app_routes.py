@@ -6,6 +6,7 @@ from entities.calendar import RaceEvent
 from entities.errors import SessionNotFoundError
 from entities.pitstop import PitStopEvent
 from entities.session import DriverResult, Lap, SessionData, SessionInfo, SessionTypeInfo
+from entities.team import Team, TeamDriver
 from entities.telemetry import TelemetryData, TelemetryPoint
 from entities.weather import WeatherData
 from frameworks_drivers.web.app import create_app
@@ -15,6 +16,7 @@ from tests.fakes import (
     FakeSeasonRepository,
     FakeSessionRepository,
     FakeStandingsRepository,
+    FakeTeamRepository,
     FakeWeatherRepository,
 )
 
@@ -136,3 +138,16 @@ def test_standings_route_returns_404_when_no_completed_rounds(client_factory):
     resp = app.test_client().get("/api/standings/2026")
     assert resp.status_code == 404
     assert resp.get_json() == {"status": "error", "message": "No completed races in 2026 yet"}
+
+
+def test_teams_route_returns_rosters_with_color(client_factory):
+    teams = [Team(name="Red Bull Racing", drivers=[TeamDriver(code="VER", name="Max Verstappen")])]
+    app = client_factory(team_repo=FakeTeamRepository(teams=teams))
+    resp = app.test_client().get("/api/teams/2026")
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["teams"][0] == {
+        "name": "Red Bull Racing",
+        "color": "#3671C6",
+        "drivers": [{"code": "VER", "name": "Max Verstappen"}],
+    }
