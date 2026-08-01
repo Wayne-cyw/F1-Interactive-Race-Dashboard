@@ -1,6 +1,10 @@
+import logging
+
 from entities.errors import SessionNotFoundError
 from entities.standing import ConstructorStanding, DriverStanding, StandingsData
 from interface_adapters.gateways.standings_repository import StandingsRepository
+
+logger = logging.getLogger(__name__)
 
 
 class GetStandingsUseCase:
@@ -18,7 +22,8 @@ class GetStandingsUseCase:
         for round_num in range(1, latest_round + 1):
             try:
                 results = self._repo.get_round_results(year, round_num)
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Could not load round {round_num}: {e}")
                 continue
             for result in results:
                 entry = driver_totals.setdefault(

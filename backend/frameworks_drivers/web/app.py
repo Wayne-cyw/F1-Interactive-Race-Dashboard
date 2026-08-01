@@ -1,6 +1,7 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_compress import Compress
 from flask_cors import CORS
+from werkzeug.exceptions import HTTPException
 
 from entities.errors import DomainError, SessionNotFoundError
 from frameworks_drivers import logging_config
@@ -164,10 +165,14 @@ def create_app(
     def handle_not_found(e):
         return jsonify({"status": "error", "message": str(e)}), 404
 
+    @app.errorhandler(HTTPException)
+    def handle_http_exception(e):
+        return e
+
     @app.errorhandler(DomainError)
     @app.errorhandler(Exception)
     def handle_generic_error(e):
-        app.logger.error(str(e))
+        app.logger.exception("Unhandled error on %s %s", request.method, request.path)
         return jsonify({"status": "error", "message": str(e)}), 500
 
     return app

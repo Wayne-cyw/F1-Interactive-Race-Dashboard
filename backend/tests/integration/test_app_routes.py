@@ -178,3 +178,13 @@ def test_drivers_route_returns_roster_with_color(client_factory):
     assert resp.get_json()["drivers"][0] == {
         "code": "VER", "name": "Max Verstappen", "team": "Red Bull Racing", "team_color": "#3671C6",
     }
+
+
+def test_undefined_route_returns_404(client_factory):
+    resp = client_factory().test_client().get("/api/does-not-exist")
+    assert resp.status_code == 404
+
+
+def test_wrong_http_method_returns_405(client_factory):
+    resp = client_factory().test_client().post("/api/seasons")
+    assert resp.status_code == 405

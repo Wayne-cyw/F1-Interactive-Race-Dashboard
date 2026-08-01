@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from functools import lru_cache
 
@@ -20,6 +21,8 @@ from interface_adapters.gateways.standings_repository import StandingsRepository
 from interface_adapters.gateways.team_repository import TeamRepository
 from interface_adapters.gateways.weather_repository import WeatherRepository
 
+logger = logging.getLogger(__name__)
+
 _SESSION_TYPE_NAMES = {
     "FP1": "Practice 1",
     "FP2": "Practice 2",
@@ -41,8 +44,10 @@ class FastF1Gateway(
 ):
     @lru_cache(maxsize=200)
     def _load_session(self, year: int, race_round: int, session_type: str = "R"):
+        logger.info(f"Loading session: {year} Round {race_round} ({session_type})")
         session = fastf1.get_session(year, race_round, session_type)
         session.load()
+        logger.info(f"Session loaded: {year} Round {race_round}")
         return session
 
     @staticmethod
