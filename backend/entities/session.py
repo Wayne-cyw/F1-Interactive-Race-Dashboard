@@ -18,6 +18,7 @@ class Lap:
     sector_1_time: float | None = None
     sector_2_time: float | None = None
     sector_3_time: float | None = None
+    gap_to_leader: float | None = None
 
 
 @dataclass(frozen=True)

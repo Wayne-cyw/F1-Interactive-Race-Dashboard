@@ -87,6 +87,7 @@ def test_session_route_returns_laps_and_results(client_factory):
     assert body["laps"][0]["sector_1_time"] == 28.4
     assert body["laps"][0]["sector_2_time"] == 33.1
     assert body["laps"][0]["sector_3_time"] == 29.7
+    assert body["laps"][0]["gap_to_leader"] == 0.0
 
 
 def test_weather_route_returns_latest_reading(client_factory):

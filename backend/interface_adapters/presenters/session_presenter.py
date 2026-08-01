@@ -13,6 +13,7 @@ def present_lap(lap: Lap) -> dict:
         "sector_1_time": lap.sector_1_time,
         "sector_2_time": lap.sector_2_time,
         "sector_3_time": lap.sector_3_time,
+        "gap_to_leader": lap.gap_to_leader,
     }
 
 
