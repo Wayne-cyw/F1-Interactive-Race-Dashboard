@@ -1,20 +1,23 @@
 import { useEffect, useState } from 'react'
 import { fetchJSON } from '../../utils/api'
+import { deriveCurrentLap } from './raceClock'
 
-const LAPS_PER_SECOND = 0.6
+const RENDER_INTERVAL_MS = 200 // throttle re-renders to 5Hz
 
 async function loadSessionBundle(year, round) {
-    const [sessionData, pitstopsBody, weatherBody, trackBody] = await Promise.all([
+    const [sessionData, pitstopsBody, weatherBody, trackBody, positionsBody] = await Promise.all([
         fetchJSON(`/session/${year}/${round}/R`),
         fetchJSON(`/pitstops/${year}/${round}`),
         fetchJSON(`/weather/${year}/${round}`),
         fetchJSON(`/track/${year}/${round}`),
+        fetchJSON(`/positions/${year}/${round}`),
     ])
     return {
         sessionData,
         pitstops: pitstopsBody.pit_stops,
         weather: weatherBody.weather,
         track: trackBody.track,
+        positions: positionsBody.drivers,
     }
 }
 
@@ -33,7 +36,7 @@ export function useRaceReplay() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
 
-    const [elapsed, setElapsed] = useState(0)
+    const [elapsedSeconds, setElapsedSeconds] = useState(0)
     const [isPlaying, setIsPlaying] = useState(true)
 
     // Pick a default race on mount: the latest season's most recently
@@ -58,8 +61,6 @@ export function useRaceReplay() {
                 return
             }
 
-            // Latest season has no completed races yet — fall back one year
-            // (a single retry, not a search loop) and use its last race.
             const fallbackYear = latestYear - 1
             const fallbackRacesBody = await fetchJSON(`/races/${fallbackYear}`)
             if (cancelled) return
@@ -100,34 +101,49 @@ export function useRaceReplay() {
 
     // Reset playback to the start whenever a new race is selected.
     useEffect(() => {
-        setElapsed(0)
+        setElapsedSeconds(0)
         setIsPlaying(true)
     }, [year, round])
 
     const totalLaps = bundle?.sessionData?.total_laps ?? 0
-    const currentLap = totalLaps ? Math.min(totalLaps, Math.floor(elapsed) + 1) : 1
-    const progress = elapsed % 1
+    const totalDurationSeconds = bundle?.sessionData?.race_duration_seconds ?? 0
+    const currentLap = bundle?.sessionData ? deriveCurrentLap(elapsedSeconds, bundle.sessionData.laps) : 1
 
+    // Advances the real-time clock every animation frame for accurate
+    // pacing (1 played second = 1 real race second), but only commits a
+    // state update — and therefore a re-render — every RENDER_INTERVAL_MS
+    // (5Hz), not on every frame (~60Hz). `elapsedSeconds` is deliberately
+    // read once as this effect's starting point and NOT listed as a
+    // dependency: the effect only needs to restart on play/pause or a race
+    // change (both already covered by the dependency array), not on every
+    // 5Hz tick it produces itself.
     useEffect(() => {
-        if (!isPlaying || totalLaps === 0) return
+        if (!isPlaying || totalDurationSeconds === 0) return
         let raf
-        let lastTime = performance.now()
+        let lastFrameTime = performance.now()
+        let lastRenderTime = lastFrameTime
+        let localElapsed = elapsedSeconds
 
         function tick(now) {
-            const deltaSeconds = (now - lastTime) / 1000
-            lastTime = now
-            setElapsed(prev => Math.min(totalLaps - 0.001, prev + deltaSeconds * LAPS_PER_SECOND))
+            const deltaSeconds = (now - lastFrameTime) / 1000
+            lastFrameTime = now
+            localElapsed = Math.min(totalDurationSeconds, localElapsed + deltaSeconds)
+            if (now - lastRenderTime >= RENDER_INTERVAL_MS) {
+                lastRenderTime = now
+                setElapsedSeconds(localElapsed)
+            }
             raf = requestAnimationFrame(tick)
         }
         raf = requestAnimationFrame(tick)
         return () => cancelAnimationFrame(raf)
-    }, [isPlaying, totalLaps])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isPlaying, totalDurationSeconds])
 
-    // Auto-pause once the replay reaches the final lap, instead of looping
-    // the animation frame forever after the race is over.
+    // Auto-pause once the replay reaches the end, instead of looping the
+    // animation frame forever after the race is over.
     useEffect(() => {
-        if (totalLaps && currentLap >= totalLaps) setIsPlaying(false)
-    }, [currentLap, totalLaps])
+        if (totalDurationSeconds && elapsedSeconds >= totalDurationSeconds) setIsPlaying(false)
+    }, [elapsedSeconds, totalDurationSeconds])
 
     function selectRace(nextYear, nextRound) {
         setYear(nextYear)
@@ -149,8 +165,8 @@ export function useRaceReplay() {
     }
 
     function play() {
-        if (currentLap >= totalLaps) {
-            setElapsed(0)
+        if (elapsedSeconds >= totalDurationSeconds) {
+            setElapsedSeconds(0)
         }
         setIsPlaying(true)
     }
@@ -159,10 +175,15 @@ export function useRaceReplay() {
         setIsPlaying(false)
     }
 
+    // Keeps its name/signature from the lap-based design (TopBar.jsx calls
+    // this with a lap number and needs no changes) but now maps the chosen
+    // lap to the earliest moment any driver started it.
     function seekToLap(lapNumber) {
         setIsPlaying(false)
-        const clamped = Math.max(1, Math.min(totalLaps, Math.round(lapNumber)))
-        setElapsed(clamped - 1)
+        const laps = bundle?.sessionData?.laps ?? []
+        const matching = laps.filter(l => l.lap_number === lapNumber && l.session_time != null)
+        const target = matching.length ? Math.min(...matching.map(l => l.session_time)) : 0
+        setElapsedSeconds(Math.max(0, Math.min(totalDurationSeconds, target)))
     }
 
     const raceName = races.find(r => r.round === round)?.name ?? ''
@@ -174,8 +195,9 @@ export function useRaceReplay() {
         pitstops: bundle?.pitstops ?? [],
         weather: bundle?.weather ?? null,
         track: bundle?.track ?? null,
+        positions: bundle?.positions ?? [],
         loading, error,
-        currentLap, progress, totalLaps, isPlaying,
+        currentLap, totalLaps, elapsedSeconds, totalDurationSeconds, isPlaying,
         play, pause, seekToLap,
     }
 }
