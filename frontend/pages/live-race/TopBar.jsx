@@ -2,7 +2,7 @@ const WEATHER_LABEL = (rainfall) => rainfall
     ? { color: 'oklch(50% .16 230)', text: 'WET' }
     : { color: 'oklch(48% .13 155)', text: 'DRY' }
 
-export default function TopBar({ seasons, races, year, round, onSelectYear, onSelectRace, currentLap, totalLaps, isPlaying, onPlayPause, onSeek, weather, raceName }) {
+export default function TopBar({ seasons, races, year, round, onSelectYear, onSelectRace, weather, raceName }) {
     const weatherInfo = weather ? WEATHER_LABEL(weather.rainfall) : null
 
     return (
@@ -52,26 +52,6 @@ export default function TopBar({ seasons, races, year, round, onSelectYear, onSe
                         <option key={s} value={s}>{s}</option>
                     ))}
                 </select>
-
-                <button
-                    onClick={onPlayPause}
-                    aria-label={isPlaying ? 'Pause replay' : 'Play replay'}
-                    style={{ border: 'none', background: '#191b1e', color: '#fff', width: 26, height: 26, borderRadius: 10, cursor: 'pointer', fontSize: 12 }}
-                >
-                    {isPlaying ? '⏸' : '▶'}
-                </button>
-
-                <input
-                    type="range"
-                    min={1}
-                    max={Math.max(1, totalLaps)}
-                    value={currentLap}
-                    onChange={e => onSeek(Number(e.target.value))}
-                    aria-label="Lap scrubber"
-                    style={{ width: 160 }}
-                />
-
-                <div style={{ fontSize: 13, color: '#8b8880' }}>Lap {currentLap} of {totalLaps}</div>
             </div>
 
             {weatherInfo && (
