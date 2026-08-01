@@ -3,6 +3,7 @@ from datetime import datetime
 import pytest
 
 from entities.calendar import RaceEvent
+from entities.driver import Driver
 from entities.errors import SessionNotFoundError
 from entities.pitstop import PitStopEvent
 from entities.session import DriverResult, Lap, SessionData, SessionInfo, SessionTypeInfo
@@ -167,3 +168,13 @@ def test_track_route_returns_404_when_no_lap_data(client_factory):
     resp = app.test_client().get("/api/track/2026/1")
     assert resp.status_code == 404
     assert resp.get_json() == {"status": "error", "message": "No valid lap data available"}
+
+
+def test_drivers_route_returns_roster_with_color(client_factory):
+    drivers = [Driver(code="VER", name="Max Verstappen", team="Red Bull Racing")]
+    app = client_factory(session_repo=FakeSessionRepository(driver_roster=drivers))
+    resp = app.test_client().get("/api/drivers/2026/1")
+    assert resp.status_code == 200
+    assert resp.get_json()["drivers"][0] == {
+        "code": "VER", "name": "Max Verstappen", "team": "Red Bull Racing", "team_color": "#3671C6",
+    }

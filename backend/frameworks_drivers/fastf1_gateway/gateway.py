@@ -5,6 +5,7 @@ import fastf1
 import pandas as pd
 
 from entities.calendar import RaceEvent
+from entities.driver import Driver
 from entities.errors import SessionNotFoundError
 from entities.pitstop import PitStopEvent
 from entities.session import DriverResult, Lap, SessionData, SessionInfo, SessionTypeInfo
@@ -226,3 +227,11 @@ class FastF1Gateway(
                 order.append(team_name)
             teams[team_name].drivers.append(TeamDriver(code=r["Abbreviation"], name=r["FullName"]))
         return [teams[name] for name in order]
+
+    def get_driver_roster(self, year: int, race_round: int) -> list[Driver]:
+        session = self._load_session(year, race_round, "R")
+        results = session.results
+        return [
+            Driver(code=r["Abbreviation"], name=r["FullName"], team=r["TeamName"])
+            for _, r in results.iterrows()
+        ]
