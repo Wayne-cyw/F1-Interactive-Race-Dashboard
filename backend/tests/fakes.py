@@ -4,6 +4,7 @@ from entities.calendar import RaceEvent
 from entities.driver import Driver
 from entities.errors import SessionNotFoundError
 from entities.pitstop import PitStopEvent
+from entities.positions import DriverPositions
 from entities.session import DriverResult, SessionData, SessionTypeInfo
 from entities.team import Team
 from entities.telemetry import TelemetryData
@@ -44,6 +45,8 @@ class FakeSessionRepository(SessionRepository):
         track_layout: "TrackLayout | None" = None,
         track_error: Exception | None = None,
         driver_roster: "list[Driver] | None" = None,
+        positions: "list[DriverPositions] | None" = None,
+        positions_error: Exception | None = None,
     ):
         self._session_types = session_types or []
         self._session_data = session_data
@@ -52,6 +55,8 @@ class FakeSessionRepository(SessionRepository):
         self._track_layout = track_layout
         self._track_error = track_error
         self._driver_roster = driver_roster or []
+        self._positions = positions or []
+        self._positions_error = positions_error
 
     def get_available_session_types(self, year: int, race_round: int) -> list[SessionTypeInfo]:
         return self._session_types
@@ -71,6 +76,11 @@ class FakeSessionRepository(SessionRepository):
 
     def get_driver_roster(self, year: int, race_round: int) -> "list[Driver]":
         return self._driver_roster
+
+    def get_race_positions(self, year: int, race_round: int) -> "list[DriverPositions]":
+        if self._positions_error:
+            raise self._positions_error
+        return self._positions
 
 
 class FakeWeatherRepository(WeatherRepository):

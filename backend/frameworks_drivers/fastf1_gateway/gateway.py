@@ -9,6 +9,7 @@ from entities.calendar import RaceEvent
 from entities.driver import Driver
 from entities.errors import SessionNotFoundError
 from entities.pitstop import PitStopEvent
+from entities.positions import DriverPositions, PositionPoint
 from entities.session import DriverResult, Lap, SessionData, SessionInfo, SessionTypeInfo
 from entities.team import Team, TeamDriver
 from entities.telemetry import TelemetryData, TelemetryPoint
@@ -57,6 +58,11 @@ class FastF1Gateway(
         if lap_one.empty:
             return pd.Timedelta(0)
         return lap_one["LapStartTime"].min()
+
+    @staticmethod
+    def _resample_half_second(df, time_col):
+        bucket = (df[time_col].dt.total_seconds() // 0.5).astype(int)
+        return df.groupby(bucket).first()
 
     @staticmethod
     def _driver_result_from_row(row) -> DriverResult:
@@ -256,3 +262,31 @@ class FastF1Gateway(
             Driver(code=r["Abbreviation"], name=r["FullName"], team=r["TeamName"])
             for _, r in results.iterrows()
         ]
+
+    def get_race_positions(self, year: int, race_round: int) -> list[DriverPositions]:
+        session = self._load_session(year, race_round, "R")
+        if session.pos_data is None or len(session.pos_data) == 0:
+            raise SessionNotFoundError("No position data available")
+
+        t0 = self._green_flag_t0(session)
+        result = []
+        for drv in session.drivers:
+            pos = session.pos_data.get(drv)
+            if pos is None or pos.empty:
+                continue
+            driver_rows = session.laps[session.laps["DriverNumber"] == drv]
+            if driver_rows.empty:
+                continue
+            driver_code = driver_rows["Driver"].iloc[0]
+
+            resampled = self._resample_half_second(pos, "SessionTime")
+            points = []
+            for _, row in resampled.iterrows():
+                if pd.isna(row.get("X")) or pd.isna(row.get("Y")):
+                    continue
+                t = (row["SessionTime"] - t0).total_seconds()
+                if t < 0:
+                    continue
+                points.append(PositionPoint(t=t, x=float(row["X"]), y=float(row["Y"])))
+            result.append(DriverPositions(driver=driver_code, points=points))
+        return result

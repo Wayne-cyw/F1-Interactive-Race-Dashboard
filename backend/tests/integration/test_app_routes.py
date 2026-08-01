@@ -6,6 +6,7 @@ from entities.calendar import RaceEvent
 from entities.driver import Driver
 from entities.errors import SessionNotFoundError
 from entities.pitstop import PitStopEvent
+from entities.positions import DriverPositions, PositionPoint
 from entities.session import DriverResult, Lap, SessionData, SessionInfo, SessionTypeInfo
 from entities.team import Team, TeamDriver
 from entities.telemetry import TelemetryData, TelemetryPoint
@@ -174,6 +175,21 @@ def test_track_route_returns_404_when_no_lap_data(client_factory):
     resp = app.test_client().get("/api/track/2026/1")
     assert resp.status_code == 404
     assert resp.get_json() == {"status": "error", "message": "No valid lap data available"}
+
+
+def test_positions_route_returns_driver_points(client_factory):
+    data = [DriverPositions(driver="VER", points=[PositionPoint(t=0.0, x=100.0, y=200.0)])]
+    app = client_factory(session_repo=FakeSessionRepository(positions=data))
+    resp = app.test_client().get("/api/positions/2026/1")
+    assert resp.status_code == 200
+    assert resp.get_json()["drivers"][0] == {"driver": "VER", "points": [{"t": 0.0, "x": 100.0, "y": 200.0}]}
+
+
+def test_positions_route_returns_404_when_unavailable(client_factory):
+    app = client_factory(session_repo=FakeSessionRepository(positions_error=SessionNotFoundError("No position data available")))
+    resp = app.test_client().get("/api/positions/2026/1")
+    assert resp.status_code == 404
+    assert resp.get_json() == {"status": "error", "message": "No position data available"}
 
 
 def test_drivers_route_returns_roster_with_color(client_factory):

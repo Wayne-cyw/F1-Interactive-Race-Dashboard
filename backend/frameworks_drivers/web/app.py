@@ -10,6 +10,7 @@ from frameworks_drivers.fastf1_gateway.gateway import FastF1Gateway
 from frameworks_drivers.system_clock import SystemClock
 from interface_adapters.controllers.drivers_controller import DriversController
 from interface_adapters.controllers.pitstops_controller import PitstopsController
+from interface_adapters.controllers.positions_controller import PositionsController
 from interface_adapters.controllers.races_controller import RacesController
 from interface_adapters.controllers.seasons_controller import SeasonsController
 from interface_adapters.controllers.session_controller import SessionController
@@ -29,6 +30,7 @@ from interface_adapters.gateways.weather_repository import WeatherRepository
 from use_cases.get_drivers import GetDriversUseCase
 from use_cases.get_pitstops import GetPitstopsUseCase
 from use_cases.get_races import GetRacesUseCase
+from use_cases.get_race_positions import GetRacePositionsUseCase
 from use_cases.get_seasons import GetSeasonsUseCase
 from use_cases.get_session import GetSessionUseCase
 from use_cases.get_session_types import GetSessionTypesUseCase
@@ -152,6 +154,13 @@ def create_app(
         "/api/track/<int:year>/<int:race_round>",
         endpoint="track_route",
         view_func=TrackController(track_use_case).handle,
+    )
+
+    positions_use_case = GetRacePositionsUseCase(session_repo)
+    app.add_url_rule(
+        "/api/positions/<int:year>/<int:race_round>",
+        endpoint="positions_route",
+        view_func=PositionsController(positions_use_case).handle,
     )
 
     drivers_use_case = GetDriversUseCase(session_repo)
