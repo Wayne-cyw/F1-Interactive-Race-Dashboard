@@ -39,6 +39,7 @@ export function useRaceReplay() {
     const [elapsedSeconds, setElapsedSeconds] = useState(0)
     const [isPlaying, setIsPlaying] = useState(true)
     const [clockEpoch, setClockEpoch] = useState(0)
+    const [playbackSpeed, setPlaybackSpeed] = useState(1)
 
     // Pick a default race on mount: the latest season's most recently
     // completed race. If the latest season has no completed races yet
@@ -129,7 +130,7 @@ export function useRaceReplay() {
         function tick(now) {
             const deltaSeconds = (now - lastFrameTime) / 1000
             lastFrameTime = now
-            localElapsed = Math.min(totalDurationSeconds, localElapsed + deltaSeconds)
+            localElapsed = Math.min(totalDurationSeconds, localElapsed + deltaSeconds * playbackSpeed)
             if (now - lastRenderTime >= RENDER_INTERVAL_MS) {
                 lastRenderTime = now
                 setElapsedSeconds(localElapsed)
@@ -139,7 +140,7 @@ export function useRaceReplay() {
         raf = requestAnimationFrame(tick)
         return () => cancelAnimationFrame(raf)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isPlaying, totalDurationSeconds, clockEpoch])
+    }, [isPlaying, totalDurationSeconds, clockEpoch, playbackSpeed])
 
     // Auto-pause once the replay reaches the end, instead of looping the
     // animation frame forever after the race is over.
@@ -178,15 +179,9 @@ export function useRaceReplay() {
         setIsPlaying(false)
     }
 
-    // Keeps its name/signature from the lap-based design (TopBar.jsx calls
-    // this with a lap number and needs no changes) but now maps the chosen
-    // lap to the earliest moment any driver started it.
-    function seekToLap(lapNumber) {
+    function seekToSeconds(seconds) {
         setIsPlaying(false)
-        const laps = bundle?.sessionData?.laps ?? []
-        const matching = laps.filter(l => l.lap_number === lapNumber && l.session_time != null)
-        const target = matching.length ? Math.min(...matching.map(l => l.session_time)) : 0
-        setElapsedSeconds(Math.max(0, Math.min(totalDurationSeconds, target)))
+        setElapsedSeconds(Math.max(0, Math.min(totalDurationSeconds, seconds)))
         setClockEpoch(e => e + 1)
     }
 
@@ -202,6 +197,7 @@ export function useRaceReplay() {
         positions: bundle?.positions ?? [],
         loading, error,
         currentLap, totalLaps, elapsedSeconds, totalDurationSeconds, isPlaying,
-        play, pause, seekToLap,
+        play, pause, seekToSeconds,
+        playbackSpeed, setPlaybackSpeed,
     }
 }
