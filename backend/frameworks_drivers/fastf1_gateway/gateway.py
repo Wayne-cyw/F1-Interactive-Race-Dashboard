@@ -5,9 +5,11 @@ import pandas as pd
 
 from entities.calendar import RaceEvent
 from entities.errors import SessionNotFoundError
+from entities.pitstop import PitStopEvent
 from entities.session import DriverResult, Lap, SessionData, SessionInfo, SessionTypeInfo
 from entities.telemetry import TelemetryData, TelemetryPoint
 from entities.weather import WeatherData
+from interface_adapters.gateways.pitstop_repository import PitstopRepository
 from interface_adapters.gateways.season_repository import SeasonRepository
 from interface_adapters.gateways.session_repository import SessionRepository
 from interface_adapters.gateways.weather_repository import WeatherRepository
@@ -23,7 +25,7 @@ _SESSION_TYPE_NAMES = {
 }
 
 
-class FastF1Gateway(SeasonRepository, SessionRepository, WeatherRepository):
+class FastF1Gateway(SeasonRepository, SessionRepository, WeatherRepository, PitstopRepository):
     @lru_cache(maxsize=200)
     def _load_session(self, year: int, race_round: int, session_type: str = "R"):
         session = fastf1.get_session(year, race_round, session_type)
@@ -152,3 +154,25 @@ class FastF1Gateway(SeasonRepository, SessionRepository, WeatherRepository):
             wind_speed=float(latest["WindSpeed"]) if pd.notna(latest.get("WindSpeed")) else None,
             wind_direction=float(latest["WindDirection"]) if pd.notna(latest.get("WindDirection")) else None,
         )
+
+    def get_pitstops(self, year: int, race_round: int) -> list[PitStopEvent]:
+        session = self._load_session(year, race_round, "R")
+        laps = session.laps
+        events = []
+        for driver in laps["Driver"].unique():
+            driver_laps = laps[laps["Driver"] == driver].sort_values("LapNumber")
+            prev_compound = None
+            for _, lap in driver_laps.iterrows():
+                current_compound = lap.get("Compound")
+                if prev_compound is not None and current_compound != prev_compound:
+                    events.append(
+                        PitStopEvent(
+                            driver=driver,
+                            lap=int(lap["LapNumber"]),
+                            from_compound=prev_compound,
+                            to_compound=current_compound,
+                            pit_duration=None,
+                        )
+                    )
+                prev_compound = current_compound
+        return events

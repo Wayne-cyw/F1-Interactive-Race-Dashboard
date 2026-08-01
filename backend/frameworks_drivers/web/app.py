@@ -7,6 +7,7 @@ from frameworks_drivers import logging_config
 from frameworks_drivers.fastf1_gateway.cache import enable_disk_cache
 from frameworks_drivers.fastf1_gateway.gateway import FastF1Gateway
 from frameworks_drivers.system_clock import SystemClock
+from interface_adapters.controllers.pitstops_controller import PitstopsController
 from interface_adapters.controllers.races_controller import RacesController
 from interface_adapters.controllers.seasons_controller import SeasonsController
 from interface_adapters.controllers.session_controller import SessionController
@@ -14,9 +15,11 @@ from interface_adapters.controllers.session_types_controller import SessionTypes
 from interface_adapters.controllers.telemetry_controller import TelemetryController
 from interface_adapters.controllers.weather_controller import WeatherController
 from interface_adapters.gateways.clock import Clock
+from interface_adapters.gateways.pitstop_repository import PitstopRepository
 from interface_adapters.gateways.season_repository import SeasonRepository
 from interface_adapters.gateways.session_repository import SessionRepository
 from interface_adapters.gateways.weather_repository import WeatherRepository
+from use_cases.get_pitstops import GetPitstopsUseCase
 from use_cases.get_races import GetRacesUseCase
 from use_cases.get_seasons import GetSeasonsUseCase
 from use_cases.get_session import GetSessionUseCase
@@ -31,6 +34,7 @@ def create_app(
     season_repo: SeasonRepository | None = None,
     session_repo: SessionRepository | None = None,
     weather_repo: WeatherRepository | None = None,
+    pitstop_repo: PitstopRepository | None = None,
     log_dir: str | None = None,
 ) -> Flask:
     app = Flask(__name__)
@@ -45,6 +49,7 @@ def create_app(
     season_repo = season_repo or gateway
     session_repo = session_repo or gateway
     weather_repo = weather_repo or gateway
+    pitstop_repo = pitstop_repo or gateway
 
     @app.route("/")
     def home():
@@ -102,6 +107,13 @@ def create_app(
         "/api/telemetry/<int:year>/<int:race_round>/<session_type>/<driver_code>",
         endpoint="telemetry",
         view_func=TelemetryController(telemetry_use_case).handle,
+    )
+
+    pitstops_use_case = GetPitstopsUseCase(pitstop_repo)
+    app.add_url_rule(
+        "/api/pitstops/<int:year>/<int:race_round>",
+        endpoint="pitstops",
+        view_func=PitstopsController(pitstops_use_case).handle,
     )
 
     @app.errorhandler(SessionNotFoundError)

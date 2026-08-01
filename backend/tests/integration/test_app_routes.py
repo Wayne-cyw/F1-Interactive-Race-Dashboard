@@ -4,11 +4,18 @@ import pytest
 
 from entities.calendar import RaceEvent
 from entities.errors import SessionNotFoundError
+from entities.pitstop import PitStopEvent
 from entities.session import DriverResult, Lap, SessionData, SessionInfo, SessionTypeInfo
 from entities.telemetry import TelemetryData, TelemetryPoint
 from entities.weather import WeatherData
 from frameworks_drivers.web.app import create_app
-from tests.fakes import FakeClock, FakeSeasonRepository, FakeSessionRepository, FakeWeatherRepository
+from tests.fakes import (
+    FakeClock,
+    FakePitstopRepository,
+    FakeSeasonRepository,
+    FakeSessionRepository,
+    FakeWeatherRepository,
+)
 
 
 @pytest.fixture
@@ -102,3 +109,11 @@ def test_telemetry_route_returns_404_when_no_laps(client_factory):
     resp = app.test_client().get("/api/telemetry/2026/1/R/XXX")
     assert resp.status_code == 404
     assert resp.get_json() == {"status": "error", "message": "No laps found for XXX"}
+
+
+def test_pitstops_route_returns_events(client_factory):
+    events = [PitStopEvent(driver="VER", lap=18, from_compound="SOFT", to_compound="HARD", pit_duration=None)]
+    app = client_factory(pitstop_repo=FakePitstopRepository(events=events))
+    resp = app.test_client().get("/api/pitstops/2026/1")
+    assert resp.status_code == 200
+    assert resp.get_json()["pit_stops"][0]["to_compound"] == "HARD"
