@@ -38,6 +38,7 @@ export function useRaceReplay() {
 
     const [elapsedSeconds, setElapsedSeconds] = useState(0)
     const [isPlaying, setIsPlaying] = useState(true)
+    const [clockEpoch, setClockEpoch] = useState(0)
 
     // Pick a default race on mount: the latest season's most recently
     // completed race. If the latest season has no completed races yet
@@ -103,6 +104,7 @@ export function useRaceReplay() {
     useEffect(() => {
         setElapsedSeconds(0)
         setIsPlaying(true)
+        setClockEpoch(e => e + 1)
     }, [year, round])
 
     const totalLaps = bundle?.sessionData?.total_laps ?? 0
@@ -137,7 +139,7 @@ export function useRaceReplay() {
         raf = requestAnimationFrame(tick)
         return () => cancelAnimationFrame(raf)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isPlaying, totalDurationSeconds])
+    }, [isPlaying, totalDurationSeconds, clockEpoch])
 
     // Auto-pause once the replay reaches the end, instead of looping the
     // animation frame forever after the race is over.
@@ -167,6 +169,7 @@ export function useRaceReplay() {
     function play() {
         if (elapsedSeconds >= totalDurationSeconds) {
             setElapsedSeconds(0)
+            setClockEpoch(e => e + 1)
         }
         setIsPlaying(true)
     }
@@ -184,6 +187,7 @@ export function useRaceReplay() {
         const matching = laps.filter(l => l.lap_number === lapNumber && l.session_time != null)
         const target = matching.length ? Math.min(...matching.map(l => l.session_time)) : 0
         setElapsedSeconds(Math.max(0, Math.min(totalDurationSeconds, target)))
+        setClockEpoch(e => e + 1)
     }
 
     const raceName = races.find(r => r.round === round)?.name ?? ''
