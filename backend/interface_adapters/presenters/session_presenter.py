@@ -10,6 +10,9 @@ def present_lap(lap: Lap) -> dict:
         "position": lap.position,
         "compound": lap.compound,
         "team": lap.team,
+        "sector_1_time": lap.sector_1_time,
+        "sector_2_time": lap.sector_2_time,
+        "sector_3_time": lap.sector_3_time,
     }
 
 

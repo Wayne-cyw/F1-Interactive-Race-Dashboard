@@ -98,7 +98,10 @@ class FastF1Gateway(
     def get_session_data(self, year: int, race_round: int, session_type: str) -> SessionData:
         session = self._load_session(year, race_round, session_type)
         laps_df = session.laps
-        needed_cols = ["Driver", "LapNumber", "LapTime", "Position", "Compound", "Team"]
+        needed_cols = [
+            "Driver", "LapNumber", "LapTime", "Position", "Compound", "Team",
+            "Sector1Time", "Sector2Time", "Sector3Time",
+        ]
         available_cols = [c for c in needed_cols if c in laps_df.columns]
         laps_subset = laps_df[available_cols].copy()
         if "LapTime" in laps_subset.columns:
@@ -114,6 +117,9 @@ class FastF1Gateway(
                     position=int(lap["Position"]) if "Position" in lap.index and pd.notna(lap["Position"]) else None,
                     compound=(lap["Compound"] if pd.notna(lap["Compound"]) else "UNKNOWN") if "Compound" in lap.index else None,
                     team=lap["Team"] if "Team" in lap.index else None,
+                    sector_1_time=lap["Sector1Time"].total_seconds() if "Sector1Time" in lap.index and pd.notna(lap["Sector1Time"]) else None,
+                    sector_2_time=lap["Sector2Time"].total_seconds() if "Sector2Time" in lap.index and pd.notna(lap["Sector2Time"]) else None,
+                    sector_3_time=lap["Sector3Time"].total_seconds() if "Sector3Time" in lap.index and pd.notna(lap["Sector3Time"]) else None,
                 )
             )
 

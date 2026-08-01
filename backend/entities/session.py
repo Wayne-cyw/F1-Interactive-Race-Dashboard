@@ -15,6 +15,9 @@ class Lap:
     position: int | None = None
     compound: str | None = None
     team: str | None = None
+    sector_1_time: float | None = None
+    sector_2_time: float | None = None
+    sector_3_time: float | None = None
 
 
 @dataclass(frozen=True)
