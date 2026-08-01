@@ -10,6 +10,8 @@ import { useDriverTelemetry } from './live-race/useDriverTelemetry'
 import { buildLeaderboardRows } from './live-race/leaderboardData'
 import { buildPitLog, buildTireStints } from './live-race/stints'
 import { buildTrackPath } from './live-race/trackMap'
+import { deriveLapStartTime } from './live-race/raceClock'
+import { sliceTelemetry } from './live-race/telemetrySlice'
 
 const FONT_LINK_ID = 'race-center-fonts'
 const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap'
@@ -42,7 +44,7 @@ export default function LiveRace() {
     const [selectedDriverId, setSelectedDriverId] = useState(null)
 
     const replay = useRaceReplay()
-    const { telemetry } = useDriverTelemetry(replay.year, replay.round, selectedDriverId)
+    const { points: telemetryPoints } = useDriverTelemetry(replay.year, replay.round, selectedDriverId)
 
     const drivers = useMemo(() => {
         if (!replay.sessionData) return []
@@ -88,6 +90,24 @@ export default function LiveRace() {
         [replay.track]
     )
 
+    const positionsByDriver = useMemo(
+        () => Object.fromEntries((replay.positions ?? []).map(d => [d.driver, d.points])),
+        [replay.positions]
+    )
+
+    const driverLaps = useMemo(
+        () => replay.sessionData ? replay.sessionData.laps.filter(l => l.driver === selectedDriverId) : [],
+        [replay.sessionData, selectedDriverId]
+    )
+    const lapStartTime = useMemo(
+        () => deriveLapStartTime(replay.elapsedSeconds, driverLaps),
+        [replay.elapsedSeconds, driverLaps]
+    )
+    const telemetry = useMemo(
+        () => sliceTelemetry(telemetryPoints, replay.elapsedSeconds, lapStartTime),
+        [telemetryPoints, replay.elapsedSeconds, lapStartTime]
+    )
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#faf9f6', color: '#191b1e', fontFamily: 'Inter, system-ui, sans-serif' }}>
             <TopBar
@@ -130,9 +150,8 @@ export default function LiveRace() {
                             selected={selected}
                             onSelectDriver={setSelectedDriverId}
                             trackPath={trackPath}
-                            currentLap={replay.currentLap}
-                            progress={replay.progress}
-                            totalLaps={replay.totalLaps}
+                            positions={positionsByDriver}
+                            elapsedSeconds={replay.elapsedSeconds}
                             telemetry={telemetry}
                         />
                     )}
@@ -153,7 +172,7 @@ export default function LiveRace() {
                             topSpeed={telemetry?.topSpeed ?? 0}
                             avgSpeed={telemetry?.avgSpeed ?? 0}
                             drsCount={telemetry?.drsCount ?? 0}
-                            currentGear={telemetry?.lastPoint?.gear ?? null}
+                            currentGear={telemetry?.current?.gear ?? null}
                         />
                     )}
                 </>

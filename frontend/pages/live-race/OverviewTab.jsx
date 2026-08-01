@@ -3,11 +3,11 @@ import Leaderboard from './Leaderboard'
 import ResizeHandle from './ResizeHandle'
 import { useResizableHeight } from './useResizableHeight'
 import { useResizableWidth } from './useResizableWidth'
-import { carPositionT } from './trackMap'
+import { interpolatePosition } from './trackMap'
 
 const SECTOR_DELTAS_MIN_HEIGHT = 64
 
-export default function OverviewTab({ drivers, selected, onSelectDriver, trackPath, currentLap, progress, totalLaps, telemetry }) {
+export default function OverviewTab({ drivers, selected, onSelectDriver, trackPath, positions, elapsedSeconds, telemetry }) {
     const [leaderboardWidth, onLeaderboardResize] = useResizableWidth(440, { min: 320, max: 640, edge: 'right' })
     const [telemetryWidth, onTelemetryResize] = useResizableWidth(360, { min: 280, max: 520, edge: 'left' })
     const [sectorDeltasHeight, onSectorDeltasResize] = useResizableHeight(SECTOR_DELTAS_MIN_HEIGHT, { min: SECTOR_DELTAS_MIN_HEIGHT, max: 280, edge: 'top' })
@@ -15,14 +15,14 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackPa
 
     const carPositions = useMemo(
         () => drivers.map(d => {
-            const t = carPositionT({ currentLap, progress, totalLaps, position: d.pos ?? drivers.length })
-            const point = trackPath.pointAt(t)
-            return { ...d, mx: point.x, my: point.y }
+            const raw = interpolatePosition(positions[d.id], elapsedSeconds)
+            const svg = raw ? trackPath.toSvgPoint(raw) : { x: 0, y: 0 }
+            return { ...d, mx: svg.x, my: svg.y }
         }),
-        [drivers, currentLap, progress, totalLaps, trackPath]
+        [drivers, positions, elapsedSeconds, trackPath]
     )
 
-    const lastPoint = telemetry?.lastPoint
+    const lastPoint = telemetry?.current
 
     return (
         <>
