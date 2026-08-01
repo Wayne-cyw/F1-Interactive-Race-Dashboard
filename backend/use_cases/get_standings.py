@@ -28,10 +28,8 @@ class GetStandingsUseCase:
                 entry["points"] += result.points
                 team_totals[result.team] = team_totals.get(result.team, 0.0) + result.points
 
-        # Sort ascending then reverse (rather than sorted(..., reverse=True)) so that
-        # ties break in favor of the most-recently-updated entry, not raw insertion order.
-        ranked_drivers = sorted(driver_totals.values(), key=lambda d: d["points"])[::-1]
-        ranked_teams = sorted(team_totals.items(), key=lambda kv: kv[1])[::-1]
+        ranked_drivers = sorted(driver_totals.values(), key=lambda d: d["points"], reverse=True)
+        ranked_teams = sorted(team_totals.items(), key=lambda kv: kv[1], reverse=True)
 
         driver_standings = [
             DriverStanding(driver=d["driver"], name=d["name"], team=d["team"], points=d["points"], position=i + 1)
