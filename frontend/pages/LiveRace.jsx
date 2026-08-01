@@ -145,6 +145,7 @@ export default function LiveRace() {
                             topSpeed={telemetry?.topSpeed ?? 0}
                             avgSpeed={telemetry?.avgSpeed ?? 0}
                             drsCount={telemetry?.drsCount ?? 0}
+                            currentGear={telemetry?.lastPoint?.gear ?? null}
                         />
                     )}
                 </>
