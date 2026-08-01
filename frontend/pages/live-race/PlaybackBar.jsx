@@ -1,7 +1,13 @@
 const SPEED_OPTIONS = [1, 2, 4, 8]
 
-function formatClock(totalSeconds) {
+function formatClock(totalSeconds, showHours) {
     const s = Math.max(0, Math.floor(totalSeconds))
+    if (showHours) {
+        const h = Math.floor(s / 3600)
+        const m = Math.floor((s % 3600) / 60)
+        const sec = s % 60
+        return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+    }
     const m = Math.floor(s / 60)
     const sec = s % 60
     return `${m}:${String(sec).padStart(2, '0')}`
@@ -29,7 +35,7 @@ export default function PlaybackBar({ isPlaying, onPlayPause, elapsedSeconds, to
             />
 
             <div style={{ fontSize: 12, color: '#8b8880', fontFamily: "'JetBrains Mono', monospace", whiteSpace: 'nowrap' }}>
-                {formatClock(elapsedSeconds)} / {formatClock(totalDurationSeconds)} · Lap {currentLap} of {totalLaps}
+                {formatClock(elapsedSeconds, totalDurationSeconds >= 3600)} / {formatClock(totalDurationSeconds, totalDurationSeconds >= 3600)} · Lap {currentLap} of {totalLaps}
             </div>
 
             <select

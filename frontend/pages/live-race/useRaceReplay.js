@@ -121,7 +121,7 @@ export function useRaceReplay() {
     // change (both already covered by the dependency array), not on every
     // 5Hz tick it produces itself.
     useEffect(() => {
-        if (!isPlaying || totalDurationSeconds === 0) return
+        if (!isPlaying || loading || totalDurationSeconds === 0) return
         let raf
         let lastFrameTime = performance.now()
         let lastRenderTime = lastFrameTime
@@ -140,7 +140,7 @@ export function useRaceReplay() {
         raf = requestAnimationFrame(tick)
         return () => cancelAnimationFrame(raf)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isPlaying, totalDurationSeconds, clockEpoch, playbackSpeed])
+    }, [isPlaying, totalDurationSeconds, clockEpoch, playbackSpeed, loading])
 
     // Auto-pause once the replay reaches the end, instead of looping the
     // animation frame forever after the race is over.
