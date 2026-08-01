@@ -51,7 +51,12 @@ export function useRaceReplay() {
                 setRound(racesBody.races[0].round)
             }
         }
-        pickDefault().catch(err => !cancelled && setError(err.message))
+        pickDefault().catch(err => {
+            if (!cancelled) {
+                setError(err.message)
+                setLoading(false)
+            }
+        })
         return () => { cancelled = true }
     }, [])
 
