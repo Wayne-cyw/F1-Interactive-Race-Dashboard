@@ -10,6 +10,7 @@ from entities.pitstop import PitStopEvent
 from entities.session import DriverResult, Lap, SessionData, SessionInfo, SessionTypeInfo
 from entities.team import Team, TeamDriver
 from entities.telemetry import TelemetryData, TelemetryPoint
+from entities.track import TrackLayout, TrackPoint
 from entities.weather import WeatherData
 from interface_adapters.gateways.pitstop_repository import PitstopRepository
 from interface_adapters.gateways.season_repository import SeasonRepository
@@ -149,6 +150,21 @@ class FastF1Gateway(
             lap_time=fastest_lap["LapTime"].total_seconds(),
             points=points,
         )
+
+    def get_track_layout(self, year: int, race_round: int) -> TrackLayout:
+        session = self._load_session(year, race_round, "R")
+        fastest_lap = session.laps.pick_fastest()
+        if fastest_lap is None or fastest_lap.empty:
+            raise SessionNotFoundError("No valid lap data available")
+
+        telemetry = fastest_lap.get_telemetry()
+        coordinates = [
+            TrackPoint(x=float(p["X"]), y=float(p["Y"]))
+            for _, p in telemetry.iterrows()
+            if pd.notna(p.get("X")) and pd.notna(p.get("Y"))
+        ]
+        event = session.event
+        return TrackLayout(name=event["EventName"], location=event["Location"], country=event["Country"], coordinates=coordinates)
 
     def get_weather(self, year: int, race_round: int) -> WeatherData:
         session = self._load_session(year, race_round, "R")

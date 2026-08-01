@@ -6,6 +6,7 @@ from entities.pitstop import PitStopEvent
 from entities.session import DriverResult, SessionData, SessionTypeInfo
 from entities.team import Team
 from entities.telemetry import TelemetryData
+from entities.track import TrackLayout
 from entities.weather import WeatherData
 from interface_adapters.gateways.clock import Clock
 from interface_adapters.gateways.pitstop_repository import PitstopRepository
@@ -39,11 +40,15 @@ class FakeSessionRepository(SessionRepository):
         session_data: "SessionData | None" = None,
         telemetry: "TelemetryData | None" = None,
         telemetry_error: Exception | None = None,
+        track_layout: "TrackLayout | None" = None,
+        track_error: Exception | None = None,
     ):
         self._session_types = session_types or []
         self._session_data = session_data
         self._telemetry = telemetry
         self._telemetry_error = telemetry_error
+        self._track_layout = track_layout
+        self._track_error = track_error
 
     def get_available_session_types(self, year: int, race_round: int) -> list[SessionTypeInfo]:
         return self._session_types
@@ -55,6 +60,11 @@ class FakeSessionRepository(SessionRepository):
         if self._telemetry_error:
             raise self._telemetry_error
         return self._telemetry
+
+    def get_track_layout(self, year: int, race_round: int) -> "TrackLayout":
+        if self._track_error:
+            raise self._track_error
+        return self._track_layout
 
 
 class FakeWeatherRepository(WeatherRepository):

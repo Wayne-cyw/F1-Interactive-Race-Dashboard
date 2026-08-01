@@ -15,6 +15,7 @@ from interface_adapters.controllers.session_types_controller import SessionTypes
 from interface_adapters.controllers.standings_controller import StandingsController
 from interface_adapters.controllers.teams_controller import TeamsController
 from interface_adapters.controllers.telemetry_controller import TelemetryController
+from interface_adapters.controllers.track_controller import TrackController
 from interface_adapters.controllers.weather_controller import WeatherController
 from interface_adapters.gateways.clock import Clock
 from interface_adapters.gateways.pitstop_repository import PitstopRepository
@@ -31,6 +32,7 @@ from use_cases.get_session_types import GetSessionTypesUseCase
 from use_cases.get_standings import GetStandingsUseCase
 from use_cases.get_teams import GetTeamsUseCase
 from use_cases.get_telemetry import GetTelemetryUseCase
+from use_cases.get_track import GetTrackUseCase
 from use_cases.get_weather import GetWeatherUseCase
 
 
@@ -138,6 +140,13 @@ def create_app(
         "/api/teams/<int:year>",
         endpoint="teams",
         view_func=TeamsController(teams_use_case).handle,
+    )
+
+    track_use_case = GetTrackUseCase(session_repo)
+    app.add_url_rule(
+        "/api/track/<int:year>/<int:race_round>",
+        endpoint="track",
+        view_func=TrackController(track_use_case).handle,
     )
 
     @app.errorhandler(SessionNotFoundError)

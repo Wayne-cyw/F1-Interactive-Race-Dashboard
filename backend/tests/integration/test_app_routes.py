@@ -8,6 +8,7 @@ from entities.pitstop import PitStopEvent
 from entities.session import DriverResult, Lap, SessionData, SessionInfo, SessionTypeInfo
 from entities.team import Team, TeamDriver
 from entities.telemetry import TelemetryData, TelemetryPoint
+from entities.track import TrackLayout, TrackPoint
 from entities.weather import WeatherData
 from frameworks_drivers.web.app import create_app
 from tests.fakes import (
@@ -151,3 +152,18 @@ def test_teams_route_returns_rosters_with_color(client_factory):
         "color": "#3671C6",
         "drivers": [{"code": "VER", "name": "Max Verstappen"}],
     }
+
+
+def test_track_route_returns_coordinates(client_factory):
+    layout = TrackLayout(name="Bahrain Grand Prix", location="Sakhir", country="Bahrain", coordinates=[TrackPoint(x=100.0, y=200.0)])
+    app = client_factory(session_repo=FakeSessionRepository(track_layout=layout))
+    resp = app.test_client().get("/api/track/2026/1")
+    assert resp.status_code == 200
+    assert resp.get_json()["track"]["coordinates"] == [{"x": 100.0, "y": 200.0}]
+
+
+def test_track_route_returns_404_when_no_lap_data(client_factory):
+    app = client_factory(session_repo=FakeSessionRepository(track_error=SessionNotFoundError("No valid lap data available")))
+    resp = app.test_client().get("/api/track/2026/1")
+    assert resp.status_code == 404
+    assert resp.get_json() == {"status": "error", "message": "No valid lap data available"}
