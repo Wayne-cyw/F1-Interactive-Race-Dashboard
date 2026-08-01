@@ -1,9 +1,11 @@
 // Normalizes /api/track's GPS-derived {x, y} meter coordinates (can reach
 // ±5000) into an SVG path filling a width×height viewBox with fixed
-// padding, plus a t -> {x, y} lookup for placing cars along the outline.
+// padding. Exposes the same normalization as `toSvgPoint` so real-time car
+// positions (from /api/positions, not part of the fixed outline) can be
+// placed in the exact same SVG space.
 export function buildTrackPath(coordinates, { width = 560, height = 320, padding = 30 } = {}) {
     if (!coordinates || coordinates.length === 0) {
-        return { pathD: '', pointAt: () => ({ x: width / 2, y: height / 2 }) }
+        return { pathD: '', toSvgPoint: () => ({ x: width / 2, y: height / 2 }) }
     }
 
     const xs = coordinates.map(p => p.x)
@@ -21,33 +23,46 @@ export function buildTrackPath(coordinates, { width = 560, height = 320, padding
     const offsetX = padding + (drawableWidth - spanX * scale) / 2
     const offsetY = padding + (drawableHeight - spanY * scale) / 2
 
-    const points = coordinates.map(p => ({
-        x: offsetX + (p.x - minX) * scale,
-        // SVG y grows downward; flip so the track isn't mirrored vertically.
-        y: offsetY + (spanY - (p.y - minY)) * scale,
-    }))
+    function toSvgPoint(p) {
+        return {
+            x: offsetX + (p.x - minX) * scale,
+            // SVG y grows downward; flip so the track isn't mirrored vertically.
+            y: offsetY + (spanY - (p.y - minY)) * scale,
+        }
+    }
 
+    const points = coordinates.map(toSvgPoint)
     const pathD = points
         .map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)} ${p.y.toFixed(1)}`)
         .join(' ') + ' Z'
 
-    function pointAt(t) {
-        const clamped = ((t % 1) + 1) % 1
-        const index = Math.floor(clamped * points.length) % points.length
-        return points[index]
-    }
-
-    return { pathD, pointAt }
+    return { pathD, toSvgPoint }
 }
 
-const POSITION_SPACING = 0.015
+// Linearly interpolates a driver's real-world {x, y} position at time `t`
+// (seconds since green flag) from their sorted position sample array
+// (each {t, x, y}, ~2Hz from the backend). Returns null if there is no
+// data at all. Clamps to the first/last sample outside the recorded range
+// (e.g. before the driver's first sample or after their last).
+export function interpolatePosition(points, t) {
+    if (!points || points.length === 0) return null
+    if (t <= points[0].t) return { x: points[0].x, y: points[0].y }
+    const last = points[points.length - 1]
+    if (t >= last.t) return { x: last.x, y: last.y }
 
-// Schematic running-order spacing along the track curve — the same formula
-// and constant the old Three.js live-race engine used — not GPS-accurate
-// telemetry-driven car position (per-lap intra-lap distance isn't available
-// from the session endpoint).
-export function carPositionT({ currentLap, progress, totalLaps, position }) {
-    if (!totalLaps) return 0
-    const raw = (currentLap - 1 + progress) / totalLaps + (position - 1) * POSITION_SPACING
-    return ((raw % 1) + 1) % 1
+    let lo = 0
+    let hi = points.length - 1
+    while (lo < hi) {
+        const mid = (lo + hi) >> 1
+        if (points[mid].t <= t) lo = mid + 1
+        else hi = mid
+    }
+    const after = points[lo]
+    const before = points[lo - 1]
+    const span = after.t - before.t || 1
+    const frac = (t - before.t) / span
+    return {
+        x: before.x + (after.x - before.x) * frac,
+        y: before.y + (after.y - before.y) * frac,
+    }
 }
