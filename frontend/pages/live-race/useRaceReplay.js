@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { fetchJSON } from '../../utils/api'
 
+const LAPS_PER_SECOND = 0.6
+
 async function loadSessionBundle(year, round) {
     const [sessionData, pitstopsBody, weatherBody, trackBody] = await Promise.all([
         fetchJSON(`/session/${year}/${round}/R`),
@@ -24,6 +26,10 @@ export function useRaceReplay() {
     const [bundle, setBundle] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+
+    const [currentLap, setCurrentLap] = useState(1)
+    const [progress, setProgress] = useState(0)
+    const [isPlaying, setIsPlaying] = useState(true)
 
     // Pick a default race on mount: latest season, round 1. If that
     // session isn't available yet (season in progress), fall back one
@@ -81,6 +87,37 @@ export function useRaceReplay() {
         return () => { cancelled = true }
     }, [year, round])
 
+    // Reset playback to the start whenever a new race is selected.
+    useEffect(() => {
+        setCurrentLap(1)
+        setProgress(0)
+        setIsPlaying(true)
+    }, [year, round])
+
+    const totalLaps = bundle?.sessionData?.total_laps ?? 0
+
+    useEffect(() => {
+        if (!isPlaying || totalLaps === 0) return
+        let raf
+        let lastTime = performance.now()
+
+        function tick(now) {
+            const deltaSeconds = (now - lastTime) / 1000
+            lastTime = now
+            setProgress(prevProgress => {
+                let nextProgress = prevProgress + deltaSeconds * LAPS_PER_SECOND
+                if (nextProgress >= 1) {
+                    nextProgress -= 1
+                    setCurrentLap(prevLap => Math.min(totalLaps, prevLap + 1))
+                }
+                return nextProgress
+            })
+            raf = requestAnimationFrame(tick)
+        }
+        raf = requestAnimationFrame(tick)
+        return () => cancelAnimationFrame(raf)
+    }, [isPlaying, totalLaps])
+
     function selectRace(nextYear, nextRound) {
         setYear(nextYear)
         setRound(nextRound)
@@ -90,6 +127,21 @@ export function useRaceReplay() {
         const racesBody = await fetchJSON(`/races/${nextYear}`)
         setRaces(racesBody.races)
         selectRace(nextYear, racesBody.races[0].round)
+    }
+
+    function play() {
+        if (currentLap >= totalLaps) return
+        setIsPlaying(true)
+    }
+
+    function pause() {
+        setIsPlaying(false)
+    }
+
+    function seekToLap(lapNumber) {
+        setIsPlaying(false)
+        setCurrentLap(Math.max(1, Math.min(totalLaps, Math.round(lapNumber))))
+        setProgress(0)
     }
 
     const raceName = races.find(r => r.round === round)?.name ?? ''
@@ -102,5 +154,7 @@ export function useRaceReplay() {
         weather: bundle?.weather ?? null,
         track: bundle?.track ?? null,
         loading, error,
+        currentLap, progress, totalLaps, isPlaying,
+        play, pause, seekToLap,
     }
 }
