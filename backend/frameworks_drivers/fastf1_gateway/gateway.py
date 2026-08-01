@@ -1,3 +1,4 @@
+from datetime import datetime
 from functools import lru_cache
 
 import fastf1
@@ -12,6 +13,7 @@ from entities.weather import WeatherData
 from interface_adapters.gateways.pitstop_repository import PitstopRepository
 from interface_adapters.gateways.season_repository import SeasonRepository
 from interface_adapters.gateways.session_repository import SessionRepository
+from interface_adapters.gateways.standings_repository import StandingsRepository
 from interface_adapters.gateways.weather_repository import WeatherRepository
 
 _SESSION_TYPE_NAMES = {
@@ -25,7 +27,7 @@ _SESSION_TYPE_NAMES = {
 }
 
 
-class FastF1Gateway(SeasonRepository, SessionRepository, WeatherRepository, PitstopRepository):
+class FastF1Gateway(SeasonRepository, SessionRepository, WeatherRepository, PitstopRepository, StandingsRepository):
     @lru_cache(maxsize=200)
     def _load_session(self, year: int, race_round: int, session_type: str = "R"):
         session = fastf1.get_session(year, race_round, session_type)
@@ -176,3 +178,13 @@ class FastF1Gateway(SeasonRepository, SessionRepository, WeatherRepository, Pits
                     )
                 prev_compound = current_compound
         return events
+
+    def get_completed_rounds(self, year: int) -> list[int]:
+        schedule = fastf1.get_event_schedule(year)
+        completed = schedule[schedule["EventDate"] < datetime.now()]
+        return [int(r) for r in completed["RoundNumber"]]
+
+    def get_round_results(self, year: int, race_round: int) -> list[DriverResult]:
+        session = self._load_session(year, race_round, "R")
+        results_df = session.results
+        return [self._driver_result_from_row(r) for _, r in results_df.iterrows()]

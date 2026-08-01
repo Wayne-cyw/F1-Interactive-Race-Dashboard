@@ -14,6 +14,7 @@ from tests.fakes import (
     FakePitstopRepository,
     FakeSeasonRepository,
     FakeSessionRepository,
+    FakeStandingsRepository,
     FakeWeatherRepository,
 )
 
@@ -117,3 +118,21 @@ def test_pitstops_route_returns_events(client_factory):
     resp = app.test_client().get("/api/pitstops/2026/1")
     assert resp.status_code == 200
     assert resp.get_json()["pit_stops"][0]["to_compound"] == "HARD"
+
+
+def test_standings_route_returns_ranked_drivers_and_teams(client_factory):
+    round_1 = [DriverResult(driver="VER", driver_name="Max Verstappen", team="Red Bull Racing", position=1, points=25.0, status="Finished")]
+    repo = FakeStandingsRepository(completed_rounds=[1], results_by_round={1: round_1})
+    app = client_factory(standings_repo=repo)
+    resp = app.test_client().get("/api/standings/2026")
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["driver_standings"][0]["team_color"] == "#3671C6"
+    assert body["last_race"] == 1
+
+
+def test_standings_route_returns_404_when_no_completed_rounds(client_factory):
+    app = client_factory(standings_repo=FakeStandingsRepository(completed_rounds=[]))
+    resp = app.test_client().get("/api/standings/2026")
+    assert resp.status_code == 404
+    assert resp.get_json() == {"status": "error", "message": "No completed races in 2026 yet"}

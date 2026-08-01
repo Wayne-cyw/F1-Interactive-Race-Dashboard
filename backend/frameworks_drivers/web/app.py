@@ -12,18 +12,21 @@ from interface_adapters.controllers.races_controller import RacesController
 from interface_adapters.controllers.seasons_controller import SeasonsController
 from interface_adapters.controllers.session_controller import SessionController
 from interface_adapters.controllers.session_types_controller import SessionTypesController
+from interface_adapters.controllers.standings_controller import StandingsController
 from interface_adapters.controllers.telemetry_controller import TelemetryController
 from interface_adapters.controllers.weather_controller import WeatherController
 from interface_adapters.gateways.clock import Clock
 from interface_adapters.gateways.pitstop_repository import PitstopRepository
 from interface_adapters.gateways.season_repository import SeasonRepository
 from interface_adapters.gateways.session_repository import SessionRepository
+from interface_adapters.gateways.standings_repository import StandingsRepository
 from interface_adapters.gateways.weather_repository import WeatherRepository
 from use_cases.get_pitstops import GetPitstopsUseCase
 from use_cases.get_races import GetRacesUseCase
 from use_cases.get_seasons import GetSeasonsUseCase
 from use_cases.get_session import GetSessionUseCase
 from use_cases.get_session_types import GetSessionTypesUseCase
+from use_cases.get_standings import GetStandingsUseCase
 from use_cases.get_telemetry import GetTelemetryUseCase
 from use_cases.get_weather import GetWeatherUseCase
 
@@ -35,6 +38,7 @@ def create_app(
     session_repo: SessionRepository | None = None,
     weather_repo: WeatherRepository | None = None,
     pitstop_repo: PitstopRepository | None = None,
+    standings_repo: StandingsRepository | None = None,
     log_dir: str | None = None,
 ) -> Flask:
     app = Flask(__name__)
@@ -50,6 +54,7 @@ def create_app(
     session_repo = session_repo or gateway
     weather_repo = weather_repo or gateway
     pitstop_repo = pitstop_repo or gateway
+    standings_repo = standings_repo or gateway
 
     @app.route("/")
     def home():
@@ -114,6 +119,13 @@ def create_app(
         "/api/pitstops/<int:year>/<int:race_round>",
         endpoint="pitstops",
         view_func=PitstopsController(pitstops_use_case).handle,
+    )
+
+    standings_use_case = GetStandingsUseCase(standings_repo)
+    app.add_url_rule(
+        "/api/standings/<int:year>",
+        endpoint="standings",
+        view_func=StandingsController(standings_use_case).handle,
     )
 
     @app.errorhandler(SessionNotFoundError)
