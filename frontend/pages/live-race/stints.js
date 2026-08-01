@@ -24,7 +24,7 @@ export function buildPitLog(pitstops, currentLap) {
 // changes, clipped to currentLap so a stint still in progress ends at
 // currentLap rather than revealing a pit stop that hasn't happened yet in
 // the replay — consistent with buildPitLog only showing completed stops.
-export function buildTireStints({ pitstops, results, currentLap, totalLaps }) {
+export function buildTireStints({ pitstops, results, laps, currentLap, totalLaps }) {
     const stintsByDriver = {}
 
     for (const result of results) {
@@ -33,9 +33,12 @@ export function buildTireStints({ pitstops, results, currentLap, totalLaps }) {
             .filter(p => p.driver === driverCode && p.lap <= currentLap)
             .sort((a, b) => a.lap - b.lap)
 
+        const driverLaps = (laps ?? []).filter(l => l.driver === driverCode && l.lap_number != null).sort((a, b) => a.lap_number - b.lap_number)
+        const openingCompound = driverLaps.length ? driverLaps[0].compound : null
+
         const rawStints = []
         let from = 0
-        let compound = driverPitstops.length ? driverPitstops[0].from_compound : null
+        let compound = openingCompound ?? (driverPitstops.length ? driverPitstops[0].from_compound : null)
         for (const stop of driverPitstops) {
             rawStints.push({ compound, from, to: stop.lap })
             from = stop.lap

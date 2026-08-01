@@ -18,6 +18,12 @@ async function loadSessionBundle(year, round) {
     }
 }
 
+function latestRunRound(races) {
+    const today = new Date().toISOString().slice(0, 10)
+    const run = races.filter(r => r.date && r.date <= today)
+    return run.length ? run[run.length - 1].round : null
+}
+
 export function useRaceReplay() {
     const [seasons, setSeasons] = useState([])
     const [races, setRaces] = useState([])
@@ -27,13 +33,13 @@ export function useRaceReplay() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
 
-    const [currentLap, setCurrentLap] = useState(1)
-    const [progress, setProgress] = useState(0)
+    const [elapsed, setElapsed] = useState(0)
     const [isPlaying, setIsPlaying] = useState(true)
 
-    // Pick a default race on mount: latest season, round 1. If that
-    // session isn't available yet (season in progress), fall back one
-    // year — a single retry, not a search loop.
+    // Pick a default race on mount: the latest season's most recently
+    // completed race. If the latest season has no completed races yet
+    // (season not started), fall back one year — a single retry, not a
+    // search loop.
     useEffect(() => {
         let cancelled = false
         async function pickDefault() {
@@ -41,21 +47,26 @@ export function useRaceReplay() {
             if (cancelled) return
             setSeasons(seasonsBody.seasons)
             const latestYear = seasonsBody.seasons[0]
-            try {
-                const racesBody = await fetchJSON(`/races/${latestYear}`)
-                if (cancelled) return
+
+            const racesBody = await fetchJSON(`/races/${latestYear}`)
+            if (cancelled) return
+            const round = latestRunRound(racesBody.races)
+            if (round != null) {
                 setRaces(racesBody.races)
                 setYear(latestYear)
-                setRound(racesBody.races[0].round)
-            } catch {
-                if (cancelled) return
-                const fallbackYear = latestYear - 1
-                const racesBody = await fetchJSON(`/races/${fallbackYear}`)
-                if (cancelled) return
-                setRaces(racesBody.races)
-                setYear(fallbackYear)
-                setRound(racesBody.races[0].round)
+                setRound(round)
+                return
             }
+
+            // Latest season has no completed races yet — fall back one year
+            // (a single retry, not a search loop) and use its last race.
+            const fallbackYear = latestYear - 1
+            const fallbackRacesBody = await fetchJSON(`/races/${fallbackYear}`)
+            if (cancelled) return
+            const fallbackRound = latestRunRound(fallbackRacesBody.races) ?? fallbackRacesBody.races[0].round
+            setRaces(fallbackRacesBody.races)
+            setYear(fallbackYear)
+            setRound(fallbackRound)
         }
         pickDefault().catch(err => {
             if (!cancelled) {
@@ -89,12 +100,13 @@ export function useRaceReplay() {
 
     // Reset playback to the start whenever a new race is selected.
     useEffect(() => {
-        setCurrentLap(1)
-        setProgress(0)
+        setElapsed(0)
         setIsPlaying(true)
     }, [year, round])
 
     const totalLaps = bundle?.sessionData?.total_laps ?? 0
+    const currentLap = totalLaps ? Math.min(totalLaps, Math.floor(elapsed) + 1) : 1
+    const progress = elapsed % 1
 
     useEffect(() => {
         if (!isPlaying || totalLaps === 0) return
@@ -104,19 +116,18 @@ export function useRaceReplay() {
         function tick(now) {
             const deltaSeconds = (now - lastTime) / 1000
             lastTime = now
-            setProgress(prevProgress => {
-                let nextProgress = prevProgress + deltaSeconds * LAPS_PER_SECOND
-                if (nextProgress >= 1) {
-                    nextProgress -= 1
-                    setCurrentLap(prevLap => Math.min(totalLaps, prevLap + 1))
-                }
-                return nextProgress
-            })
+            setElapsed(prev => Math.min(totalLaps - 0.001, prev + deltaSeconds * LAPS_PER_SECOND))
             raf = requestAnimationFrame(tick)
         }
         raf = requestAnimationFrame(tick)
         return () => cancelAnimationFrame(raf)
     }, [isPlaying, totalLaps])
+
+    // Auto-pause once the replay reaches the final lap, instead of looping
+    // the animation frame forever after the race is over.
+    useEffect(() => {
+        if (totalLaps && currentLap >= totalLaps) setIsPlaying(false)
+    }, [currentLap, totalLaps])
 
     function selectRace(nextYear, nextRound) {
         setYear(nextYear)
@@ -124,13 +135,23 @@ export function useRaceReplay() {
     }
 
     async function selectYear(nextYear) {
-        const racesBody = await fetchJSON(`/races/${nextYear}`)
-        setRaces(racesBody.races)
-        selectRace(nextYear, racesBody.races[0].round)
+        try {
+            const racesBody = await fetchJSON(`/races/${nextYear}`)
+            if (racesBody.races.length === 0) {
+                setError(`No races found for ${nextYear}`)
+                return
+            }
+            setRaces(racesBody.races)
+            selectRace(nextYear, racesBody.races[0].round)
+        } catch (err) {
+            setError(err.message)
+        }
     }
 
     function play() {
-        if (currentLap >= totalLaps) return
+        if (currentLap >= totalLaps) {
+            setElapsed(0)
+        }
         setIsPlaying(true)
     }
 
@@ -140,8 +161,8 @@ export function useRaceReplay() {
 
     function seekToLap(lapNumber) {
         setIsPlaying(false)
-        setCurrentLap(Math.max(1, Math.min(totalLaps, Math.round(lapNumber))))
-        setProgress(0)
+        const clamped = Math.max(1, Math.min(totalLaps, Math.round(lapNumber)))
+        setElapsed(clamped - 1)
     }
 
     const raceName = races.find(r => r.round === round)?.name ?? ''

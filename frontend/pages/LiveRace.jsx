@@ -55,9 +55,12 @@ export default function LiveRace() {
         })
     }, [replay.sessionData, replay.pitstops, replay.currentLap, selectedDriverId])
 
-    // Default the selected driver to the race leader once data first loads.
+    // Default the selected driver to the race leader once data first loads,
+    // and re-default if a season switch drops the previously-selected driver
+    // (e.g. they didn't race in the newly selected year).
     useEffect(() => {
-        if (!selectedDriverId && drivers.length > 0) {
+        if (drivers.length === 0) return
+        if (!selectedDriverId || !drivers.some(d => d.id === selectedDriverId)) {
             setSelectedDriverId(drivers[0].id)
         }
     }, [drivers, selectedDriverId])
@@ -71,7 +74,7 @@ export default function LiveRace() {
 
     const stintsByDriver = useMemo(
         () => replay.sessionData
-            ? buildTireStints({ pitstops: replay.pitstops, results: replay.sessionData.results, currentLap: replay.currentLap, totalLaps: replay.totalLaps })
+            ? buildTireStints({ pitstops: replay.pitstops, results: replay.sessionData.results, laps: replay.sessionData.laps, currentLap: replay.currentLap, totalLaps: replay.totalLaps })
             : {},
         [replay.sessionData, replay.pitstops, replay.currentLap, replay.totalLaps]
     )
@@ -114,6 +117,11 @@ export default function LiveRace() {
                     Couldn't load this race: {replay.error}. Pick a different race above.
                 </div>
             )}
+            {!replay.loading && !replay.error && !selected && (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8b8880' }}>
+                    No driver data available for this session.
+                </div>
+            )}
             {!replay.loading && !replay.error && selected && (
                 <>
                     {activeTab === 'overview' && (
@@ -132,7 +140,7 @@ export default function LiveRace() {
                         <TimingTab drivers={driversWithStints} onSelectDriver={setSelectedDriverId} />
                     )}
                     {activeTab === 'strategy' && (
-                        <StrategyTab drivers={driversWithStints} pitLog={pitLog} />
+                        <StrategyTab drivers={driversWithStints} pitLog={pitLog} currentLap={replay.currentLap} totalLaps={replay.totalLaps} />
                     )}
                     {activeTab === 'telemetry' && (
                         <TelemetryTab
