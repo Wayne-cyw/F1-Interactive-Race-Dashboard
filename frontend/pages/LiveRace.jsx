@@ -5,6 +5,7 @@ import OverviewTab from './live-race/OverviewTab'
 import TimingTab from './live-race/TimingTab'
 import StrategyTab from './live-race/StrategyTab'
 import TelemetryTab from './live-race/TelemetryTab'
+import PlaybackBar from './live-race/PlaybackBar'
 import { useRaceReplay } from './live-race/useRaceReplay'
 import { useDriverTelemetry } from './live-race/useDriverTelemetry'
 import { buildLeaderboardRows } from './live-race/leaderboardData'
@@ -117,11 +118,6 @@ export default function LiveRace() {
                 round={replay.round}
                 onSelectYear={replay.selectYear}
                 onSelectRace={round => replay.selectRace(replay.year, round)}
-                currentLap={replay.currentLap}
-                totalLaps={replay.totalLaps}
-                isPlaying={replay.isPlaying}
-                onPlayPause={() => (replay.isPlaying ? replay.pause() : replay.play())}
-                onSeek={replay.seekToLap}
                 weather={replay.weather}
                 raceName={replay.raceName}
             />
@@ -175,6 +171,17 @@ export default function LiveRace() {
                             currentGear={telemetry?.current?.gear ?? null}
                         />
                     )}
+                    <PlaybackBar
+                        isPlaying={replay.isPlaying}
+                        onPlayPause={() => (replay.isPlaying ? replay.pause() : replay.play())}
+                        elapsedSeconds={replay.elapsedSeconds}
+                        totalDurationSeconds={replay.totalDurationSeconds}
+                        currentLap={replay.currentLap}
+                        totalLaps={replay.totalLaps}
+                        onSeek={replay.seekToSeconds}
+                        playbackSpeed={replay.playbackSpeed}
+                        onSpeedChange={replay.setPlaybackSpeed}
+                    />
                 </>
             )}
         </div>
