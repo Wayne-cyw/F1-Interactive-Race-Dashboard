@@ -54,6 +54,8 @@ class FastF1Gateway(
     @staticmethod
     def _green_flag_t0(session):
         laps = session.laps
+        if "LapStartTime" not in laps.columns:
+            return pd.Timedelta(0)
         lap_one = laps[(laps["LapNumber"] == 1) & laps["LapStartTime"].notna()]
         if lap_one.empty:
             return pd.Timedelta(0)
@@ -61,6 +63,7 @@ class FastF1Gateway(
 
     @staticmethod
     def _resample_half_second(df, time_col):
+        df = df[df[time_col].notna()]
         bucket = (df[time_col].dt.total_seconds() // 0.5).astype(int)
         return df.groupby(bucket).first()
 
@@ -163,19 +166,25 @@ class FastF1Gateway(
         t0 = self._green_flag_t0(session)
         resampled = self._resample_half_second(car, "SessionTime")
         points = []
-        for _, row in resampled.iterrows():
-            t = (row["SessionTime"] - t0).total_seconds()
+        for row in resampled.itertuples():
+            t = (row.SessionTime - t0).total_seconds()
             if t < 0:
                 continue
+            speed = getattr(row, "Speed", None)
+            throttle = getattr(row, "Throttle", None)
+            brake = getattr(row, "Brake", None)
+            gear = getattr(row, "nGear", None)
+            rpm = getattr(row, "RPM", None)
+            drs = getattr(row, "DRS", None)
             points.append(
                 TelemetryPoint(
                     t=t,
-                    speed=float(row["Speed"]) if pd.notna(row.get("Speed")) else None,
-                    throttle=float(row["Throttle"]) if pd.notna(row.get("Throttle")) else None,
-                    brake=bool(row["Brake"]) if pd.notna(row.get("Brake")) else False,
-                    gear=int(row["nGear"]) if pd.notna(row.get("nGear")) else None,
-                    rpm=float(row["RPM"]) if pd.notna(row.get("RPM")) else None,
-                    drs=int(row["DRS"]) if pd.notna(row.get("DRS")) else 0,
+                    speed=float(speed) if pd.notna(speed) else None,
+                    throttle=float(throttle) if pd.notna(throttle) else None,
+                    brake=bool(brake) if pd.notna(brake) else False,
+                    gear=int(gear) if pd.notna(gear) else None,
+                    rpm=float(rpm) if pd.notna(rpm) else None,
+                    drs=int(drs) if pd.notna(drs) else 0,
                 )
             )
         return TelemetryData(driver=driver_code, points=points)
@@ -264,6 +273,7 @@ class FastF1Gateway(
             for _, r in results.iterrows()
         ]
 
+    @lru_cache(maxsize=50)
     def get_race_positions(self, year: int, race_round: int) -> list[DriverPositions]:
         session = self._load_session(year, race_round, "R")
         if session.pos_data is None or len(session.pos_data) == 0:
@@ -282,12 +292,14 @@ class FastF1Gateway(
 
             resampled = self._resample_half_second(pos, "SessionTime")
             points = []
-            for _, row in resampled.iterrows():
-                if pd.isna(row.get("X")) or pd.isna(row.get("Y")):
+            for row in resampled.itertuples():
+                x = getattr(row, "X", None)
+                y = getattr(row, "Y", None)
+                if pd.isna(x) or pd.isna(y):
                     continue
-                t = (row["SessionTime"] - t0).total_seconds()
+                t = (row.SessionTime - t0).total_seconds()
                 if t < 0:
                     continue
-                points.append(PositionPoint(t=t, x=float(row["X"]), y=float(row["Y"])))
+                points.append(PositionPoint(t=t, x=float(x), y=float(y)))
             result.append(DriverPositions(driver=driver_code, points=points))
         return result
