@@ -14,7 +14,7 @@ def _session_data(laps, results=None, total_laps=57):
 
 def test_returns_session_data_from_repository():
     data = _session_data(
-        laps=[Lap(driver="VER", lap_number=1, lap_time=91.2, position=1, compound="SOFT", team="Red Bull Racing", sector_1_time=28.4, sector_2_time=33.1, sector_3_time=29.7)],
+        laps=[Lap(driver="VER", lap_number=1, lap_time=91.2, position=1, compound="SOFT", team="Red Bull Racing", sector_1_time=28.4, sector_2_time=33.1, sector_3_time=29.7, session_time=0.0)],
         results=[DriverResult(driver="VER", driver_name="Max Verstappen", team="Red Bull Racing", position=1, points=25.0, status="Finished")],
     )
     use_case = GetSessionUseCase(FakeSessionRepository(session_data=data))
@@ -28,6 +28,7 @@ def test_returns_session_data_from_repository():
     assert lap.driver == "VER"
     assert lap.sector_1_time == 28.4
     assert lap.gap_to_leader == 0.0  # sole driver in the field is trivially the leader
+    assert lap.session_time == 0.0
 
 
 def test_computes_gap_to_leader_across_multiple_laps_and_drivers():
@@ -84,3 +85,20 @@ def test_gap_to_leader_only_compares_drivers_present_at_that_lap_number():
     # it has one fewer recorded lap, which is the approximation's known caveat.
     assert by_key[("HAM", 3)].gap_to_leader == 0.0
     assert round(by_key[("VER", 3)].gap_to_leader, 3) == 86.0
+
+
+def test_computes_race_duration_from_last_completed_lap():
+    laps = [
+        Lap(driver="VER", lap_number=1, lap_time=90.0, session_time=0.0),
+        Lap(driver="HAM", lap_number=1, lap_time=95.0, session_time=0.0),
+    ]
+    use_case = GetSessionUseCase(FakeSessionRepository(session_data=_session_data(laps, total_laps=1)))
+    result = use_case.execute(2026, 1, "R")
+    assert result.race_duration_seconds == 95.0  # HAM's lap 1 finishes latest
+
+
+def test_race_duration_is_zero_when_no_lap_has_both_fields():
+    laps = [Lap(driver="VER", lap_number=1, lap_time=None, session_time=0.0)]
+    use_case = GetSessionUseCase(FakeSessionRepository(session_data=_session_data(laps, total_laps=1)))
+    result = use_case.execute(2026, 1, "R")
+    assert result.race_duration_seconds == 0.0

@@ -14,6 +14,7 @@ def present_lap(lap: Lap) -> dict:
         "sector_2_time": lap.sector_2_time,
         "sector_3_time": lap.sector_3_time,
         "gap_to_leader": lap.gap_to_leader,
+        "session_time": lap.session_time,
     }
 
 
@@ -41,4 +42,5 @@ def present_session(data: SessionData) -> dict:
         "laps": [present_lap(lap) for lap in data.laps],
         "results": [present_result(r) for r in data.results],
         "total_laps": data.total_laps,
+        "race_duration_seconds": data.race_duration_seconds,
     }

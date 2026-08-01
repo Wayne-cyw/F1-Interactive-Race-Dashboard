@@ -25,12 +25,23 @@ class GetSessionUseCase:
 
     def execute(self, year: int, race_round: int, session_type: str) -> SessionData:
         data = self._repo.get_session_data(year, race_round, session_type)
+        laps_with_gap = self._with_gap_to_leader(data.laps)
         return SessionData(
             session_info=data.session_info,
-            laps=self._with_gap_to_leader(data.laps),
+            laps=laps_with_gap,
             results=data.results,
             total_laps=data.total_laps,
+            race_duration_seconds=self._race_duration_seconds(laps_with_gap),
         )
+
+    @staticmethod
+    def _race_duration_seconds(laps: list[Lap]) -> float:
+        candidates = [
+            lap.session_time + lap.lap_time
+            for lap in laps
+            if lap.session_time is not None and lap.lap_time is not None
+        ]
+        return max(candidates) if candidates else 0.0
 
     @staticmethod
     def _with_gap_to_leader(laps: list[Lap]) -> list[Lap]:

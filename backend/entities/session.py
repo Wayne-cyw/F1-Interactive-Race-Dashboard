@@ -19,6 +19,7 @@ class Lap:
     sector_2_time: float | None = None
     sector_3_time: float | None = None
     gap_to_leader: float | None = None
+    session_time: float | None = None
 
 
 @dataclass(frozen=True)
@@ -45,3 +46,4 @@ class SessionData:
     laps: list[Lap]
     results: list[DriverResult]
     total_laps: int
+    race_duration_seconds: float = 0.0
