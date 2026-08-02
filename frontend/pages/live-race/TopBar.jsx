@@ -6,7 +6,7 @@ const WEATHER_LABEL = (rainfall) => rainfall
 
 export default function TopBar({ seasons, races, year, round, onSelectYear, onSelectRace, weather, raceName, trackStatus }) {
     const weatherInfo = weather ? WEATHER_LABEL(weather.rainfall) : null
-    const statusMeta = trackStatus ? (STATUS_META[trackStatus.status] ?? STATUS_META['1']) : null
+    const statusMeta = trackStatus ? (STATUS_META[trackStatus.status] ?? { label: trackStatus.message || 'UNKNOWN', color: '#8b8880' }) : null
 
     return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 32px', borderBottom: '1px solid #e6e3dc', background: '#fff', flexWrap: 'wrap', gap: 14 }}>

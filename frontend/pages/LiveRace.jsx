@@ -138,7 +138,7 @@ export default function LiveRace() {
                 onSelectRace={round => replay.selectRace(replay.year, round)}
                 weather={replay.weather}
                 raceName={replay.raceName}
-                trackStatus={currentTrackStatus}
+                trackStatus={replay.sessionData ? currentTrackStatus : null}
             />
             <TabNav activeTab={activeTab} onChange={setActiveTab} />
 

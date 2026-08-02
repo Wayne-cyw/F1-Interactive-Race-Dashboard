@@ -11,7 +11,7 @@ async function loadSessionBundle(year, round) {
         fetchJSON(`/weather/${year}/${round}`),
         fetchJSON(`/track/${year}/${round}`),
         fetchJSON(`/positions/${year}/${round}`),
-        fetchJSON(`/track-status/${year}/${round}`),
+        fetchJSON(`/track-status/${year}/${round}`).catch(() => ({ track_status: [] })),
     ])
     return {
         sessionData,
@@ -117,11 +117,11 @@ export function useRaceReplay() {
     // Advances the real-time clock every animation frame for accurate
     // pacing (1 played second = 1 real race second), but only commits a
     // state update — and therefore a re-render — every RENDER_INTERVAL_MS
-    // (5Hz), not on every frame (~60Hz). `elapsedSeconds` is deliberately
+    // (30Hz), not on every frame (~60Hz). `elapsedSeconds` is deliberately
     // read once as this effect's starting point and NOT listed as a
     // dependency: the effect only needs to restart on play/pause or a race
     // change (both already covered by the dependency array), not on every
-    // 5Hz tick it produces itself.
+    // 30Hz tick it produces itself.
     useEffect(() => {
         if (!isPlaying || loading || totalDurationSeconds === 0) return
         let raf

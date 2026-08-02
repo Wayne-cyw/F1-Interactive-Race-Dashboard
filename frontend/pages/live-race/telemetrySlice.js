@@ -112,8 +112,6 @@ export function sliceTelemetry(points, elapsedSeconds, lapStartTime) {
     const windowStart = elapsedSeconds - ROLLING_WINDOW_SECONDS
     const rollingPoints = points.filter(p => p.t >= windowStart && p.t <= elapsedSeconds)
     const rollingWithCurrent = current ? [...rollingPoints, current] : rollingPoints
-    const rollingSpeeds = rollingWithCurrent.map(p => p.speed).filter(v => v != null)
-    const rollingMaxSpeed = rollingSpeeds.length ? Math.max(...rollingSpeeds) : 1
 
     return {
         current,
@@ -123,7 +121,7 @@ export function sliceTelemetry(points, elapsedSeconds, lapStartTime) {
         speedPolyBig: toPolyline(lapSoFar.map(p => p.speed ?? 0), 600, 110, 0, Math.max(1, topSpeed)),
         throttlePolyBig: toPolyline(lapSoFar.map(p => p.throttle ?? 0), 600, 70, 0, 100),
         brakePolyBig: toPolyline(lapSoFar.map(p => (p.brake ? 100 : 0)), 600, 70, 0, 100),
-        speedRollingPoly: toRollingPolyline(rollingWithCurrent, p => p.speed ?? 0, 300, 90, 0, Math.max(1, rollingMaxSpeed), windowStart),
+        speedRollingPoly: toRollingPolyline(rollingWithCurrent, p => p.speed ?? 0, 300, 90, 0, Math.max(1, topSpeed), windowStart),
         throttleRollingPoly: toRollingPolyline(rollingWithCurrent, p => p.throttle ?? 0, 300, 60, 0, 100, windowStart),
         brakeRollingPoly: toRollingPolyline(rollingWithCurrent, p => (p.brake ? 100 : 0), 300, 60, 0, 100, windowStart),
     }
