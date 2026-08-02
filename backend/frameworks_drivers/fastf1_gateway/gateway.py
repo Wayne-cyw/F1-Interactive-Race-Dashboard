@@ -224,13 +224,17 @@ class FastF1Gateway(
     def get_pitstops(self, year: int, race_round: int) -> list[PitStopEvent]:
         session = self._load_session(year, race_round, "R")
         laps = session.laps
+        t0 = self._green_flag_t0(session)
         events = []
         for driver in laps["Driver"].unique():
             driver_laps = laps[laps["Driver"] == driver].sort_values("LapNumber")
             prev_compound = None
+            prev_lap = None
             for _, lap in driver_laps.iterrows():
                 current_compound = lap.get("Compound")
                 if prev_compound is not None and current_compound != prev_compound:
+                    pit_in_time = prev_lap.get("PitInTime") if prev_lap is not None else None
+                    pit_out_time = lap.get("PitOutTime")
                     events.append(
                         PitStopEvent(
                             driver=driver,
@@ -238,9 +242,12 @@ class FastF1Gateway(
                             from_compound=prev_compound,
                             to_compound=current_compound,
                             pit_duration=None,
+                            pit_in_time=(pit_in_time - t0).total_seconds() if pd.notna(pit_in_time) else None,
+                            pit_out_time=(pit_out_time - t0).total_seconds() if pd.notna(pit_out_time) else None,
                         )
                     )
                 prev_compound = current_compound
+                prev_lap = lap
         return events
 
     def get_completed_rounds(self, year: int) -> list[int]:

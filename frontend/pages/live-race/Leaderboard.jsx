@@ -19,6 +19,9 @@ export default function Leaderboard({ drivers, onSelectDriver, width }) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                         <div style={{ width: 4, height: 16, background: d.color, borderRadius: 2, flexShrink: 0 }} />
                         <span style={{ fontWeight: 600, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
+                        {d.inPit && (
+                            <span style={{ padding: '2px 6px', borderRadius: 10, background: '#fdf3e7', fontSize: 10, color: 'oklch(55% .15 70)', fontWeight: 700, flexShrink: 0 }}>PIT</span>
+                        )}
                     </div>
                     <div style={{ fontSize: 12, color: '#8b8880' }}>{d.gap}</div>
                     {!compact && <div style={{ fontSize: 12, color: '#403c36', fontFamily: "'JetBrains Mono', monospace" }}>{d.last}</div>}

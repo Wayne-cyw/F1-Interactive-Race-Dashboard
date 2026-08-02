@@ -56,3 +56,48 @@ def test_resample_half_second_preserves_session_time_column():
     })
     resampled = FastF1Gateway._resample_half_second(df, "SessionTime")
     assert "SessionTime" in resampled.columns
+
+
+def _fake_session_for_pitstops():
+    laps = pd.DataFrame({
+        "Driver": ["VER", "VER", "VER"],
+        "LapNumber": [1, 2, 3],
+        "Compound": ["SOFT", "SOFT", "HARD"],
+        "LapStartTime": [pd.Timedelta(seconds=0), pd.Timedelta(seconds=90), pd.Timedelta(seconds=200)],
+        "PitInTime": [pd.NaT, pd.Timedelta(seconds=175), pd.NaT],
+        "PitOutTime": [pd.NaT, pd.NaT, pd.Timedelta(seconds=195)],
+    })
+    return SimpleNamespace(laps=laps)
+
+
+def test_get_pitstops_populates_pit_in_and_out_time_in_seconds_since_green_flag():
+    gateway = FastF1Gateway()
+    gateway._load_session = lambda *args, **kwargs: _fake_session_for_pitstops()
+
+    events = gateway.get_pitstops(2026, 1)
+
+    assert len(events) == 1
+    event = events[0]
+    assert event.driver == "VER"
+    assert event.lap == 3
+    assert event.from_compound == "SOFT"
+    assert event.to_compound == "HARD"
+    assert event.pit_in_time == 175.0
+    assert event.pit_out_time == 195.0
+
+
+def test_get_pitstops_leaves_times_null_when_fastf1_columns_are_missing_or_nan():
+    laps = pd.DataFrame({
+        "Driver": ["VER", "VER"],
+        "LapNumber": [1, 2],
+        "Compound": ["SOFT", "HARD"],
+        "LapStartTime": [pd.Timedelta(seconds=0), pd.Timedelta(seconds=90)],
+    })
+    gateway = FastF1Gateway()
+    gateway._load_session = lambda *args, **kwargs: SimpleNamespace(laps=laps)
+
+    events = gateway.get_pitstops(2026, 1)
+
+    assert len(events) == 1
+    assert events[0].pit_in_time is None
+    assert events[0].pit_out_time is None
