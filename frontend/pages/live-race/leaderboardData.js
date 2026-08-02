@@ -55,6 +55,11 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
 
         const driverPitstops = pitstops.filter(p => p.driver === driverCode && p.lap <= currentLap)
         const lastPitLap = driverPitstops.length ? Math.max(...driverPitstops.map(p => p.lap)) : 0
+        const inPit = driverPitstops.some(p =>
+            p.pit_in_time != null &&
+            elapsedSeconds >= p.pit_in_time &&
+            (p.pit_out_time == null || elapsedSeconds < p.pit_out_time)
+        )
 
         const result = results.find(r => r.driver === driverCode)
         const dnfEntry = dnfInfo?.get(driverCode)
@@ -75,6 +80,7 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
             tire: compoundToTireCode(latestLap.compound),
             age: latestLap.lap_number - lastPitLap,
             pits: driverPitstops.length,
+            inPit,
             top5: !dnf && latestLap.position != null && latestLap.position <= 3,
             dnf,
             _revealAtSeconds: dnfEntry?.revealAtSeconds ?? null,
