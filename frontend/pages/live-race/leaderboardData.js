@@ -55,7 +55,7 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
 
         const driverPitstops = pitstops.filter(p => p.driver === driverCode && p.lap <= currentLap)
         const lastPitLap = driverPitstops.length ? Math.max(...driverPitstops.map(p => p.lap)) : 0
-        const inPit = driverPitstops.some(p =>
+        const inPit = pitstops.filter(p => p.driver === driverCode).some(p =>
             p.pit_in_time != null &&
             elapsedSeconds >= p.pit_in_time &&
             (p.pit_out_time == null || elapsedSeconds < p.pit_out_time)
