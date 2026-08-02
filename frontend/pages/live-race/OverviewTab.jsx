@@ -1,17 +1,19 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import Leaderboard from './Leaderboard'
 import ResizeHandle from './ResizeHandle'
-import { useResizableHeight } from './useResizableHeight'
 import { useResizableWidth } from './useResizableWidth'
 import { interpolatePosition } from './trackMap'
+import { BEST_SECTOR_COLOR } from './leaderboardData'
 
-const SECTOR_DELTAS_MIN_HEIGHT = 64
+const SECTOR_BOXES = [
+    { key: 's1', label: 'SECTOR 1' },
+    { key: 's2', label: 'SECTOR 2' },
+    { key: 's3', label: 'SECTOR 3' },
+]
 
-export default function OverviewTab({ drivers, selected, onSelectDriver, trackPath, positions, elapsedSeconds, telemetry }) {
+export default function OverviewTab({ drivers, selected, onSelectDriver, trackPath, positions, elapsedSeconds, telemetry, bestSectors }) {
     const [leaderboardWidth, onLeaderboardResize] = useResizableWidth(440, { min: 320, max: 640, edge: 'right' })
     const [telemetryWidth, onTelemetryResize] = useResizableWidth(360, { min: 280, max: 520, edge: 'left' })
-    const [sectorDeltasHeight, onSectorDeltasResize] = useResizableHeight(SECTOR_DELTAS_MIN_HEIGHT, { min: SECTOR_DELTAS_MIN_HEIGHT, max: 280, edge: 'top' })
-    const [sectorDeltasCollapsed, setSectorDeltasCollapsed] = useState(false)
 
     const carPositions = useMemo(
         () => drivers.filter(d => !d.dnf).map(d => {
@@ -41,7 +43,7 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackPa
                     </svg>
                     <div style={{ display: 'flex', gap: 20, marginTop: 6, fontSize: 12, color: '#8b8880' }}>
                         <div>S1 <b style={{ color: '#403c36' }}>{selected?.s1 ?? '—'}</b></div>
-                        <div>S2 <b style={{ color: 'oklch(52% .18 300)' }}>{selected?.s2 ?? '—'}</b></div>
+                        <div>S2 <b style={{ color: selected?.s2c === BEST_SECTOR_COLOR ? BEST_SECTOR_COLOR : '#403c36' }}>{selected?.s2 ?? '—'}</b></div>
                         <div>S3 <b style={{ color: '#403c36' }}>{selected?.s3 ?? '—'}</b></div>
                     </div>
                 </div>
@@ -90,32 +92,19 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackPa
                 </div>
             </div>
 
-            <div style={{ padding: '10px 32px 0', background: '#fff', display: 'flex', flexDirection: 'column' }}>
-                {!sectorDeltasCollapsed && <ResizeHandle onMouseDown={onSectorDeltasResize} orientation="horizontal" />}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>SECTOR DELTAS</div>
-                    <button
-                        onClick={() => setSectorDeltasCollapsed(c => !c)}
-                        aria-label={sectorDeltasCollapsed ? 'Expand sector deltas' : 'Collapse sector deltas'}
-                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 11, color: '#a8a49b', padding: 4 }}
-                    >
-                        {sectorDeltasCollapsed ? '▸' : '▾'}
-                    </button>
-                </div>
-                {!sectorDeltasCollapsed && (
-                    <div style={{ height: sectorDeltasHeight, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 6 }}>
-                        {drivers.filter(d => d.top5).map(d => (
-                            <div key={d.id} style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: 10, alignItems: 'center', flexShrink: 0 }}>
-                                <span style={{ fontSize: 11, color: '#403c36' }}>{d.name}</span>
-                                <div style={{ display: 'flex', gap: 2, height: 7 }}>
-                                    <div style={{ width: '33%', background: d.s1c, borderRadius: 2 }} />
-                                    <div style={{ width: '34%', background: d.s2c, borderRadius: 2 }} />
-                                    <div style={{ width: '33%', background: d.s3c, borderRadius: 2 }} />
-                                </div>
+            <div style={{ padding: '10px 32px 16px', background: '#fff' }}>
+                <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 8 }}>SECTOR DELTAS</div>
+                <div style={{ display: 'flex', gap: 12 }}>
+                    {SECTOR_BOXES.map(({ key, label }) => (
+                        <div key={key} style={{ flex: 1, padding: '10px 14px', borderRadius: 10, background: '#f7f6f2' }}>
+                            <div style={{ fontSize: 10.5, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 4 }}>{label}</div>
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                                <span style={{ fontWeight: 700, fontSize: 14 }}>{bestSectors?.[key]?.name ?? '—'}</span>
+                                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: '#403c36' }}>{bestSectors?.[key]?.time ?? '—'}</span>
                             </div>
-                        ))}
-                    </div>
-                )}
+                        </div>
+                    ))}
+                </div>
             </div>
         </>
     )
