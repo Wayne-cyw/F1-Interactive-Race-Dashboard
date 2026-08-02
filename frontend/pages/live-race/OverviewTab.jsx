@@ -3,6 +3,7 @@ import Leaderboard from './Leaderboard'
 import ResizeHandle from './ResizeHandle'
 import { useResizableWidth } from './useResizableWidth'
 import { interpolatePosition } from './trackMap'
+import { BEST_SECTOR_COLOR } from './leaderboardData'
 
 const SECTOR_BOXES = [
     { key: 's1', label: 'SECTOR 1' },
@@ -42,7 +43,7 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackPa
                     </svg>
                     <div style={{ display: 'flex', gap: 20, marginTop: 6, fontSize: 12, color: '#8b8880' }}>
                         <div>S1 <b style={{ color: '#403c36' }}>{selected?.s1 ?? '—'}</b></div>
-                        <div>S2 <b style={{ color: 'oklch(52% .18 300)' }}>{selected?.s2 ?? '—'}</b></div>
+                        <div>S2 <b style={{ color: selected?.s2c === BEST_SECTOR_COLOR ? BEST_SECTOR_COLOR : '#403c36' }}>{selected?.s2 ?? '—'}</b></div>
                         <div>S3 <b style={{ color: '#403c36' }}>{selected?.s3 ?? '—'}</b></div>
                     </div>
                 </div>
