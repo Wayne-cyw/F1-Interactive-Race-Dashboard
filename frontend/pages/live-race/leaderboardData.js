@@ -1,9 +1,9 @@
+import { isRevealed } from './dnf'
+
 const TIRE_COLOR = { S: '#c23b3b', M: '#d9a300', H: '#6b6862', I: '#3ecf6e', W: '#3671c6' }
 const COMPOUND_CODES = { SOFT: 'S', MEDIUM: 'M', HARD: 'H', INTERMEDIATE: 'I', WET: 'W' }
 const BEST_SECTOR_COLOR = 'oklch(52% .18 300)'
 const NORMAL_SECTOR_COLOR = '#d9a300'
-
-import { isRevealed } from './dnf'
 
 export function formatLapTime(seconds) {
     if (seconds == null) return '—'
@@ -62,7 +62,7 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
 
         rows.push({
             id: driverCode,
-            pos: latestLap.position,
+            pos: dnf ? null : latestLap.position,
             color: result?.team_color ?? '#8b8880',
             name: formatDriverName(result?.driver_name),
             team: result?.team ?? '',
@@ -75,9 +75,10 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
             tire: compoundToTireCode(latestLap.compound),
             age: latestLap.lap_number - lastPitLap,
             pits: driverPitstops.length,
-            top5: latestLap.position != null && latestLap.position <= 3,
+            top5: !dnf && latestLap.position != null && latestLap.position <= 3,
             dnf,
             _revealAtSeconds: dnfEntry?.revealAtSeconds ?? null,
+            _lastLapEndSeconds: dnfEntry?.lastLapEndSeconds ?? null,
             _sector1: latestLap.sector_1_time,
             _sector2: latestLap.sector_2_time,
             _sector3: latestLap.sector_3_time,
@@ -86,7 +87,11 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
 
     rows.sort((a, b) => {
         if (a.dnf !== b.dnf) return a.dnf ? 1 : -1
-        if (a.dnf) return (b._revealAtSeconds ?? 0) - (a._revealAtSeconds ?? 0)
+        if (a.dnf) {
+            const revealDiff = (b._revealAtSeconds ?? 0) - (a._revealAtSeconds ?? 0)
+            if (revealDiff !== 0) return revealDiff
+            return (b._lastLapEndSeconds ?? 0) - (a._lastLapEndSeconds ?? 0)
+        }
         return (a.pos ?? Infinity) - (b.pos ?? Infinity)
     })
 
@@ -96,7 +101,7 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
 
     return rows.map(r => {
         const selected = r.id === selectedDriverId
-        const { _sector1, _sector2, _sector3, _revealAtSeconds, ...row } = r
+        const { _sector1, _sector2, _sector3, _revealAtSeconds, _lastLapEndSeconds, ...row } = r
         return {
             ...row,
             selected,
