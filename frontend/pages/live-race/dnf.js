@@ -62,7 +62,11 @@ export function computeDnfInfo({ results, positions, laps, totalDurationSeconds 
         const revealAtSeconds = lastSampleTime + RETIREMENT_LAP_MULTIPLIER * avgLapTime
 
         if (classification === 'dnf') {
-            info.set(driverId, { isDnf: true, lastSampleTime, revealAtSeconds })
+            // Confirmed by status: always reveal, even if the 3-lap
+            // confirmation window would otherwise run past the checkered
+            // flag (e.g. a late-race crash) — clamp so it always surfaces
+            // by the end of the race instead of never.
+            info.set(driverId, { isDnf: true, lastSampleTime, revealAtSeconds: Math.min(revealAtSeconds, totalDurationSeconds) })
         } else {
             // Ambiguous status: only counts as DNF if the freeze window
             // actually completes before the race ends — otherwise this is
