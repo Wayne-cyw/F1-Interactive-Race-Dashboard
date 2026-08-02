@@ -50,7 +50,7 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackPa
 
                 <div style={{ padding: '16px 32px', overflowY: 'auto', minHeight: 0 }}>
                     <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 12 }}>TELEMETRY — {selected?.name ?? '—'}</div>
-                    <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 1 }}>{telemetry?.topSpeed ?? '—'}<span style={{ fontSize: 14, color: '#a8a49b' }}> km/h</span></div>
+                    <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 1 }}>{lastPoint?.speed != null ? Math.round(lastPoint.speed) : '—'}<span style={{ fontSize: 14, color: '#a8a49b' }}> km/h</span></div>
                     <div style={{ display: 'flex', gap: 14, marginTop: 14, alignItems: 'center' }}>
                         <div style={{ fontSize: 24, fontWeight: 700, color: 'oklch(50% .16 230)' }}>{lastPoint?.gear ?? '—'}</div>
                         {lastPoint?.drs > 0
