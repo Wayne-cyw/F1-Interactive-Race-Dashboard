@@ -2,7 +2,7 @@ import { isRevealed } from './dnf'
 
 const TIRE_COLOR = { S: '#c23b3b', M: '#d9a300', H: '#6b6862', I: '#3ecf6e', W: '#3671c6' }
 const COMPOUND_CODES = { SOFT: 'S', MEDIUM: 'M', HARD: 'H', INTERMEDIATE: 'I', WET: 'W' }
-const BEST_SECTOR_COLOR = 'oklch(52% .18 300)'
+export const BEST_SECTOR_COLOR = 'oklch(52% .18 300)'
 const NORMAL_SECTOR_COLOR = '#d9a300'
 
 export function formatLapTime(seconds) {
@@ -115,4 +115,20 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
             s3c: _sector3 != null && _sector3 === bestSector3 ? BEST_SECTOR_COLOR : NORMAL_SECTOR_COLOR,
         }
     })
+}
+
+// Finds, per sector, which driver currently holds the fastest time and
+// what it is — reuses the s{1,2,3}c coloring buildLeaderboardRows already
+// computes (set to BEST_SECTOR_COLOR exactly on the row holding that
+// sector's best time) rather than recomputing raw sector times again.
+// Returns null for a sector nobody has posted a time in yet (early race).
+export function deriveBestSectors(rows) {
+    const s1Row = rows.find(r => r.s1c === BEST_SECTOR_COLOR)
+    const s2Row = rows.find(r => r.s2c === BEST_SECTOR_COLOR)
+    const s3Row = rows.find(r => r.s3c === BEST_SECTOR_COLOR)
+    return {
+        s1: s1Row ? { name: s1Row.name, time: s1Row.s1 } : null,
+        s2: s2Row ? { name: s2Row.name, time: s2Row.s2 } : null,
+        s3: s3Row ? { name: s3Row.name, time: s3Row.s3 } : null,
+    }
 }
