@@ -11,6 +11,7 @@ from entities.session import DriverResult, Lap, SessionData, SessionInfo, Sessio
 from entities.team import Team, TeamDriver
 from entities.telemetry import TelemetryData, TelemetryPoint
 from entities.track import TrackLayout, TrackPoint
+from entities.track_status import TrackStatusEvent
 from entities.weather import WeatherData
 from frameworks_drivers.web.app import create_app
 from tests.fakes import (
@@ -192,6 +193,23 @@ def test_positions_route_returns_404_when_unavailable(client_factory):
     resp = app.test_client().get("/api/positions/2026/1")
     assert resp.status_code == 404
     assert resp.get_json() == {"status": "error", "message": "No position data available"}
+
+
+def test_track_status_route_returns_events(client_factory):
+    events = [TrackStatusEvent(t=0.0, status="1", message="AllClear")]
+    app = client_factory(session_repo=FakeSessionRepository(track_status=events))
+    resp = app.test_client().get("/api/track-status/2026/1")
+    assert resp.status_code == 200
+    assert resp.get_json()["track_status"] == [{"t": 0.0, "status": "1", "message": "AllClear"}]
+
+
+def test_track_status_route_returns_404_when_unavailable(client_factory):
+    app = client_factory(
+        session_repo=FakeSessionRepository(track_status_error=SessionNotFoundError("No track status data available"))
+    )
+    resp = app.test_client().get("/api/track-status/2026/1")
+    assert resp.status_code == 404
+    assert resp.get_json() == {"status": "error", "message": "No track status data available"}
 
 
 def test_drivers_route_returns_roster_with_color(client_factory):

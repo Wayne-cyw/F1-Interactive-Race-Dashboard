@@ -19,6 +19,7 @@ from interface_adapters.controllers.standings_controller import StandingsControl
 from interface_adapters.controllers.teams_controller import TeamsController
 from interface_adapters.controllers.telemetry_controller import TelemetryController
 from interface_adapters.controllers.track_controller import TrackController
+from interface_adapters.controllers.track_status_controller import TrackStatusController
 from interface_adapters.controllers.weather_controller import WeatherController
 from interface_adapters.gateways.clock import Clock
 from interface_adapters.gateways.pitstop_repository import PitstopRepository
@@ -38,6 +39,7 @@ from use_cases.get_standings import GetStandingsUseCase
 from use_cases.get_teams import GetTeamsUseCase
 from use_cases.get_telemetry import GetTelemetryUseCase
 from use_cases.get_track import GetTrackUseCase
+from use_cases.get_track_status import GetTrackStatusUseCase
 from use_cases.get_weather import GetWeatherUseCase
 
 
@@ -161,6 +163,13 @@ def create_app(
         "/api/positions/<int:year>/<int:race_round>",
         endpoint="positions_route",
         view_func=PositionsController(positions_use_case).handle,
+    )
+
+    track_status_use_case = GetTrackStatusUseCase(session_repo)
+    app.add_url_rule(
+        "/api/track-status/<int:year>/<int:race_round>",
+        endpoint="track_status_route",
+        view_func=TrackStatusController(track_status_use_case).handle,
     )
 
     drivers_use_case = GetDriversUseCase(session_repo)

@@ -307,5 +307,19 @@ class FastF1Gateway(
 
     @lru_cache(maxsize=50)
     def get_track_status(self, year: int, race_round: int) -> list[TrackStatusEvent]:
-        # To be implemented in Task 3
-        return []
+        session = self._load_session(year, race_round, "R")
+        status_df = getattr(session, "track_status", None)
+        if status_df is None or status_df.empty:
+            raise SessionNotFoundError("No track status data available")
+
+        t0 = self._green_flag_t0(session)
+        events = []
+        for row in status_df.sort_values("Time").itertuples():
+            events.append(
+                TrackStatusEvent(
+                    t=(row.Time - t0).total_seconds(),
+                    status=str(row.Status),
+                    message=str(row.Message) if pd.notna(row.Message) else "",
+                )
+            )
+        return events
