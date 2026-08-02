@@ -10,7 +10,7 @@ function StatTile({ label, value, unit }) {
     )
 }
 
-export default function TelemetryTab({ drivers, selected, onSelectDriver, speedPolyBig, throttlePolyBig, brakePolyBig, topSpeed, avgSpeed, drsCount }) {
+export default function TelemetryTab({ drivers, selected, onSelectDriver, speedPolyBig, throttlePolyBig, brakePolyBig, topSpeed, avgSpeed, drsCount, currentGear }) {
     const [driverListWidth, onDriverListResize] = useResizableWidth(260, { min: 200, max: 420, edge: 'right' })
 
     return (
@@ -41,7 +41,7 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedP
                     <StatTile label="TOP SPEED" value={topSpeed} unit="km/h" />
                     <StatTile label="AVG SPEED" value={avgSpeed} unit="km/h" />
                     <StatTile label="DRS ACTIVATIONS" value={drsCount} />
-                    <StatTile label="CURRENT GEAR" value={selected.gear} />
+                    <StatTile label="CURRENT GEAR" value={currentGear ?? '—'} />
                 </div>
 
                 <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 8 }}>SPEED (km/h) · LAP TRACE</div>

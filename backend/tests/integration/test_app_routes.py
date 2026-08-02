@@ -6,6 +6,7 @@ from entities.calendar import RaceEvent
 from entities.driver import Driver
 from entities.errors import SessionNotFoundError
 from entities.pitstop import PitStopEvent
+from entities.positions import DriverPositions, PositionPoint
 from entities.session import DriverResult, Lap, SessionData, SessionInfo, SessionTypeInfo
 from entities.team import Team, TeamDriver
 from entities.telemetry import TelemetryData, TelemetryPoint
@@ -73,7 +74,7 @@ def test_session_types_route_returns_available_types(client_factory):
 def test_session_route_returns_laps_and_results(client_factory):
     data = SessionData(
         session_info=SessionInfo(name="Bahrain Grand Prix", country="Bahrain", location="Sakhir", session_type="R"),
-        laps=[Lap(driver="VER", lap_number=1, lap_time=91.2, position=1, compound="SOFT", team="Red Bull Racing")],
+        laps=[Lap(driver="VER", lap_number=1, lap_time=91.2, position=1, compound="SOFT", team="Red Bull Racing", sector_1_time=28.4, sector_2_time=33.1, sector_3_time=29.7, session_time=0.0)],
         results=[DriverResult(driver="VER", driver_name="Max Verstappen", team="Red Bull Racing", position=1, points=25.0, status="Finished")],
         total_laps=57,
     )
@@ -84,6 +85,12 @@ def test_session_route_returns_laps_and_results(client_factory):
     assert body["session"] == {"name": "Bahrain Grand Prix", "country": "Bahrain", "location": "Sakhir", "session_type": "R"}
     assert body["results"][0]["team_color"] == "#3671C6"
     assert body["total_laps"] == 57
+    assert body["laps"][0]["sector_1_time"] == 28.4
+    assert body["laps"][0]["sector_2_time"] == 33.1
+    assert body["laps"][0]["sector_3_time"] == 29.7
+    assert body["laps"][0]["gap_to_leader"] == 0.0
+    assert body["laps"][0]["session_time"] == 0.0
+    assert body["race_duration_seconds"] == 91.2
 
 
 def test_weather_route_returns_latest_reading(client_factory):
@@ -102,11 +109,13 @@ def test_weather_route_returns_404_when_unavailable(client_factory):
 
 
 def test_telemetry_route_returns_sampled_points(client_factory):
-    data = TelemetryData(driver="VER", lap_number=32, lap_time=91.234, points=[TelemetryPoint(distance=0.0, speed=290.5, throttle=100.0, brake=False, gear=7, rpm=11500.0, drs=1)])
+    data = TelemetryData(driver="VER", points=[TelemetryPoint(t=12.5, speed=290.5, throttle=100.0, brake=False, gear=7, rpm=11500.0, drs=1)])
     app = client_factory(session_repo=FakeSessionRepository(telemetry=data))
     resp = app.test_client().get("/api/telemetry/2026/1/R/VER")
     assert resp.status_code == 200
-    assert resp.get_json()["telemetry"][0]["speed"] == 290.5
+    body = resp.get_json()
+    assert body["telemetry"][0]["speed"] == 290.5
+    assert body["telemetry"][0]["t"] == 12.5
 
 
 def test_telemetry_route_returns_404_when_no_laps(client_factory):
@@ -168,6 +177,21 @@ def test_track_route_returns_404_when_no_lap_data(client_factory):
     resp = app.test_client().get("/api/track/2026/1")
     assert resp.status_code == 404
     assert resp.get_json() == {"status": "error", "message": "No valid lap data available"}
+
+
+def test_positions_route_returns_driver_points(client_factory):
+    data = [DriverPositions(driver="VER", points=[PositionPoint(t=0.0, x=100.0, y=200.0)])]
+    app = client_factory(session_repo=FakeSessionRepository(positions=data))
+    resp = app.test_client().get("/api/positions/2026/1")
+    assert resp.status_code == 200
+    assert resp.get_json()["drivers"][0] == {"driver": "VER", "points": [{"t": 0.0, "x": 100.0, "y": 200.0}]}
+
+
+def test_positions_route_returns_404_when_unavailable(client_factory):
+    app = client_factory(session_repo=FakeSessionRepository(positions_error=SessionNotFoundError("No position data available")))
+    resp = app.test_client().get("/api/positions/2026/1")
+    assert resp.status_code == 404
+    assert resp.get_json() == {"status": "error", "message": "No position data available"}
 
 
 def test_drivers_route_returns_roster_with_color(client_factory):

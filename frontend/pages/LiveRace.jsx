@@ -1,18 +1,22 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import TopBar from './live-race/TopBar'
 import TabNav from './live-race/TabNav'
 import OverviewTab from './live-race/OverviewTab'
 import TimingTab from './live-race/TimingTab'
 import StrategyTab from './live-race/StrategyTab'
 import TelemetryTab from './live-race/TelemetryTab'
-import { DEFAULT_RACE_ID, RACES, fmtClock } from './live-race/mockData'
-import { useRaceCenterData } from './live-race/useRaceCenterData'
+import PlaybackBar from './live-race/PlaybackBar'
+import { useRaceReplay } from './live-race/useRaceReplay'
+import { useDriverTelemetry } from './live-race/useDriverTelemetry'
+import { buildLeaderboardRows } from './live-race/leaderboardData'
+import { buildPitLog, buildTireStints } from './live-race/stints'
+import { buildTrackPath } from './live-race/trackMap'
+import { deriveLapStartTime } from './live-race/raceClock'
+import { sliceTelemetry } from './live-race/telemetrySlice'
 
 const FONT_LINK_ID = 'race-center-fonts'
 const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap'
 
-// Loads the Race Center's fonts only while this page is mounted, so the rest
-// of the app's font choices are unaffected.
 function useRaceCenterFonts() {
     useEffect(() => {
         if (document.getElementById(FONT_LINK_ID)) return
@@ -38,63 +42,147 @@ export default function LiveRace() {
     useRaceCenterFonts()
 
     const [activeTab, setActiveTab] = useState('overview')
-    const [selectedDriverId, setSelectedDriverId] = useState(1)
-    const [sessionSeconds, setSessionSeconds] = useState(0)
-    const [selectedRaceId, setSelectedRaceId] = useState(DEFAULT_RACE_ID)
+    const [selectedDriverId, setSelectedDriverId] = useState(null)
 
-    // Placeholder race state/weather — a following pass wires these to real
-    // track-status and weather data instead of a fixed value.
-    const [raceState] = useState('green')
-    const [weather] = useState('dry')
+    const replay = useRaceReplay()
+    const { points: telemetryPoints } = useDriverTelemetry(replay.year, replay.round, selectedDriverId)
 
+    const drivers = useMemo(() => {
+        if (!replay.sessionData) return []
+        return buildLeaderboardRows({
+            laps: replay.sessionData.laps,
+            results: replay.sessionData.results,
+            pitstops: replay.pitstops,
+            currentLap: replay.currentLap,
+            selectedDriverId,
+        })
+    }, [replay.sessionData, replay.pitstops, replay.currentLap, selectedDriverId])
+
+    // Default the selected driver to the race leader once data first loads,
+    // and re-default if a season switch drops the previously-selected driver
+    // (e.g. they didn't race in the newly selected year).
     useEffect(() => {
-        const timer = setInterval(() => setSessionSeconds(s => s + 1), 1000)
-        return () => clearInterval(timer)
-    }, [])
+        if (drivers.length === 0) return
+        if (!selectedDriverId || !drivers.some(d => d.id === selectedDriverId)) {
+            setSelectedDriverId(drivers[0].id)
+        }
+    }, [drivers, selectedDriverId])
 
-    const {
-        drivers, selected, pitLog, totalLaps,
-        speedPoly, speedPolyBig, throttlePolyBig, brakePolyBig,
-        topSpeed, avgSpeed, drsCount,
-    } = useRaceCenterData(selectedDriverId)
+    const selected = drivers.find(d => d.id === selectedDriverId) ?? null
+
+    const pitLog = useMemo(
+        () => buildPitLog(replay.pitstops, replay.currentLap),
+        [replay.pitstops, replay.currentLap]
+    )
+
+    const stintsByDriver = useMemo(
+        () => replay.sessionData
+            ? buildTireStints({ pitstops: replay.pitstops, results: replay.sessionData.results, laps: replay.sessionData.laps, currentLap: replay.currentLap, totalLaps: replay.totalLaps })
+            : {},
+        [replay.sessionData, replay.pitstops, replay.currentLap, replay.totalLaps]
+    )
+    const driversWithStints = useMemo(
+        () => drivers.map(d => ({ ...d, stints: stintsByDriver[d.id] ?? [] })),
+        [drivers, stintsByDriver]
+    )
+
+    const trackPath = useMemo(
+        () => buildTrackPath(replay.track?.coordinates ?? []),
+        [replay.track]
+    )
+
+    const positionsByDriver = useMemo(
+        () => Object.fromEntries((replay.positions ?? []).map(d => [d.driver, d.points])),
+        [replay.positions]
+    )
+
+    const driverLaps = useMemo(
+        () => replay.sessionData ? replay.sessionData.laps.filter(l => l.driver === selectedDriverId) : [],
+        [replay.sessionData, selectedDriverId]
+    )
+    const lapStartTime = useMemo(
+        () => deriveLapStartTime(replay.elapsedSeconds, driverLaps),
+        [replay.elapsedSeconds, driverLaps]
+    )
+    const telemetry = useMemo(
+        () => sliceTelemetry(telemetryPoints, replay.elapsedSeconds, lapStartTime),
+        [telemetryPoints, replay.elapsedSeconds, lapStartTime]
+    )
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#faf9f6', color: '#191b1e', fontFamily: 'Inter, system-ui, sans-serif' }}>
             <TopBar
-                races={RACES}
-                selectedRaceId={selectedRaceId}
-                onSelectRace={setSelectedRaceId}
-                currentLap={42}
-                totalLaps={totalLaps}
-                sessionClock={fmtClock(sessionSeconds)}
-                raceState={raceState}
-                weather={weather}
-                trackTemp={41}
-                airTemp={24}
+                seasons={replay.seasons}
+                races={replay.races}
+                year={replay.year}
+                round={replay.round}
+                onSelectYear={replay.selectYear}
+                onSelectRace={round => replay.selectRace(replay.year, round)}
+                weather={replay.weather}
+                raceName={replay.raceName}
             />
             <TabNav activeTab={activeTab} onChange={setActiveTab} />
 
-            {activeTab === 'overview' && (
-                <OverviewTab drivers={drivers} selected={selected} onSelectDriver={setSelectedDriverId} speedPoly={speedPoly} />
+            {replay.loading && (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8b8880' }}>
+                    Loading {replay.raceName || 'race'}… (first load of a race can take 30–60s)
+                </div>
             )}
-            {activeTab === 'timing' && (
-                <TimingTab drivers={drivers} onSelectDriver={setSelectedDriverId} />
+            {!replay.loading && replay.error && (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c23b3b' }}>
+                    Couldn't load this race: {replay.error}. Pick a different race above.
+                </div>
             )}
-            {activeTab === 'strategy' && (
-                <StrategyTab drivers={drivers} pitLog={pitLog} />
+            {!replay.loading && !replay.error && !selected && (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8b8880' }}>
+                    No driver data available for this session.
+                </div>
             )}
-            {activeTab === 'telemetry' && (
-                <TelemetryTab
-                    drivers={drivers}
-                    selected={selected}
-                    onSelectDriver={setSelectedDriverId}
-                    speedPolyBig={speedPolyBig}
-                    throttlePolyBig={throttlePolyBig}
-                    brakePolyBig={brakePolyBig}
-                    topSpeed={topSpeed}
-                    avgSpeed={avgSpeed}
-                    drsCount={drsCount}
-                />
+            {!replay.loading && !replay.error && selected && (
+                <>
+                    {activeTab === 'overview' && (
+                        <OverviewTab
+                            drivers={driversWithStints}
+                            selected={selected}
+                            onSelectDriver={setSelectedDriverId}
+                            trackPath={trackPath}
+                            positions={positionsByDriver}
+                            elapsedSeconds={replay.elapsedSeconds}
+                            telemetry={telemetry}
+                        />
+                    )}
+                    {activeTab === 'timing' && (
+                        <TimingTab drivers={driversWithStints} onSelectDriver={setSelectedDriverId} />
+                    )}
+                    {activeTab === 'strategy' && (
+                        <StrategyTab drivers={driversWithStints} pitLog={pitLog} currentLap={replay.currentLap} totalLaps={replay.totalLaps} />
+                    )}
+                    {activeTab === 'telemetry' && (
+                        <TelemetryTab
+                            drivers={driversWithStints}
+                            selected={selected}
+                            onSelectDriver={setSelectedDriverId}
+                            speedPolyBig={telemetry?.speedPolyBig ?? ''}
+                            throttlePolyBig={telemetry?.throttlePolyBig ?? ''}
+                            brakePolyBig={telemetry?.brakePolyBig ?? ''}
+                            topSpeed={telemetry?.topSpeed ?? 0}
+                            avgSpeed={telemetry?.avgSpeed ?? 0}
+                            drsCount={telemetry?.drsCount ?? 0}
+                            currentGear={telemetry?.current?.gear ?? null}
+                        />
+                    )}
+                    <PlaybackBar
+                        isPlaying={replay.isPlaying}
+                        onPlayPause={() => (replay.isPlaying ? replay.pause() : replay.play())}
+                        elapsedSeconds={replay.elapsedSeconds}
+                        totalDurationSeconds={replay.totalDurationSeconds}
+                        currentLap={replay.currentLap}
+                        totalLaps={replay.totalLaps}
+                        onSeek={replay.seekToSeconds}
+                        playbackSpeed={replay.playbackSpeed}
+                        onSpeedChange={replay.setPlaybackSpeed}
+                    />
+                </>
             )}
         </div>
     )

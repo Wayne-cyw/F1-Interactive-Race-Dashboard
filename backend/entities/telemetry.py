@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class TelemetryPoint:
-    distance: float | None
+    t: float
     speed: float | None
     throttle: float | None
     brake: bool
@@ -15,6 +15,4 @@ class TelemetryPoint:
 @dataclass(frozen=True)
 class TelemetryData:
     driver: str
-    lap_number: int
-    lap_time: float
     points: list[TelemetryPoint]

@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from entities.driver import Driver
+from entities.positions import DriverPositions
 from entities.session import SessionData, SessionTypeInfo
 from entities.telemetry import TelemetryData
 from entities.track import TrackLayout
@@ -25,4 +26,8 @@ class SessionRepository(ABC):
 
     @abstractmethod
     def get_driver_roster(self, year: int, race_round: int) -> list[Driver]:
+        ...
+
+    @abstractmethod
+    def get_race_positions(self, year: int, race_round: int) -> list[DriverPositions]:
         ...

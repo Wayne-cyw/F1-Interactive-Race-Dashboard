@@ -9,6 +9,7 @@ from entities.calendar import RaceEvent
 from entities.driver import Driver
 from entities.errors import SessionNotFoundError
 from entities.pitstop import PitStopEvent
+from entities.positions import DriverPositions, PositionPoint
 from entities.session import DriverResult, Lap, SessionData, SessionInfo, SessionTypeInfo
 from entities.team import Team, TeamDriver
 from entities.telemetry import TelemetryData, TelemetryPoint
@@ -49,6 +50,22 @@ class FastF1Gateway(
         session.load()
         logger.info(f"Session loaded: {year} Round {race_round}")
         return session
+
+    @staticmethod
+    def _green_flag_t0(session):
+        laps = session.laps
+        if "LapStartTime" not in laps.columns:
+            return pd.Timedelta(0)
+        lap_one = laps[(laps["LapNumber"] == 1) & laps["LapStartTime"].notna()]
+        if lap_one.empty:
+            return pd.Timedelta(0)
+        return lap_one["LapStartTime"].min()
+
+    @staticmethod
+    def _resample_half_second(df, time_col):
+        df = df[df[time_col].notna()]
+        bucket = (df[time_col].dt.total_seconds() // 0.5).astype(int)
+        return df.groupby(bucket).first()
 
     @staticmethod
     def _driver_result_from_row(row) -> DriverResult:
@@ -98,7 +115,11 @@ class FastF1Gateway(
     def get_session_data(self, year: int, race_round: int, session_type: str) -> SessionData:
         session = self._load_session(year, race_round, session_type)
         laps_df = session.laps
-        needed_cols = ["Driver", "LapNumber", "LapTime", "Position", "Compound", "Team"]
+        t0 = self._green_flag_t0(session)
+        needed_cols = [
+            "Driver", "LapNumber", "LapTime", "Position", "Compound", "Team",
+            "Sector1Time", "Sector2Time", "Sector3Time", "LapStartTime",
+        ]
         available_cols = [c for c in needed_cols if c in laps_df.columns]
         laps_subset = laps_df[available_cols].copy()
         if "LapTime" in laps_subset.columns:
@@ -114,6 +135,10 @@ class FastF1Gateway(
                     position=int(lap["Position"]) if "Position" in lap.index and pd.notna(lap["Position"]) else None,
                     compound=(lap["Compound"] if pd.notna(lap["Compound"]) else "UNKNOWN") if "Compound" in lap.index else None,
                     team=lap["Team"] if "Team" in lap.index else None,
+                    sector_1_time=lap["Sector1Time"].total_seconds() if "Sector1Time" in lap.index and pd.notna(lap["Sector1Time"]) else None,
+                    sector_2_time=lap["Sector2Time"].total_seconds() if "Sector2Time" in lap.index and pd.notna(lap["Sector2Time"]) else None,
+                    sector_3_time=lap["Sector3Time"].total_seconds() if "Sector3Time" in lap.index and pd.notna(lap["Sector3Time"]) else None,
+                    session_time=(lap["LapStartTime"] - t0).total_seconds() if "LapStartTime" in lap.index and pd.notna(lap["LapStartTime"]) else None,
                 )
             )
 
@@ -132,30 +157,37 @@ class FastF1Gateway(
         driver_laps = session.laps.pick_driver(driver_code)
         if driver_laps.empty:
             raise SessionNotFoundError(f"No laps found for {driver_code}")
-        fastest_lap = driver_laps.pick_fastest()
-        if fastest_lap is None or fastest_lap.empty:
-            raise SessionNotFoundError("No valid fastest lap")
 
-        telemetry_df = fastest_lap.get_telemetry()
-        sampled = telemetry_df.iloc[::10]
-        points = [
-            TelemetryPoint(
-                distance=float(p["Distance"]) if pd.notna(p.get("Distance")) else None,
-                speed=float(p["Speed"]) if pd.notna(p.get("Speed")) else None,
-                throttle=float(p["Throttle"]) if pd.notna(p.get("Throttle")) else None,
-                brake=bool(p["Brake"]) if pd.notna(p.get("Brake")) else False,
-                gear=int(p["nGear"]) if pd.notna(p.get("nGear")) else None,
-                rpm=float(p["RPM"]) if pd.notna(p.get("RPM")) else None,
-                drs=int(p["DRS"]) if pd.notna(p.get("DRS")) else 0,
+        driver_number = driver_laps["DriverNumber"].iloc[0]
+        car = session.car_data.get(driver_number)
+        if car is None or car.empty:
+            raise SessionNotFoundError(f"No telemetry found for {driver_code}")
+
+        t0 = self._green_flag_t0(session)
+        resampled = self._resample_half_second(car, "SessionTime")
+        points = []
+        for row in resampled.itertuples():
+            t = (row.SessionTime - t0).total_seconds()
+            if t < 0:
+                continue
+            speed = getattr(row, "Speed", None)
+            throttle = getattr(row, "Throttle", None)
+            brake = getattr(row, "Brake", None)
+            gear = getattr(row, "nGear", None)
+            rpm = getattr(row, "RPM", None)
+            drs = getattr(row, "DRS", None)
+            points.append(
+                TelemetryPoint(
+                    t=t,
+                    speed=float(speed) if pd.notna(speed) else None,
+                    throttle=float(throttle) if pd.notna(throttle) else None,
+                    brake=bool(brake) if pd.notna(brake) else False,
+                    gear=int(gear) if pd.notna(gear) else None,
+                    rpm=float(rpm) if pd.notna(rpm) else None,
+                    drs=int(drs) if pd.notna(drs) else 0,
+                )
             )
-            for _, p in sampled.iterrows()
-        ]
-        return TelemetryData(
-            driver=driver_code,
-            lap_number=int(fastest_lap["LapNumber"]),
-            lap_time=fastest_lap["LapTime"].total_seconds(),
-            points=points,
-        )
+        return TelemetryData(driver=driver_code, points=points)
 
     def get_track_layout(self, year: int, race_round: int) -> TrackLayout:
         session = self._load_session(year, race_round, "R")
@@ -240,3 +272,34 @@ class FastF1Gateway(
             Driver(code=r["Abbreviation"], name=r["FullName"], team=r["TeamName"])
             for _, r in results.iterrows()
         ]
+
+    @lru_cache(maxsize=50)
+    def get_race_positions(self, year: int, race_round: int) -> list[DriverPositions]:
+        session = self._load_session(year, race_round, "R")
+        if session.pos_data is None or len(session.pos_data) == 0:
+            raise SessionNotFoundError("No position data available")
+
+        t0 = self._green_flag_t0(session)
+        result = []
+        for drv in session.drivers:
+            pos = session.pos_data.get(drv)
+            if pos is None or pos.empty:
+                continue
+            driver_rows = session.laps[session.laps["DriverNumber"] == drv]
+            if driver_rows.empty:
+                continue
+            driver_code = driver_rows["Driver"].iloc[0]
+
+            resampled = self._resample_half_second(pos, "SessionTime")
+            points = []
+            for row in resampled.itertuples():
+                x = getattr(row, "X", None)
+                y = getattr(row, "Y", None)
+                if pd.isna(x) or pd.isna(y):
+                    continue
+                t = (row.SessionTime - t0).total_seconds()
+                if t < 0:
+                    continue
+                points.append(PositionPoint(t=t, x=float(x), y=float(y)))
+            result.append(DriverPositions(driver=driver_code, points=points))
+        return result

@@ -54,7 +54,7 @@ Clean Architecture layering — see `docs/superpowers/specs/2026-07-31-backend-c
 
 All API responses include gzip compression via `flask-compress`. CORS is enabled globally. HTTP contract (routes, JSON shapes, status codes) is unchanged from the pre-restructure monolith.
 
-**Frontend endpoint usage (checked at cutover, 2026-07-31):** `grep -rn "API_URL\|fetch(" frontend --include="*.jsx" --include="*.js" | grep -v node_modules` no longer returns zero matches — frontend wiring landed after this plan was written. All 11 endpoints below are now actively called by real pages: `/api/seasons`, `/api/races/<year>`, `/api/session-types/<year>/<round>`, `/api/session/<year>/<round>/<type>`, `/api/telemetry/<year>/<round>/<type>/<driver>`, `/api/drivers/<year>/<round>`, and `/api/standings/<year>` from `Dashboard.jsx`/`LiveRace.jsx`/`Standings.jsx`; `/api/teams/<year>` from `Teams.jsx`; `/api/track/<year>/<race>` from `three/Track3D.jsx` (via `Track3DCanvas`); `/api/weather/<year>/<race>` from `components/live/WeatherWidget.jsx`; `/api/pitstops/<year>/<race>` from `components/live/PitStopTracker.jsx` — all rendered inside `LiveRace.jsx`. None of the 11 are safe removal candidates. Note: `frontend/components/LiveComponents.js` also references `/api/pitstops`, `/api/weather`, `/api/track` via hardcoded `http://localhost:5000/api/...` URLs, but that file is not imported anywhere (`window.LiveComponents = {...}` self-assignment only) — it is dead legacy code, not live-app usage. Re-run the grep above before assuming any endpoint's usage has changed.
+**Frontend endpoint usage (checked after connecting Race Center to the backend, 2026-08-01):** the Race Center (`frontend/pages/LiveRace.jsx` and everything under `frontend/pages/live-race/`) now actively calls `/api/seasons`, `/api/races/<year>`, `/api/session/<year>/<round>/R`, `/api/pitstops/<year>/<round>`, `/api/weather/<year>/<round>`, `/api/track/<year>/<round>`, `/api/positions/<year>/<round>`, and `/api/telemetry/<year>/<round>/R/<driver>` — all via `useRaceReplay.js` and `useDriverTelemetry.js`. `/api/session-types`, `/api/standings`, `/api/teams`, and `/api/drivers` currently have no frontend consumer (Race Center always requests session type `R`, and has no standings/teams/roster views).
 
 API base URL: `http://localhost:5000/api` (or `/api` after Vite proxy is configured)
 
@@ -65,7 +65,8 @@ Key endpoints:
 | `GET /api/races/<year>` | Race schedule for a season |
 | `GET /api/session/<year>/<round>/<type>` | Full session data (laps, results, pit stops) |
 | `GET /api/session-types/<year>/<round>` | Which sessions exist (R/Q/S/FP1-3) |
-| `GET /api/telemetry/<year>/<round>/<type>/<driver>` | Speed, throttle, distance arrays |
+| `GET /api/telemetry/<year>/<round>/<type>/<driver>` | Full-session speed/throttle/brake/gear/rpm/DRS points, each with `t` (seconds since green flag) |
+| `GET /api/positions/<year>/<round>` | Per-driver `{t, x, y}` GPS position timeline, 2Hz, relative to green flag |
 | `GET /api/track/<year>/<race>` | Track outline as `{x, y}` coordinate array |
 | `GET /api/standings/<year>` | Driver + constructor championship tables |
 | `GET /api/teams/<year>` | Team rosters with driver codes |
@@ -78,13 +79,20 @@ Fully bundled SPA — no router, no other pages. `frontend/` is the Vite root. E
 **Key files:**
 - `frontend/App.jsx` — renders `<LiveRace />` directly, nothing else
 - `frontend/pages/LiveRace.jsx` — the entire app: page-level state (active tab, selected driver, session clock) and composition of the sections below
-- `frontend/pages/live-race/mockData.js` — placeholder driver/pit-stop data plus `genTrace`/`toPolyline`/`fmtClock` helpers
-- `frontend/pages/live-race/useRaceCenterData.js` — derives display-ready driver rows, selected-driver telemetry traces, and strategy bar geometry
-- `frontend/pages/live-race/{TopBar,TabNav,OverviewTab,TimingTab,StrategyTab,TelemetryTab}.jsx` — one component per section; each tab is plain HTML/SVG with inline styles (no Canvas, no Three.js)
+- `frontend/pages/live-race/useRaceReplay.js` — season/race selection, session bundle fetching (`/session`, `/pitstops`, `/weather`, `/track`, `/positions`), and real-time playback state (`elapsedSeconds`, `totalDurationSeconds`, `isPlaying`, `play`/`pause`/`seekToSeconds`, `playbackSpeed`/`setPlaybackSpeed`); a `clockEpoch` counter forces the animation-loop effect to restart on every external write to `elapsedSeconds` (race switch, seek, restart-from-end), since `isPlaying`/`totalDurationSeconds` alone don't reliably change on those events
+- `frontend/pages/live-race/useDriverTelemetry.js` — fetches the selected driver's raw full-session telemetry points from `/api/telemetry` once per driver selection (no derivation — see `telemetrySlice.js`)
+- `frontend/pages/live-race/telemetrySlice.js` — `sliceTelemetry` derives what the UI needs at the current `elapsedSeconds` from those raw points: whole-race-so-far stats (top/avg speed, DRS activation count) and a current-lap-so-far polyline trace
+- `frontend/pages/live-race/leaderboardData.js` — derives display-ready driver rows from real session/pitstop data, scoped to laps completed so far
+- `frontend/pages/live-race/stints.js` — tire stint + pit log derivation from pit stops and lap compounds
+- `frontend/pages/live-race/raceClock.js` — `deriveCurrentLap`/`deriveLapStartTime` bridge the real-time `elapsedSeconds` clock to the lap-based leaderboard/strategy pipeline and to per-driver lap-scoped telemetry slicing
+- `frontend/pages/live-race/trackMap.js` — normalizes `/api/track` GPS coordinates into scene-space SVG path data; also exposes `toSvgPoint` (reused to place live car positions in the same SVG space) and `interpolatePosition` (binary-search + linear interpolation over a driver's real `/api/positions` GPS samples to get their position at any `t`)
+- `frontend/utils/api.js` — shared `fetchJSON` wrapper (base URL, error handling)
+- `frontend/pages/live-race/{TopBar,TabNav,OverviewTab,TimingTab,StrategyTab,TelemetryTab}.jsx` — one component per section; each tab is plain HTML/SVG with inline styles (no Canvas, no Three.js). `TopBar.jsx` is just race/year selects + weather — playback controls live in `PlaybackBar.jsx`, not here
+- `frontend/pages/live-race/PlaybackBar.jsx` — persistent playback bar rendered outside the tab-switch conditional: play/pause, scrubber, speed control
 - `frontend/pages/live-race/Leaderboard.jsx` — used by OverviewTab; below `COMPACT_WIDTH_THRESHOLD` (380px) it drops the position, last-lap, and tire+age columns, showing only driver name + gap. Driven by the same width state as its resize handle, so it responds live while dragging.
 - `frontend/pages/live-race/useResizableWidth.js` / `useResizableHeight.js` + `ResizeHandle.jsx` (`orientation="vertical"|"horizontal"`) — shared drag-to-resize primitives. Overview (leaderboard + telemetry columns, plus the Sector Deltas panel's height), Strategy (pit log column), and Telemetry (driver list column) all use them; resize state is local to each tab and resets when you navigate away and back (tabs unmount on switch). Timing has no resizable panels.
 
-**All data is currently placeholder/generated, not wired to the backend yet.** Next step: wire `useRaceCenterData` to real `/api` endpoints (standings, session, telemetry, pitstops) in place of `mockData.js`.
+The Race Center now replays real historical race data via `useRaceReplay` as a real-time, second-by-second playback (1 played second = 1 real race second) — car positions come from real GPS telemetry (`/api/positions`), not a schematic approximation, and the selected driver's telemetry panel updates continuously. Still not true live data, since FastF1 only serves completed sessions.
 
 **Removed (no longer part of the app):** the Dashboard/Standings/Teams pages, `TopNav`/`Sidebar` navigation, `Background3D`/`Hero3D` (Three.js decorative backgrounds), `Charts.jsx` (chart.js wrapper), and the pre-Vite legacy HTML files (`live.html`, `standings.html`, `teams.html`, `debug.html`, `test.html`). The backend's other endpoints (`/api/races`, `/api/standings`, `/api/teams`, etc.) still exist and work — they just have no frontend consumer at the moment.
 
@@ -94,6 +102,7 @@ Fully bundled SPA — no router, no other pages. `frontend/` is the Vite root. E
 - All corner radii (buttons, badges, tiles, chart panels) are a consistent `10px`
 
 ### Key Gotchas
+- **Case-insensitive filename collisions break the build silently**: `frontend/pages/live-race/leaderboardData.js` is named that way, not `leaderboard.js`, specifically because `Leaderboard.jsx` already exists in the same directory. On a case-insensitive filesystem (macOS default), an extensionless import like `import Leaderboard from './Leaderboard'` gets resolved by Vite/Rollup trying the `.js` extension before `.jsx` — so it silently binds to the wrong file if a same-named `.js` module exists, producing a "default is not exported" build error that has nothing to do with the actual bug. Avoid creating a `.js` file with the same base name (case-insensitively) as an existing `.jsx` component.
 - **FastF1 first load**: The first time a session loads, FastF1 fetches from the F1 data API — can take 30–60 seconds. Subsequent loads read from `backend/cache/`.
 - **Track coordinates**: `/api/track` returns FastF1 GPS-derived `{x, y}` coordinates in meters (values can reach ±5000) — relevant if/when the Overview tab's track map is wired to real data instead of the mockup's fixed SVG path.
 - **`<body>` margin reset**: `frontend/index.html` has an inline `<style>` resetting `html, body` margin to 0. Deleting `styles.css` (see above) removed the app's only CSS reset — without it the browser's default 8px body margin adds 16px of phantom scroll height, which is exactly what made the single-viewport layout overflow until this was found. Don't remove this reset without re-checking that every tab still fits one viewport.
