@@ -24,7 +24,7 @@ export default function Leaderboard({ drivers, onSelectDriver, width }) {
         function captureTops() {
             const tops = new Map()
             rowRefs.current.forEach((node, id) => {
-                if (node) tops.set(id, node.getBoundingClientRect().top)
+                if (node) tops.set(id, node.offsetTop)
             })
             prevTops.current = tops
         }
@@ -44,7 +44,7 @@ export default function Leaderboard({ drivers, onSelectDriver, width }) {
             if (!node) return
             const prevTop = prevTops.current.get(id)
             if (prevTop == null) return
-            const newTop = node.getBoundingClientRect().top
+            const newTop = node.offsetTop
             const delta = prevTop - newTop
             if (delta === 0) return
 
