@@ -14,7 +14,7 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackPa
     const [sectorDeltasCollapsed, setSectorDeltasCollapsed] = useState(false)
 
     const carPositions = useMemo(
-        () => drivers.map(d => {
+        () => drivers.filter(d => !d.dnf).map(d => {
             const raw = interpolatePosition(positions[d.id], elapsedSeconds)
             const svg = raw ? trackPath.toSvgPoint(raw) : { x: 0, y: 0 }
             return { ...d, mx: svg.x, my: svg.y }
