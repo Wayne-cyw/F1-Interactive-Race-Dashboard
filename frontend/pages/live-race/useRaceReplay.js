@@ -5,12 +5,13 @@ import { deriveCurrentLap } from './raceClock'
 const RENDER_INTERVAL_MS = 33 // throttle re-renders to ~30Hz
 
 async function loadSessionBundle(year, round) {
-    const [sessionData, pitstopsBody, weatherBody, trackBody, positionsBody] = await Promise.all([
+    const [sessionData, pitstopsBody, weatherBody, trackBody, positionsBody, trackStatusBody] = await Promise.all([
         fetchJSON(`/session/${year}/${round}/R`),
         fetchJSON(`/pitstops/${year}/${round}`),
         fetchJSON(`/weather/${year}/${round}`),
         fetchJSON(`/track/${year}/${round}`),
         fetchJSON(`/positions/${year}/${round}`),
+        fetchJSON(`/track-status/${year}/${round}`),
     ])
     return {
         sessionData,
@@ -18,6 +19,7 @@ async function loadSessionBundle(year, round) {
         weather: weatherBody.weather,
         track: trackBody.track,
         positions: positionsBody.drivers,
+        trackStatus: trackStatusBody.track_status,
     }
 }
 
@@ -195,6 +197,7 @@ export function useRaceReplay() {
         weather: bundle?.weather ?? null,
         track: bundle?.track ?? null,
         positions: bundle?.positions ?? [],
+        trackStatus: bundle?.trackStatus ?? [],
         loading, error,
         currentLap, totalLaps, elapsedSeconds, totalDurationSeconds, isPlaying,
         play, pause, seekToSeconds,
