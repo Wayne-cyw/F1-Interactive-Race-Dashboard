@@ -127,11 +127,19 @@ def test_telemetry_route_returns_404_when_no_laps(client_factory):
 
 
 def test_pitstops_route_returns_events(client_factory):
-    events = [PitStopEvent(driver="VER", lap=18, from_compound="SOFT", to_compound="HARD", pit_duration=None)]
+    events = [
+        PitStopEvent(
+            driver="VER", lap=18, from_compound="SOFT", to_compound="HARD",
+            pit_duration=None, pit_in_time=1024.5, pit_out_time=1048.2,
+        )
+    ]
     app = client_factory(pitstop_repo=FakePitstopRepository(events=events))
     resp = app.test_client().get("/api/pitstops/2026/1")
     assert resp.status_code == 200
-    assert resp.get_json()["pit_stops"][0]["to_compound"] == "HARD"
+    body = resp.get_json()["pit_stops"][0]
+    assert body["to_compound"] == "HARD"
+    assert body["pit_in_time"] == 1024.5
+    assert body["pit_out_time"] == 1048.2
 
 
 def test_standings_route_returns_ranked_drivers_and_teams(client_factory):
