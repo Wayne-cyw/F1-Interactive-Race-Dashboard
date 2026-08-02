@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { fetchJSON } from '../../utils/api'
 import { deriveCurrentLap } from './raceClock'
 
-const RENDER_INTERVAL_MS = 200 // throttle re-renders to 5Hz
+const RENDER_INTERVAL_MS = 33 // throttle re-renders to ~30Hz
 
 async function loadSessionBundle(year, round) {
     const [sessionData, pitstopsBody, weatherBody, trackBody, positionsBody] = await Promise.all([
