@@ -69,19 +69,19 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackPa
                     </div>
                     <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
                         <div>
-                            <div style={{ fontSize: 10.5, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 4 }}>SPEED · LAST 15S</div>
+                            <div style={{ fontSize: 10.5, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 4 }}>SPEED</div>
                             <svg viewBox="0 0 300 90" style={{ width: '100%', height: 70 }}>
                                 <polyline points={telemetry?.speedRollingPoly ?? ''} fill="none" stroke="oklch(50% .16 230)" strokeWidth="2" />
                             </svg>
                         </div>
                         <div>
-                            <div style={{ fontSize: 10.5, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 4 }}>THROTTLE · LAST 15S</div>
+                            <div style={{ fontSize: 10.5, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 4 }}>THROTTLE</div>
                             <svg viewBox="0 0 300 60" style={{ width: '100%', height: 46 }}>
                                 <polyline points={telemetry?.throttleRollingPoly ?? ''} fill="none" stroke="oklch(48% .13 155)" strokeWidth="2" />
                             </svg>
                         </div>
                         <div>
-                            <div style={{ fontSize: 10.5, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 4 }}>BRAKE · LAST 15S</div>
+                            <div style={{ fontSize: 10.5, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 4 }}>BRAKE</div>
                             <svg viewBox="0 0 300 60" style={{ width: '100%', height: 46 }}>
                                 <polyline points={telemetry?.brakeRollingPoly ?? ''} fill="none" stroke="oklch(55% .18 25)" strokeWidth="2" />
                             </svg>
