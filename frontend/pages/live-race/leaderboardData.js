@@ -75,7 +75,6 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
             tire: compoundToTireCode(latestLap.compound),
             age: latestLap.lap_number - lastPitLap,
             pits: driverPitstops.length,
-            top5: !dnf && latestLap.position != null && latestLap.position <= 3,
             dnf,
             _revealAtSeconds: dnfEntry?.revealAtSeconds ?? null,
             _lastLapEndSeconds: dnfEntry?.lastLapEndSeconds ?? null,
