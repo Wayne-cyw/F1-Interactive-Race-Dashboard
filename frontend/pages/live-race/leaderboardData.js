@@ -3,6 +3,8 @@ const COMPOUND_CODES = { SOFT: 'S', MEDIUM: 'M', HARD: 'H', INTERMEDIATE: 'I', W
 const BEST_SECTOR_COLOR = 'oklch(52% .18 300)'
 const NORMAL_SECTOR_COLOR = '#d9a300'
 
+import { isRevealed } from './dnf'
+
 export function formatLapTime(seconds) {
     if (seconds == null) return '—'
     const m = Math.floor(seconds / 60)
@@ -34,7 +36,7 @@ export function formatDriverName(fullName) {
 // Turns raw session laps/results/pitstops into the exact presentational
 // shape Leaderboard/TimingTab/TelemetryTab already render, scoped to laps
 // completed so far (lap_number <= currentLap) — the replay's "now".
-export function buildLeaderboardRows({ laps, results, pitstops, currentLap, selectedDriverId }) {
+export function buildLeaderboardRows({ laps, results, pitstops, currentLap, selectedDriverId, dnfInfo, elapsedSeconds }) {
     const completedLaps = laps.filter(l => l.lap_number != null && l.lap_number <= currentLap)
 
     const lapsByDriver = new Map()
@@ -55,6 +57,8 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
         const lastPitLap = driverPitstops.length ? Math.max(...driverPitstops.map(p => p.lap)) : 0
 
         const result = results.find(r => r.driver === driverCode)
+        const dnfEntry = dnfInfo?.get(driverCode)
+        const dnf = dnfInfo ? isRevealed(dnfInfo, driverCode, elapsedSeconds) : false
 
         rows.push({
             id: driverCode,
@@ -62,7 +66,7 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
             color: result?.team_color ?? '#8b8880',
             name: formatDriverName(result?.driver_name),
             team: result?.team ?? '',
-            gap: formatGap(latestLap.position, latestLap.gap_to_leader),
+            gap: dnf ? 'DNF' : formatGap(latestLap.position, latestLap.gap_to_leader),
             best: formatLapTime(bestTime),
             last: formatLapTime(latestLap.lap_time),
             s1: formatSectorTime(latestLap.sector_1_time),
@@ -72,13 +76,19 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
             age: latestLap.lap_number - lastPitLap,
             pits: driverPitstops.length,
             top5: latestLap.position != null && latestLap.position <= 3,
+            dnf,
+            _revealAtSeconds: dnfEntry?.revealAtSeconds ?? null,
             _sector1: latestLap.sector_1_time,
             _sector2: latestLap.sector_2_time,
             _sector3: latestLap.sector_3_time,
         })
     }
 
-    rows.sort((a, b) => (a.pos ?? Infinity) - (b.pos ?? Infinity))
+    rows.sort((a, b) => {
+        if (a.dnf !== b.dnf) return a.dnf ? 1 : -1
+        if (a.dnf) return (b._revealAtSeconds ?? 0) - (a._revealAtSeconds ?? 0)
+        return (a.pos ?? Infinity) - (b.pos ?? Infinity)
+    })
 
     const bestSector1 = Math.min(...rows.map(r => r._sector1).filter(v => v != null), Infinity)
     const bestSector2 = Math.min(...rows.map(r => r._sector2).filter(v => v != null), Infinity)
@@ -86,7 +96,7 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
 
     return rows.map(r => {
         const selected = r.id === selectedDriverId
-        const { _sector1, _sector2, _sector3, ...row } = r
+        const { _sector1, _sector2, _sector3, _revealAtSeconds, ...row } = r
         return {
             ...row,
             selected,

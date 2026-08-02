@@ -13,6 +13,8 @@ import { buildPitLog, buildTireStints } from './live-race/stints'
 import { buildTrackPath } from './live-race/trackMap'
 import { deriveLapStartTime } from './live-race/raceClock'
 import { sliceTelemetry } from './live-race/telemetrySlice'
+import { computeDnfInfo } from './live-race/dnf'
+import { deriveCurrentTrackStatus } from './live-race/trackStatus'
 
 const FONT_LINK_ID = 'race-center-fonts'
 const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap'
@@ -47,6 +49,20 @@ export default function LiveRace() {
     const replay = useRaceReplay()
     const { points: telemetryPoints } = useDriverTelemetry(replay.year, replay.round, selectedDriverId)
 
+    const positionsByDriver = useMemo(
+        () => Object.fromEntries((replay.positions ?? []).map(d => [d.driver, d.points])),
+        [replay.positions]
+    )
+
+    const dnfInfo = useMemo(() => {
+        if (!replay.sessionData) return new Map()
+        return computeDnfInfo({
+            results: replay.sessionData.results,
+            laps: replay.sessionData.laps,
+            totalDurationSeconds: replay.totalDurationSeconds,
+        })
+    }, [replay.sessionData, replay.totalDurationSeconds])
+
     const drivers = useMemo(() => {
         if (!replay.sessionData) return []
         return buildLeaderboardRows({
@@ -55,8 +71,10 @@ export default function LiveRace() {
             pitstops: replay.pitstops,
             currentLap: replay.currentLap,
             selectedDriverId,
+            dnfInfo,
+            elapsedSeconds: replay.elapsedSeconds,
         })
-    }, [replay.sessionData, replay.pitstops, replay.currentLap, selectedDriverId])
+    }, [replay.sessionData, replay.pitstops, replay.currentLap, selectedDriverId, dnfInfo, replay.elapsedSeconds])
 
     // Default the selected driver to the race leader once data first loads,
     // and re-default if a season switch drops the previously-selected driver
@@ -91,9 +109,9 @@ export default function LiveRace() {
         [replay.track]
     )
 
-    const positionsByDriver = useMemo(
-        () => Object.fromEntries((replay.positions ?? []).map(d => [d.driver, d.points])),
-        [replay.positions]
+    const currentTrackStatus = useMemo(
+        () => deriveCurrentTrackStatus(replay.elapsedSeconds, replay.trackStatus),
+        [replay.elapsedSeconds, replay.trackStatus]
     )
 
     const driverLaps = useMemo(
@@ -120,6 +138,7 @@ export default function LiveRace() {
                 onSelectRace={round => replay.selectRace(replay.year, round)}
                 weather={replay.weather}
                 raceName={replay.raceName}
+                trackStatus={replay.sessionData ? currentTrackStatus : null}
             />
             <TabNav activeTab={activeTab} onChange={setActiveTab} />
 

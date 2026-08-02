@@ -14,7 +14,7 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackPa
     const [sectorDeltasCollapsed, setSectorDeltasCollapsed] = useState(false)
 
     const carPositions = useMemo(
-        () => drivers.map(d => {
+        () => drivers.filter(d => !d.dnf).map(d => {
             const raw = interpolatePosition(positions[d.id], elapsedSeconds)
             const svg = raw ? trackPath.toSvgPoint(raw) : { x: 0, y: 0 }
             return { ...d, mx: svg.x, my: svg.y }
@@ -67,9 +67,26 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackPa
                             <div style={{ height: 6, background: '#eeece6', borderRadius: 3, marginTop: 4 }}><div style={{ width: lastPoint?.brake ? '100%' : '0%', height: '100%', background: 'oklch(55% .18 25)', borderRadius: 3 }} /></div>
                         </div>
                     </div>
-                    <svg viewBox="0 0 300 90" style={{ width: '100%', height: 70, marginTop: 14 }}>
-                        <polyline points={telemetry?.speedPoly ?? ''} fill="none" stroke="oklch(50% .16 230)" strokeWidth="2" />
-                    </svg>
+                    <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        <div>
+                            <div style={{ fontSize: 10.5, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 4 }}>SPEED · LAST 15S</div>
+                            <svg viewBox="0 0 300 90" style={{ width: '100%', height: 70 }}>
+                                <polyline points={telemetry?.speedRollingPoly ?? ''} fill="none" stroke="oklch(50% .16 230)" strokeWidth="2" />
+                            </svg>
+                        </div>
+                        <div>
+                            <div style={{ fontSize: 10.5, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 4 }}>THROTTLE · LAST 15S</div>
+                            <svg viewBox="0 0 300 60" style={{ width: '100%', height: 46 }}>
+                                <polyline points={telemetry?.throttleRollingPoly ?? ''} fill="none" stroke="oklch(48% .13 155)" strokeWidth="2" />
+                            </svg>
+                        </div>
+                        <div>
+                            <div style={{ fontSize: 10.5, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 4 }}>BRAKE · LAST 15S</div>
+                            <svg viewBox="0 0 300 60" style={{ width: '100%', height: 46 }}>
+                                <polyline points={telemetry?.brakeRollingPoly ?? ''} fill="none" stroke="oklch(55% .18 25)" strokeWidth="2" />
+                            </svg>
+                        </div>
+                    </div>
                 </div>
             </div>
 

@@ -2,15 +2,16 @@ import { useEffect, useState } from 'react'
 import { fetchJSON } from '../../utils/api'
 import { deriveCurrentLap } from './raceClock'
 
-const RENDER_INTERVAL_MS = 200 // throttle re-renders to 5Hz
+const RENDER_INTERVAL_MS = 33 // throttle re-renders to ~30Hz
 
 async function loadSessionBundle(year, round) {
-    const [sessionData, pitstopsBody, weatherBody, trackBody, positionsBody] = await Promise.all([
+    const [sessionData, pitstopsBody, weatherBody, trackBody, positionsBody, trackStatusBody] = await Promise.all([
         fetchJSON(`/session/${year}/${round}/R`),
         fetchJSON(`/pitstops/${year}/${round}`),
         fetchJSON(`/weather/${year}/${round}`),
         fetchJSON(`/track/${year}/${round}`),
         fetchJSON(`/positions/${year}/${round}`),
+        fetchJSON(`/track-status/${year}/${round}`).catch(() => ({ track_status: [] })),
     ])
     return {
         sessionData,
@@ -18,6 +19,7 @@ async function loadSessionBundle(year, round) {
         weather: weatherBody.weather,
         track: trackBody.track,
         positions: positionsBody.drivers,
+        trackStatus: trackStatusBody.track_status,
     }
 }
 
@@ -115,11 +117,11 @@ export function useRaceReplay() {
     // Advances the real-time clock every animation frame for accurate
     // pacing (1 played second = 1 real race second), but only commits a
     // state update — and therefore a re-render — every RENDER_INTERVAL_MS
-    // (5Hz), not on every frame (~60Hz). `elapsedSeconds` is deliberately
+    // (30Hz), not on every frame (~60Hz). `elapsedSeconds` is deliberately
     // read once as this effect's starting point and NOT listed as a
     // dependency: the effect only needs to restart on play/pause or a race
     // change (both already covered by the dependency array), not on every
-    // 5Hz tick it produces itself.
+    // 30Hz tick it produces itself.
     useEffect(() => {
         if (!isPlaying || loading || totalDurationSeconds === 0) return
         let raf
@@ -195,6 +197,7 @@ export function useRaceReplay() {
         weather: bundle?.weather ?? null,
         track: bundle?.track ?? null,
         positions: bundle?.positions ?? [],
+        trackStatus: bundle?.trackStatus ?? [],
         loading, error,
         currentLap, totalLaps, elapsedSeconds, totalDurationSeconds, isPlaying,
         play, pause, seekToSeconds,

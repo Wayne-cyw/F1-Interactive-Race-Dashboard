@@ -14,6 +14,7 @@ from entities.session import DriverResult, Lap, SessionData, SessionInfo, Sessio
 from entities.team import Team, TeamDriver
 from entities.telemetry import TelemetryData, TelemetryPoint
 from entities.track import TrackLayout, TrackPoint
+from entities.track_status import TrackStatusEvent
 from entities.weather import WeatherData
 from interface_adapters.gateways.pitstop_repository import PitstopRepository
 from interface_adapters.gateways.season_repository import SeasonRepository
@@ -303,3 +304,22 @@ class FastF1Gateway(
                 points.append(PositionPoint(t=t, x=float(x), y=float(y)))
             result.append(DriverPositions(driver=driver_code, points=points))
         return result
+
+    @lru_cache(maxsize=50)
+    def get_track_status(self, year: int, race_round: int) -> list[TrackStatusEvent]:
+        session = self._load_session(year, race_round, "R")
+        status_df = getattr(session, "track_status", None)
+        if status_df is None or status_df.empty:
+            raise SessionNotFoundError("No track status data available")
+
+        t0 = self._green_flag_t0(session)
+        events = []
+        for row in status_df.sort_values("Time").itertuples():
+            events.append(
+                TrackStatusEvent(
+                    t=(row.Time - t0).total_seconds(),
+                    status=str(row.Status),
+                    message=str(row.Message) if pd.notna(row.Message) else "",
+                )
+            )
+        return events

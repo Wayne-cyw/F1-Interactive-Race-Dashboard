@@ -5,6 +5,7 @@ from entities.positions import DriverPositions
 from entities.session import SessionData, SessionTypeInfo
 from entities.telemetry import TelemetryData
 from entities.track import TrackLayout
+from entities.track_status import TrackStatusEvent
 
 
 class SessionRepository(ABC):
@@ -30,4 +31,8 @@ class SessionRepository(ABC):
 
     @abstractmethod
     def get_race_positions(self, year: int, race_round: int) -> list[DriverPositions]:
+        ...
+
+    @abstractmethod
+    def get_track_status(self, year: int, race_round: int) -> list[TrackStatusEvent]:
         ...
