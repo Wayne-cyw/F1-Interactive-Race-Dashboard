@@ -57,11 +57,10 @@ export default function LiveRace() {
         if (!replay.sessionData) return new Map()
         return computeDnfInfo({
             results: replay.sessionData.results,
-            positions: positionsByDriver,
             laps: replay.sessionData.laps,
             totalDurationSeconds: replay.totalDurationSeconds,
         })
-    }, [replay.sessionData, positionsByDriver, replay.totalDurationSeconds])
+    }, [replay.sessionData, replay.totalDurationSeconds])
 
     const drivers = useMemo(() => {
         if (!replay.sessionData) return []
