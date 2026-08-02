@@ -14,6 +14,7 @@ import { buildTrackPath } from './live-race/trackMap'
 import { deriveLapStartTime } from './live-race/raceClock'
 import { sliceTelemetry } from './live-race/telemetrySlice'
 import { computeDnfInfo } from './live-race/dnf'
+import { deriveCurrentTrackStatus } from './live-race/trackStatus'
 
 const FONT_LINK_ID = 'race-center-fonts'
 const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap'
@@ -108,6 +109,11 @@ export default function LiveRace() {
         [replay.track]
     )
 
+    const currentTrackStatus = useMemo(
+        () => deriveCurrentTrackStatus(replay.elapsedSeconds, replay.trackStatus),
+        [replay.elapsedSeconds, replay.trackStatus]
+    )
+
     const driverLaps = useMemo(
         () => replay.sessionData ? replay.sessionData.laps.filter(l => l.driver === selectedDriverId) : [],
         [replay.sessionData, selectedDriverId]
@@ -132,6 +138,7 @@ export default function LiveRace() {
                 onSelectRace={round => replay.selectRace(replay.year, round)}
                 weather={replay.weather}
                 raceName={replay.raceName}
+                trackStatus={currentTrackStatus}
             />
             <TabNav activeTab={activeTab} onChange={setActiveTab} />
 

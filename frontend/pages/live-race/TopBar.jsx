@@ -1,9 +1,12 @@
+import { STATUS_META } from './trackStatus'
+
 const WEATHER_LABEL = (rainfall) => rainfall
     ? { color: 'oklch(50% .16 230)', text: 'WET' }
     : { color: 'oklch(48% .13 155)', text: 'DRY' }
 
-export default function TopBar({ seasons, races, year, round, onSelectYear, onSelectRace, weather, raceName }) {
+export default function TopBar({ seasons, races, year, round, onSelectYear, onSelectRace, weather, raceName, trackStatus }) {
     const weatherInfo = weather ? WEATHER_LABEL(weather.rainfall) : null
+    const statusMeta = trackStatus ? (STATUS_META[trackStatus.status] ?? STATUS_META['1']) : null
 
     return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 32px', borderBottom: '1px solid #e6e3dc', background: '#fff', flexWrap: 'wrap', gap: 14 }}>
@@ -54,13 +57,20 @@ export default function TopBar({ seasons, races, year, round, onSelectYear, onSe
                 </select>
             </div>
 
-            {weatherInfo && (
-                <div style={{ display: 'flex', gap: 22, fontSize: 13, color: '#5c5852' }}>
-                    <div>Track <b style={{ color: '#191b1e' }}>{Math.round(weather.track_temp)}°C</b></div>
-                    <div>Air <b style={{ color: '#191b1e' }}>{Math.round(weather.air_temp)}°C</b></div>
-                    <div style={{ color: weatherInfo.color }}>{weatherInfo.text}</div>
-                </div>
-            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
+                {statusMeta && (
+                    <div style={{ padding: '4px 10px', borderRadius: 10, background: '#f2f0ea', fontSize: 11, fontWeight: 600, color: statusMeta.color }}>
+                        {statusMeta.label}
+                    </div>
+                )}
+                {weatherInfo && (
+                    <div style={{ display: 'flex', gap: 22, fontSize: 13, color: '#5c5852' }}>
+                        <div>Track <b style={{ color: '#191b1e' }}>{Math.round(weather.track_temp)}°C</b></div>
+                        <div>Air <b style={{ color: '#191b1e' }}>{Math.round(weather.air_temp)}°C</b></div>
+                        <div style={{ color: weatherInfo.color }}>{weatherInfo.text}</div>
+                    </div>
+                )}
+            </div>
         </div>
     )
 }
