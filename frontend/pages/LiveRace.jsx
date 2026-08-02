@@ -8,7 +8,7 @@ import TelemetryTab from './live-race/TelemetryTab'
 import PlaybackBar from './live-race/PlaybackBar'
 import { useRaceReplay } from './live-race/useRaceReplay'
 import { useDriverTelemetry } from './live-race/useDriverTelemetry'
-import { buildLeaderboardRows } from './live-race/leaderboardData'
+import { buildLeaderboardRows, deriveBestSectors } from './live-race/leaderboardData'
 import { buildPitLog, buildTireStints } from './live-race/stints'
 import { buildTrackPath } from './live-race/trackMap'
 import { deriveLapStartTime } from './live-race/raceClock'
@@ -75,6 +75,8 @@ export default function LiveRace() {
             elapsedSeconds: replay.elapsedSeconds,
         })
     }, [replay.sessionData, replay.pitstops, replay.currentLap, selectedDriverId, dnfInfo, replay.elapsedSeconds])
+
+    const bestSectors = useMemo(() => deriveBestSectors(drivers), [drivers])
 
     // Default the selected driver to the race leader once data first loads,
     // and re-default if a season switch drops the previously-selected driver
@@ -168,6 +170,7 @@ export default function LiveRace() {
                             positions={positionsByDriver}
                             elapsedSeconds={replay.elapsedSeconds}
                             telemetry={telemetry}
+                            bestSectors={bestSectors}
                         />
                     )}
                     {activeTab === 'timing' && (
