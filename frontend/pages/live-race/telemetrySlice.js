@@ -1,33 +1,18 @@
-// Builds an SVG polyline `points` string from a value array, scaled into a
-// w×h viewBox with the given min/max value range.
-function toPolyline(values, w, h, min, max) {
-    if (values.length === 0) return ''
-    const range = max - min || 1
-    return values
-        .map((v, i) => {
-            const x = (i / Math.max(1, values.length - 1)) * w
-            const y = h - ((v - min) / range) * h
-            return `${x.toFixed(1)},${y.toFixed(1)}`
-        })
-        .join(' ')
-}
-
 const ROLLING_WINDOW_SECONDS = 15
 
-// Builds a rolling-window SVG polyline: x is mapped by real elapsed-time
-// offset from `windowStart` (not sample index, which is what made the old
-// Overview speed graph "compress" a variable-length lap into a fixed
-// width) — so the right edge (x=w) is always "now" and old samples slide
-// off the left edge once they're more than ROLLING_WINDOW_SECONDS old.
-// Early in the race, before a full window's worth of data exists, the
-// trace simply occupies less than the full width instead of stretching to
-// fill it.
-function toRollingPolyline(points, valueFn, w, h, min, max, windowStart) {
+// Builds a time-scaled SVG polyline: x is mapped by real elapsed-time
+// offset from `windowStart` over a `windowSeconds`-wide span (not sample
+// index, which is what made the old Overview speed graph "compress" a
+// variable-length lap into a fixed width) — so a given moment in time
+// always lands at the same x position and never rescales as more data
+// arrives. Before the window is full, the trace simply occupies less than
+// the full width instead of stretching to fill it.
+function toTimeScaledPolyline(points, valueFn, w, h, min, max, windowStart, windowSeconds) {
     if (points.length === 0) return ''
     const range = max - min || 1
     return points
         .map(p => {
-            const x = ((p.t - windowStart) / ROLLING_WINDOW_SECONDS) * w
+            const x = ((p.t - windowStart) / windowSeconds) * w
             const y = h - ((valueFn(p) - min) / range) * h
             return `${x.toFixed(1)},${y.toFixed(1)}`
         })
@@ -92,22 +77,24 @@ function countDrsActivations(points) {
 
 // Slices a driver's full-session telemetry into what the UI needs "right
 // now" at elapsedSeconds: whole-race-so-far running stats (top speed, avg
-// speed, DRS activation count), a current-lap-so-far trace (for the
-// Telemetry tab's "LAP TRACE" chart, using lapStartTime as the trace's
-// left edge), and three rolling 15-second-window traces for the Overview
-// tab (speed/throttle/brake), which scroll in real time rather than
-// compressing a variable-length span into a fixed width. Returns null if
-// there's no data yet (e.g. before the driver's first sample).
-export function sliceTelemetry(points, elapsedSeconds, lapStartTime) {
+// speed, DRS activation count), a whole-race-so-far trace (for the
+// Telemetry tab's "RACE TRACE" chart, time-scaled across the full race
+// duration so it fills in progressively and never rescales), and three
+// rolling 15-second-window traces for the Overview tab (speed/throttle/
+// brake), which scroll in real time rather than compressing a variable-
+// length span into a fixed width. Returns null if there's no data yet
+// (e.g. before the driver's first sample).
+export function sliceTelemetry(points, elapsedSeconds, totalDurationSeconds) {
     if (!points || points.length === 0) return null
     const soFar = points.filter(p => p.t <= elapsedSeconds)
     if (soFar.length === 0) return null
 
-    const lapSoFar = soFar.filter(p => p.t >= (lapStartTime ?? 0))
     const speeds = soFar.map(p => p.speed).filter(v => v != null)
     const topSpeed = speeds.length ? Math.round(Math.max(...speeds)) : 0
     const avgSpeed = speeds.length ? Math.round(speeds.reduce((a, b) => a + b, 0) / speeds.length) : 0
     const current = interpolateTelemetryPoint(points, elapsedSeconds)
+
+    const raceWindowSeconds = Math.max(totalDurationSeconds ?? 0, elapsedSeconds, 1)
 
     const windowStart = elapsedSeconds - ROLLING_WINDOW_SECONDS
     const rollingPoints = points.filter(p => p.t >= windowStart && p.t <= elapsedSeconds)
@@ -118,11 +105,11 @@ export function sliceTelemetry(points, elapsedSeconds, lapStartTime) {
         topSpeed,
         avgSpeed,
         drsCount: countDrsActivations(soFar),
-        speedPolyBig: toPolyline(lapSoFar.map(p => p.speed ?? 0), 600, 110, 0, Math.max(1, topSpeed)),
-        throttlePolyBig: toPolyline(lapSoFar.map(p => p.throttle ?? 0), 600, 70, 0, 100),
-        brakePolyBig: toPolyline(lapSoFar.map(p => (p.brake ? 100 : 0)), 600, 70, 0, 100),
-        speedRollingPoly: toRollingPolyline(rollingWithCurrent, p => p.speed ?? 0, 300, 90, 0, Math.max(1, topSpeed), windowStart),
-        throttleRollingPoly: toRollingPolyline(rollingWithCurrent, p => p.throttle ?? 0, 300, 60, 0, 100, windowStart),
-        brakeRollingPoly: toRollingPolyline(rollingWithCurrent, p => (p.brake ? 100 : 0), 300, 60, 0, 100, windowStart),
+        speedPolyBig: toTimeScaledPolyline(soFar, p => p.speed ?? 0, 600, 110, 0, Math.max(1, topSpeed), 0, raceWindowSeconds),
+        throttlePolyBig: toTimeScaledPolyline(soFar, p => p.throttle ?? 0, 600, 70, 0, 100, 0, raceWindowSeconds),
+        brakePolyBig: toTimeScaledPolyline(soFar, p => (p.brake ? 100 : 0), 600, 70, 0, 100, 0, raceWindowSeconds),
+        speedRollingPoly: toTimeScaledPolyline(rollingWithCurrent, p => p.speed ?? 0, 300, 90, 0, Math.max(1, topSpeed), windowStart, ROLLING_WINDOW_SECONDS),
+        throttleRollingPoly: toTimeScaledPolyline(rollingWithCurrent, p => p.throttle ?? 0, 300, 60, 0, 100, windowStart, ROLLING_WINDOW_SECONDS),
+        brakeRollingPoly: toTimeScaledPolyline(rollingWithCurrent, p => (p.brake ? 100 : 0), 300, 60, 0, 100, windowStart, ROLLING_WINDOW_SECONDS),
     }
 }

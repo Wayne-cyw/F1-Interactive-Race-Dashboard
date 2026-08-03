@@ -11,7 +11,6 @@ import { useDriverTelemetry } from './live-race/useDriverTelemetry'
 import { buildLeaderboardRows, deriveBestSectors } from './live-race/leaderboardData'
 import { buildPitLog, buildTireStints } from './live-race/stints'
 import { buildTrackPath } from './live-race/trackMap'
-import { deriveLapStartTime } from './live-race/raceClock'
 import { sliceTelemetry } from './live-race/telemetrySlice'
 import { computeDnfInfo } from './live-race/dnf'
 import { deriveCurrentTrackStatus } from './live-race/trackStatus'
@@ -116,17 +115,9 @@ export default function LiveRace() {
         [replay.elapsedSeconds, replay.trackStatus]
     )
 
-    const driverLaps = useMemo(
-        () => replay.sessionData ? replay.sessionData.laps.filter(l => l.driver === selectedDriverId) : [],
-        [replay.sessionData, selectedDriverId]
-    )
-    const lapStartTime = useMemo(
-        () => deriveLapStartTime(replay.elapsedSeconds, driverLaps),
-        [replay.elapsedSeconds, driverLaps]
-    )
     const telemetry = useMemo(
-        () => sliceTelemetry(telemetryPoints, replay.elapsedSeconds, lapStartTime),
-        [telemetryPoints, replay.elapsedSeconds, lapStartTime]
+        () => sliceTelemetry(telemetryPoints, replay.elapsedSeconds, replay.totalDurationSeconds),
+        [telemetryPoints, replay.elapsedSeconds, replay.totalDurationSeconds]
     )
 
     return (

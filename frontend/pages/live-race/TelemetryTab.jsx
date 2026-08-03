@@ -44,7 +44,7 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedP
                     <StatTile label="CURRENT GEAR" value={currentGear ?? '—'} />
                 </div>
 
-                <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 8 }}>SPEED (km/h) · LAP TRACE</div>
+                <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 8 }}>SPEED (km/h) · RACE TRACE</div>
                 <svg viewBox="0 0 600 110" style={{ width: '100%', height: 130, background: '#fff', border: '1px solid #eeece6', borderRadius: 10 }}>
                     <polyline points={speedPolyBig} fill="none" stroke="oklch(50% .16 230)" strokeWidth="2.5" />
                 </svg>
