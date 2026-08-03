@@ -30,6 +30,7 @@ class DriverResult:
     position: int | None
     points: float
     status: str
+    grid_position: int | None = None
 
 
 @dataclass(frozen=True)

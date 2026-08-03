@@ -77,6 +77,7 @@ class FastF1Gateway(
             position=int(row["Position"]) if "Position" in row.index and pd.notna(row["Position"]) else None,
             points=float(row["Points"]) if "Points" in row.index and pd.notna(row["Points"]) else 0.0,
             status=row["Status"] if "Status" in row.index else "Unknown",
+            grid_position=int(row["GridPosition"]) if "GridPosition" in row.index and pd.notna(row["GridPosition"]) else None,
         )
 
     def get_races(self, year: int) -> list[RaceEvent]:

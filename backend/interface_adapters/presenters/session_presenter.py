@@ -27,6 +27,7 @@ def present_result(result: DriverResult) -> dict:
         "position": result.position,
         "points": result.points,
         "status": result.status,
+        "grid_position": result.grid_position,
     }
 
 
