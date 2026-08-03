@@ -28,7 +28,7 @@ const WHEEL_POSITIONS = [
 // wings with endplates, and four wheels. `heading` (radians, world Y
 // rotation) points the car's nose along its direction of travel.
 // Positioned with its wheels resting on `position` (the track surface
-// height at this point), tinted with the driver's team color. A larger
+// height at this point), tinted with the driver's team color. A
 // fully-transparent hit-target sphere surrounds it so the car stays easy
 // to click at any zoom level, without visually growing beyond the model.
 export default function F1Car3D({ position, heading, color, selected, onClick }) {

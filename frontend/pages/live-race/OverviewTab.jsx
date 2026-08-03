@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import Leaderboard from './Leaderboard'
 import ResizeHandle from './ResizeHandle'
 import TrackMap3D from './TrackMap3D'
@@ -21,6 +21,8 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackSc
     const [leaderboardWidth, onLeaderboardResize] = useResizableWidth(440, { min: 320, max: 640, edge: 'right' })
     const [telemetryWidth, onTelemetryResize] = useResizableWidth(360, { min: 280, max: 520, edge: 'left' })
 
+    const lastHeadingRef = useRef(new Map())
+
     const carPositions = useMemo(
         () => drivers.filter(d => !d.dnf).map(d => {
             const raw = interpolatePosition(positions[d.id], elapsedSeconds)
@@ -29,7 +31,10 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackSc
             const sceneAhead = ahead ? trackScene.toScenePoint(ahead) : scenePosition
             const dx = sceneAhead.x - scenePosition.x
             const dz = sceneAhead.z - scenePosition.z
-            const heading = (dx !== 0 || dz !== 0) ? Math.atan2(-dz, dx) : 0
+            const heading = (dx !== 0 || dz !== 0)
+                ? Math.atan2(-dz, dx)
+                : lastHeadingRef.current.get(d.id) ?? 0
+            lastHeadingRef.current.set(d.id, heading)
             return { ...d, scenePosition, heading }
         }),
         [drivers, positions, elapsedSeconds, trackScene]

@@ -5,7 +5,7 @@
 // SVG viewBox.
 
 const SCENE_SIZE = 16
-const ELEVATION_EXAGGERATION = 10
+const ELEVATION_EXAGGERATION = 3
 const ROAD_WIDTH = 0.5
 
 // Real F1 elevation change (a few meters) is invisible next to a track's
@@ -18,10 +18,12 @@ export function buildTrackScene(coordinates, { sceneSize = SCENE_SIZE, elevation
 
     const xs = coordinates.map(p => p.x)
     const ys = coordinates.map(p => p.y)
+    const zs = coordinates.map(p => p.z ?? 0)
     const minX = Math.min(...xs)
     const maxX = Math.max(...xs)
     const minY = Math.min(...ys)
     const maxY = Math.max(...ys)
+    const minZ = Math.min(...zs)
     const spanX = maxX - minX || 1
     const spanY = maxY - minY || 1
     const scale = sceneSize / Math.max(spanX, spanY)
@@ -33,9 +35,13 @@ export function buildTrackScene(coordinates, { sceneSize = SCENE_SIZE, elevation
             x: (p.x - centerX) * scale,
             // Three.js is Y-up: the track's ground plane (x/y from
             // FastF1) maps to the scene's X/Z plane, elevation (z from
-            // FastF1) maps to scene Y.
-            z: (p.y - centerY) * scale,
-            y: (p.z ?? 0) * scale * elevationExaggeration,
+            // FastF1 — absolute altitude, not track-relative, so it's
+            // zeroed against the track's own lowest point) maps to
+            // scene Y. The z sign is flipped: an unflipped x/y -> x/z
+            // mapping mirrors the circuit's real-world winding
+            // direction when viewed from above.
+            z: -(p.y - centerY) * scale,
+            y: ((p.z ?? 0) - minZ) * scale * elevationExaggeration,
         }
     }
 

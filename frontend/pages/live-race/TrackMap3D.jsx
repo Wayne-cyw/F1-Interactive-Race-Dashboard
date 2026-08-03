@@ -6,13 +6,18 @@ import F1Car3D from './F1Car3D'
 import { buildRibbonVertices } from './trackGeometry3d'
 
 function TrackRibbon({ points }) {
-    const vertices = useMemo(() => buildRibbonVertices(points), [points])
-    if (vertices.length === 0) return null
+    const geometry = useMemo(() => {
+        const vertices = buildRibbonVertices(points)
+        if (vertices.length === 0) return null
+        const geom = new THREE.BufferGeometry()
+        geom.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
+        geom.computeVertexNormals()
+        return geom
+    }, [points])
+
+    if (!geometry) return null
     return (
-        <mesh>
-            <bufferGeometry>
-                <bufferAttribute attach="attributes-position" array={vertices} count={vertices.length / 3} itemSize={3} />
-            </bufferGeometry>
+        <mesh geometry={geometry}>
             <meshStandardMaterial color="#e3e0d8" side={THREE.DoubleSide} />
         </mesh>
     )
@@ -34,7 +39,7 @@ export default function TrackMap3D({ trackPoints, carPositions, onSelectDriver }
                     onClick={() => onSelectDriver(d.id)}
                 />
             ))}
-            <OrbitControls enablePan minDistance={4} maxDistance={32} />
+            <OrbitControls enablePan minDistance={4} maxDistance={32} maxPolarAngle={Math.PI / 2 - 0.05} />
         </Canvas>
     )
 }
