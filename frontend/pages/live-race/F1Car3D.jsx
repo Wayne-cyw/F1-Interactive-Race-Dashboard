@@ -38,12 +38,17 @@ export default function F1Car3D({ position, heading, color, selected, onClick })
 
     const carScene = useMemo(() => {
         const clone = scene.clone(true)
+        let recoloredCount = 0
         clone.traverse(child => {
             if (child.isMesh && BODY_MATERIAL_NAMES.has(child.material.name)) {
                 child.material = child.material.clone()
                 child.material.color.set(color)
+                recoloredCount++
             }
         })
+        if (recoloredCount === 0 && import.meta.env.DEV) {
+            console.warn(`F1Car3D: no body materials matched BODY_MATERIAL_NAMES — cars will render in the model's default color, not team colors. Check ${MODEL_URL}'s material names still match.`)
+        }
         return clone
     }, [scene, color])
 
@@ -75,7 +80,7 @@ export default function F1Car3D({ position, heading, color, selected, onClick })
 
             {selected && (
                 <mesh position={[0, -GROUND_OFFSET * scale, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                    <ringGeometry args={[0.3, 0.36, 32]} />
+                    <ringGeometry args={[scale * 3, scale * 3.6, 32]} />
                     <meshBasicMaterial color="#ffffff" transparent opacity={0.8} />
                 </mesh>
             )}
