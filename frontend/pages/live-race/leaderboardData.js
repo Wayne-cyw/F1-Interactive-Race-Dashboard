@@ -35,9 +35,18 @@ export function formatDriverName(fullName) {
 
 // Turns raw session laps/results/pitstops into the exact presentational
 // shape Leaderboard/TimingTab/TelemetryTab already render, scoped to laps
-// completed so far (lap_number <= currentLap) — the replay's "now".
+// actually completed by `elapsedSeconds` — a lap's `session_time` marks
+// when it STARTED, so completion is `session_time + lap_time`. Filtering
+// on `lap_number <= currentLap` instead (as this used to) leaks a lap's
+// full result the moment it *starts* rather than when it finishes, since
+// `currentLap` itself flips to N as soon as any driver starts lap N —
+// e.g. showing everyone's complete lap 1 (sector times included) at
+// elapsedSeconds 0, before the race has even started.
 export function buildLeaderboardRows({ laps, results, pitstops, currentLap, selectedDriverId, dnfInfo, elapsedSeconds }) {
-    const completedLaps = laps.filter(l => l.lap_number != null && l.lap_number <= currentLap)
+    const completedLaps = laps.filter(l =>
+        l.lap_number != null && l.session_time != null && l.lap_time != null &&
+        l.session_time + l.lap_time <= elapsedSeconds
+    )
 
     const lapsByDriver = new Map()
     for (const lap of completedLaps) {
@@ -47,11 +56,18 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
         lapsByDriver.set(lap.driver, existing)
     }
 
+    // Every classified driver gets a row, even ones with zero completed
+    // laps so far — e.g. retired in a lap-1 incident before crossing the
+    // line for the first time. Iterating lapsByDriver alone silently drops
+    // those drivers from the leaderboard entirely, for the whole replay.
+    const driverCodes = new Set([...lapsByDriver.keys(), ...results.map(r => r.driver).filter(Boolean)])
+
     const rows = []
-    for (const [driverCode, driverLaps] of lapsByDriver) {
-        driverLaps.sort((a, b) => a.lap_number - b.lap_number)
-        const latestLap = driverLaps[driverLaps.length - 1]
-        const bestTime = Math.min(...driverLaps.map(l => l.lap_time).filter(t => t != null))
+    for (const driverCode of driverCodes) {
+        const driverLaps = (lapsByDriver.get(driverCode) ?? []).slice().sort((a, b) => a.lap_number - b.lap_number)
+        const latestLap = driverLaps[driverLaps.length - 1] ?? null
+        const lapTimes = driverLaps.map(l => l.lap_time).filter(t => t != null)
+        const bestTime = lapTimes.length ? Math.min(...lapTimes) : null
 
         const driverPitstops = pitstops.filter(p => p.driver === driverCode && p.lap <= currentLap)
         const lastPitLap = driverPitstops.length ? Math.max(...driverPitstops.map(p => p.lap)) : 0
@@ -71,24 +87,24 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
 
         rows.push({
             id: driverCode,
-            pos: dnf ? null : latestLap.position,
+            pos: dnf || !latestLap ? null : latestLap.position,
             color: result?.team_color ?? '#8b8880',
             name: formatDriverName(result?.driver_name),
             team: result?.team ?? '',
-            gap: dnf ? 'DNF' : formatGap(latestLap.position, latestLap.gap_to_leader),
+            gap: dnf ? 'DNF' : formatGap(latestLap?.position, latestLap?.gap_to_leader),
             best: formatLapTime(bestTime),
-            last: formatLapTime(latestLap.lap_time),
-            s1: formatSectorTime(latestLap.sector_1_time),
-            s2: formatSectorTime(latestLap.sector_2_time),
-            s3: formatSectorTime(latestLap.sector_3_time),
+            last: formatLapTime(latestLap?.lap_time ?? null),
+            s1: formatSectorTime(latestLap?.sector_1_time ?? null),
+            s2: formatSectorTime(latestLap?.sector_2_time ?? null),
+            s3: formatSectorTime(latestLap?.sector_3_time ?? null),
             s1Best: formatSectorTime(bestSector1SoFar === Infinity ? null : bestSector1SoFar),
             s2Best: formatSectorTime(bestSector2SoFar === Infinity ? null : bestSector2SoFar),
             s3Best: formatSectorTime(bestSector3SoFar === Infinity ? null : bestSector3SoFar),
-            tire: compoundToTireCode(latestLap.compound),
-            age: latestLap.lap_number - lastPitLap,
+            tire: compoundToTireCode(latestLap?.compound),
+            age: latestLap ? latestLap.lap_number - lastPitLap : 0,
             pits: driverPitstops.length,
             inPit,
-            top5: !dnf && latestLap.position != null && latestLap.position <= 3,
+            top5: !dnf && latestLap?.position != null && latestLap.position <= 3,
             dnf,
             _revealAtSeconds: dnfEntry?.revealAtSeconds ?? null,
             _lastLapEndSeconds: dnfEntry?.lastLapEndSeconds ?? null,
