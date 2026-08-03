@@ -23,7 +23,7 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedP
                         onClick={() => onSelectDriver(d.id)}
                         style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 32px', cursor: 'pointer', background: d.rowBg, borderLeft: `3px solid ${d.rowAccent}` }}
                     >
-                        <div style={{ width: 4, height: 14, background: d.color, borderRadius: 2 }} />
+                        <div style={{ width: 4, height: 14, background: d.color }} />
                         <span style={{ fontSize: 12.5, fontWeight: 600 }}>{d.name}</span>
                     </div>
                 ))}

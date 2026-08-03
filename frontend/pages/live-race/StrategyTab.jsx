@@ -40,7 +40,7 @@ export default function StrategyTab({ drivers, pitLog, currentLap, totalLaps }) 
                     <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid #f2f0ea' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, fontWeight: 600 }}>
                             {p.driver}
-                            <span style={{ fontFamily: "'JetBrains Mono', monospace", color: 'oklch(48% .13 155)' }}>{p.dur}s</span>
+                            <span style={{ fontFamily: "'Inconsolata', monospace", color: 'oklch(48% .13 155)' }}>{p.dur}s</span>
                         </div>
                         <div style={{ fontSize: 11, color: '#a8a49b', marginTop: 2 }}>Lap {p.lap} · {p.from} → {p.to}</div>
                     </div>

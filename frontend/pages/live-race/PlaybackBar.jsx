@@ -34,7 +34,7 @@ export default function PlaybackBar({ isPlaying, onPlayPause, elapsedSeconds, to
                 style={{ flex: 1, accentColor: '#191b1e' }}
             />
 
-            <div style={{ fontSize: 12, color: '#8b8880', fontFamily: "'JetBrains Mono', monospace", whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: 12, color: '#8b8880', fontFamily: "'Inconsolata', monospace", whiteSpace: 'nowrap' }}>
                 {formatClock(elapsedSeconds, totalDurationSeconds >= 3600)} / {formatClock(totalDurationSeconds, totalDurationSeconds >= 3600)} · Lap {currentLap} of {totalLaps}
             </div>
 
@@ -49,7 +49,7 @@ export default function PlaybackBar({ isPlaying, onPlayPause, elapsedSeconds, to
                     cursor: 'pointer',
                     fontWeight: 600,
                     fontSize: 13,
-                    fontFamily: 'Inter, sans-serif',
+                    fontFamily: "'Carbon Black', sans-serif",
                     color: '#5c5852',
                     padding: '4px 8px',
                     flexShrink: 0,

@@ -100,7 +100,7 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackPa
                             <div style={{ fontSize: 10.5, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 4 }}>{label}</div>
                             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                                 <span style={{ fontWeight: 700, fontSize: 14 }}>{bestSectors?.[key]?.name ?? '—'}</span>
-                                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: '#403c36' }}>{bestSectors?.[key]?.time ?? '—'}</span>
+                                <span style={{ fontFamily: "'Inconsolata', monospace", fontSize: 13, color: '#403c36' }}>{bestSectors?.[key]?.time ?? '—'}</span>
                             </div>
                         </div>
                     ))}
