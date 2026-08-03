@@ -15,7 +15,7 @@ export default function TimingTab({ drivers, onSelectDriver }) {
                         style={{ display: 'grid', gridTemplateColumns: COLUMNS, gap: 8, padding: '10px 12px', alignItems: 'center', cursor: 'pointer', background: d.rowBg, borderBottom: '1px solid #f2f0ea', fontFamily: "'Inconsolata', monospace", fontSize: 12.5 }}
                     >
                         <div style={{ fontWeight: 700, color: d.posColor }}>{d.pos}</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'Carbon Black', sans-serif" }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'Inconsolata', sans-serif" }}>
                             <div style={{ width: 4, height: 14, background: d.color, borderRadius: 2 }} />
                             <span style={{ fontWeight: 600, fontSize: 13 }}>{d.name}</span>
                             <span style={{ fontSize: 10.5, color: '#a8a49b' }}>{d.team}</span>

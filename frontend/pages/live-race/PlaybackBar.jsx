@@ -49,7 +49,7 @@ export default function PlaybackBar({ isPlaying, onPlayPause, elapsedSeconds, to
                     cursor: 'pointer',
                     fontWeight: 600,
                     fontSize: 13,
-                    fontFamily: "'Carbon Black', sans-serif",
+                    fontFamily: "'Inconsolata', sans-serif",
                     color: '#5c5852',
                     padding: '4px 8px',
                     flexShrink: 0,

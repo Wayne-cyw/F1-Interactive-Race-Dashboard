@@ -130,7 +130,7 @@ export default function LiveRace() {
     )
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#faf9f6', color: '#191b1e', fontFamily: "'Carbon Black', system-ui, sans-serif" }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#faf9f6', color: '#191b1e', fontFamily: "'Inconsolata', system-ui, sans-serif" }}>
             <TopBar
                 seasons={replay.seasons}
                 races={replay.races}

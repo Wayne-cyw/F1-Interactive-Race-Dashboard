@@ -23,7 +23,7 @@ export default function TopBar({ seasons, races, year, round, onSelectYear, onSe
                             cursor: 'pointer',
                             fontWeight: 700,
                             fontSize: 19,
-                            fontFamily: "'Carbon Black', sans-serif",
+                            fontFamily: "'Inconsolata', sans-serif",
                             color: '#191b1e',
                             padding: '2px 22px 2px 2px',
                         }}
@@ -46,7 +46,7 @@ export default function TopBar({ seasons, races, year, round, onSelectYear, onSe
                         cursor: 'pointer',
                         fontWeight: 600,
                         fontSize: 13,
-                        fontFamily: "'Carbon Black', sans-serif",
+                        fontFamily: "'Inconsolata', sans-serif",
                         color: '#5c5852',
                         padding: '4px 8px',
                     }}
