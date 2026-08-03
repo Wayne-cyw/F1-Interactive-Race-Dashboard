@@ -3,7 +3,7 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
 import F1Car3D from './F1Car3D'
-import { buildRibbonVertices } from './trackMap3d'
+import { buildRibbonVertices } from './trackGeometry3d'
 
 function TrackRibbon({ points }) {
     const vertices = useMemo(() => buildRibbonVertices(points), [points])
