@@ -8,6 +8,6 @@ def present_track(layout: TrackLayout) -> dict:
             "name": layout.name,
             "location": layout.location,
             "country": layout.country,
-            "coordinates": [{"x": p.x, "y": p.y} for p in layout.coordinates],
+            "coordinates": [{"x": p.x, "y": p.y, "z": p.z} for p in layout.coordinates],
         },
     }

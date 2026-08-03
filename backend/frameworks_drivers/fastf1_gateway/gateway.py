@@ -199,7 +199,11 @@ class FastF1Gateway(
 
         telemetry = fastest_lap.get_telemetry()
         coordinates = [
-            TrackPoint(x=float(p["X"]), y=float(p["Y"]))
+            TrackPoint(
+                x=float(p["X"]),
+                y=float(p["Y"]),
+                z=float(p["Z"]) if pd.notna(p.get("Z")) else 0.0,
+            )
             for _, p in telemetry.iterrows()
             if pd.notna(p.get("X")) and pd.notna(p.get("Y"))
         ]
@@ -304,12 +308,13 @@ class FastF1Gateway(
             for row in resampled.itertuples():
                 x = getattr(row, "X", None)
                 y = getattr(row, "Y", None)
+                z = getattr(row, "Z", None)
                 if pd.isna(x) or pd.isna(y):
                     continue
                 t = (row.SessionTime - t0).total_seconds()
                 if t < 0:
                     continue
-                points.append(PositionPoint(t=t, x=float(x), y=float(y)))
+                points.append(PositionPoint(t=t, x=float(x), y=float(y), z=float(z) if pd.notna(z) else 0.0))
             result.append(DriverPositions(driver=driver_code, points=points))
         return result
 

@@ -2,6 +2,8 @@ from types import SimpleNamespace
 
 import pandas as pd
 
+from entities.positions import DriverPositions, PositionPoint
+from entities.track import TrackPoint
 from frameworks_drivers.fastf1_gateway.gateway import FastF1Gateway
 
 
@@ -101,3 +103,125 @@ def test_get_pitstops_leaves_times_null_when_fastf1_columns_are_missing_or_nan()
     assert len(events) == 1
     assert events[0].pit_in_time is None
     assert events[0].pit_out_time is None
+
+
+class _FakeLap:
+    empty = False
+
+    def __init__(self, telemetry_df):
+        self._telemetry = telemetry_df
+
+    def get_telemetry(self):
+        return self._telemetry
+
+
+class _FakeLaps:
+    def __init__(self, fastest_lap):
+        self._fastest_lap = fastest_lap
+
+    def pick_fastest(self):
+        return self._fastest_lap
+
+
+def test_get_track_layout_extracts_elevation():
+    telemetry = pd.DataFrame({"X": [100.0, 200.0], "Y": [300.0, 400.0], "Z": [10.0, 20.0]})
+    session = SimpleNamespace(
+        laps=_FakeLaps(_FakeLap(telemetry)),
+        event={"EventName": "Bahrain Grand Prix", "Location": "Sakhir", "Country": "Bahrain"},
+    )
+    gateway = FastF1Gateway()
+    gateway._load_session = lambda *args, **kwargs: session
+
+    layout = gateway.get_track_layout(2026, 1)
+
+    assert layout.coordinates == [
+        TrackPoint(x=100.0, y=300.0, z=10.0),
+        TrackPoint(x=200.0, y=400.0, z=20.0),
+    ]
+
+
+def test_get_track_layout_defaults_elevation_to_zero_when_missing():
+    telemetry = pd.DataFrame({"X": [100.0], "Y": [300.0]})
+    session = SimpleNamespace(
+        laps=_FakeLaps(_FakeLap(telemetry)),
+        event={"EventName": "Bahrain Grand Prix", "Location": "Sakhir", "Country": "Bahrain"},
+    )
+    gateway = FastF1Gateway()
+    gateway._load_session = lambda *args, **kwargs: session
+
+    layout = gateway.get_track_layout(2026, 1)
+
+    assert layout.coordinates == [TrackPoint(x=100.0, y=300.0, z=0.0)]
+
+
+def test_get_track_layout_defaults_elevation_to_zero_when_nan():
+    telemetry = pd.DataFrame({"X": [100.0], "Y": [300.0], "Z": [float("nan")]})
+    session = SimpleNamespace(
+        laps=_FakeLaps(_FakeLap(telemetry)),
+        event={"EventName": "Bahrain Grand Prix", "Location": "Sakhir", "Country": "Bahrain"},
+    )
+    gateway = FastF1Gateway()
+    gateway._load_session = lambda *args, **kwargs: session
+
+    layout = gateway.get_track_layout(2026, 1)
+
+    assert layout.coordinates == [TrackPoint(x=100.0, y=300.0, z=0.0)]
+
+
+def test_get_race_positions_defaults_elevation_to_zero_when_nan():
+    pos_df = pd.DataFrame({
+        "SessionTime": [pd.Timedelta(seconds=0.0)],
+        "X": [100.0],
+        "Y": [200.0],
+        "Z": [float("nan")],
+    })
+    gateway = FastF1Gateway()
+    gateway._load_session = lambda *args, **kwargs: _fake_session_for_positions(pos_df)
+
+    result = gateway.get_race_positions(2026, 1)
+
+    assert result == [DriverPositions(driver="VER", points=[PositionPoint(t=0.0, x=100.0, y=200.0, z=0.0)])]
+
+
+def _fake_session_for_positions(pos_df):
+    laps = pd.DataFrame({
+        "Driver": ["VER"],
+        "DriverNumber": ["1"],
+        "LapNumber": [1],
+        "LapStartTime": [pd.Timedelta(seconds=0)],
+    })
+    return SimpleNamespace(drivers=["1"], pos_data={"1": pos_df}, laps=laps)
+
+
+def test_get_race_positions_extracts_elevation():
+    pos_df = pd.DataFrame({
+        "SessionTime": [pd.Timedelta(seconds=0.0), pd.Timedelta(seconds=0.5)],
+        "X": [100.0, 110.0],
+        "Y": [200.0, 210.0],
+        "Z": [5.0, 6.0],
+    })
+    gateway = FastF1Gateway()
+    gateway._load_session = lambda *args, **kwargs: _fake_session_for_positions(pos_df)
+
+    result = gateway.get_race_positions(2026, 1)
+
+    assert result == [
+        DriverPositions(driver="VER", points=[
+            PositionPoint(t=0.0, x=100.0, y=200.0, z=5.0),
+            PositionPoint(t=0.5, x=110.0, y=210.0, z=6.0),
+        ])
+    ]
+
+
+def test_get_race_positions_defaults_elevation_to_zero_when_missing():
+    pos_df = pd.DataFrame({
+        "SessionTime": [pd.Timedelta(seconds=0.0)],
+        "X": [100.0],
+        "Y": [200.0],
+    })
+    gateway = FastF1Gateway()
+    gateway._load_session = lambda *args, **kwargs: _fake_session_for_positions(pos_df)
+
+    result = gateway.get_race_positions(2026, 1)
+
+    assert result == [DriverPositions(driver="VER", points=[PositionPoint(t=0.0, x=100.0, y=200.0, z=0.0)])]
