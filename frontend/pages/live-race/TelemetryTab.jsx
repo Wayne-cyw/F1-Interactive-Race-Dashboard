@@ -86,7 +86,7 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedS
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>TELEMETRY TRACE · SCROLL TO REWIND</div>
+                    <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>TELEMETRY TRACE</div>
                     <JumpToLiveButton following={following} onClick={jumpToLive} />
                 </div>
 
