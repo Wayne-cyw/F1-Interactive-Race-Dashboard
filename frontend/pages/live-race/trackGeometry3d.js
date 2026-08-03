@@ -5,8 +5,8 @@
 // SVG viewBox.
 
 const SCENE_SIZE = 16
-const ELEVATION_EXAGGERATION = 3
-const ROAD_WIDTH = 0.5
+const ELEVATION_EXAGGERATION = 6
+const ROAD_WIDTH = 0.4
 
 // Real F1 elevation change (a few meters) is invisible next to a track's
 // multi-kilometer horizontal span, so only elevation gets the

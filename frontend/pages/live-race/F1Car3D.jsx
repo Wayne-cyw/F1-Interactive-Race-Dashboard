@@ -15,7 +15,15 @@ const MODEL_SCALE = 0.13
 // the nose is rotated onto +X once, independent of the live heading spin.
 const MODEL_FORWARD_OFFSET = Math.PI / 2
 const HIT_TARGET_RADIUS = 0.2
-const GROUND_OFFSET = 0.05
+// The model's own origin isn't at wheel-height — its lowest vertex (the
+// wheels) sits at local Y ≈ -0.56 (measured directly from the loaded
+// geometry's bounding box), well below the origin. Without compensating
+// for that gap the car visually sinks into the track. GROUND_CLEARANCE is
+// the extra lift on top of that compensation, so the wheels rest slightly
+// above the ribbon surface rather than exactly on it (avoids z-fighting).
+const MODEL_MIN_Y = -0.5596
+const GROUND_CLEARANCE = 0.15
+const GROUND_LIFT = -MODEL_MIN_Y + GROUND_CLEARANCE
 
 // How quickly the car's rendered heading eases toward its target heading,
 // in units of "fraction of the gap closed per second" — higher is
@@ -70,7 +78,7 @@ export default function F1Car3D({ position, heading, color, selected, onClick })
     return (
         <group
             ref={groupRef}
-            position={[position.x, position.y + GROUND_OFFSET * scale, position.z]}
+            position={[position.x, position.y + GROUND_LIFT * scale, position.z]}
             onClick={onClick}
         >
             <mesh>
@@ -79,7 +87,7 @@ export default function F1Car3D({ position, heading, color, selected, onClick })
             </mesh>
 
             {selected && (
-                <mesh position={[0, -GROUND_OFFSET * scale, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <mesh position={[0, (MODEL_MIN_Y - 0.02) * scale, 0]} rotation={[-Math.PI / 2, 0, 0]}>
                     <ringGeometry args={[scale * 3, scale * 3.6, 32]} />
                     <meshBasicMaterial color="#ffffff" transparent opacity={0.8} />
                 </mesh>
