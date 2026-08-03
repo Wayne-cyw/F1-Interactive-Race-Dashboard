@@ -78,13 +78,14 @@ function countDrsActivations(points) {
 // Slices a driver's full-session telemetry into what the UI needs "right
 // now" at elapsedSeconds: whole-race-so-far running stats (top speed, avg
 // speed, DRS activation count), a whole-race-so-far trace (for the
-// Telemetry tab's "RACE TRACE" chart, time-scaled across the full race
-// duration so it fills in progressively and never rescales), and three
-// rolling 15-second-window traces for the Overview tab (speed/throttle/
-// brake), which scroll in real time rather than compressing a variable-
-// length span into a fixed width. Returns null if there's no data yet
-// (e.g. before the driver's first sample).
-export function sliceTelemetry(points, elapsedSeconds, totalDurationSeconds) {
+// Telemetry tab's "RACE TRACE" chart, time-scaled across the data that
+// exists so far so it always stretches to fill the full chart width —
+// note this does mean an earlier moment's x position shifts left as more
+// laps complete), and three rolling 15-second-window traces for the
+// Overview tab (speed/throttle/brake), which scroll in real time rather
+// than compressing a variable-length span into a fixed width. Returns
+// null if there's no data yet (e.g. before the driver's first sample).
+export function sliceTelemetry(points, elapsedSeconds) {
     if (!points || points.length === 0) return null
     const soFar = points.filter(p => p.t <= elapsedSeconds)
     if (soFar.length === 0) return null
@@ -94,7 +95,7 @@ export function sliceTelemetry(points, elapsedSeconds, totalDurationSeconds) {
     const avgSpeed = speeds.length ? Math.round(speeds.reduce((a, b) => a + b, 0) / speeds.length) : 0
     const current = interpolateTelemetryPoint(points, elapsedSeconds)
 
-    const raceWindowSeconds = Math.max(totalDurationSeconds ?? 0, elapsedSeconds, 1)
+    const raceWindowSeconds = Math.max(elapsedSeconds, 1)
 
     const windowStart = elapsedSeconds - ROLLING_WINDOW_SECONDS
     const rollingPoints = points.filter(p => p.t >= windowStart && p.t <= elapsedSeconds)

@@ -116,8 +116,8 @@ export default function LiveRace() {
     )
 
     const telemetry = useMemo(
-        () => sliceTelemetry(telemetryPoints, replay.elapsedSeconds, replay.totalDurationSeconds),
-        [telemetryPoints, replay.elapsedSeconds, replay.totalDurationSeconds]
+        () => sliceTelemetry(telemetryPoints, replay.elapsedSeconds),
+        [telemetryPoints, replay.elapsedSeconds]
     )
 
     return (
