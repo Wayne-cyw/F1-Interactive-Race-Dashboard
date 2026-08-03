@@ -176,8 +176,9 @@ export default function LiveRace() {
                             selected={selected}
                             onSelectDriver={setSelectedDriverId}
                             speedPolyBig={telemetry?.speedPolyBig ?? ''}
-                            throttlePolyBig={telemetry?.throttlePolyBig ?? ''}
-                            brakePolyBig={telemetry?.brakePolyBig ?? ''}
+                            throttleScrollPoly={telemetry?.throttleScrollPoly ?? ''}
+                            brakeScrollPoly={telemetry?.brakeScrollPoly ?? ''}
+                            scrollContentWidthPx={telemetry?.scrollContentWidthPx ?? 0}
                             topSpeed={telemetry?.topSpeed ?? 0}
                             avgSpeed={telemetry?.avgSpeed ?? 0}
                             drsCount={telemetry?.drsCount ?? 0}

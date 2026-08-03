@@ -1,5 +1,8 @@
 import ResizeHandle from './ResizeHandle'
 import { useResizableWidth } from './useResizableWidth'
+import { useFollowScroll } from './useFollowScroll'
+
+const SCROLL_CHART_HEIGHT = 140
 
 function StatTile({ label, value, unit }) {
     return (
@@ -10,8 +13,27 @@ function StatTile({ label, value, unit }) {
     )
 }
 
-export default function TelemetryTab({ drivers, selected, onSelectDriver, speedPolyBig, throttlePolyBig, brakePolyBig, topSpeed, avgSpeed, drsCount, currentGear }) {
+function ScrollChart({ index, register, onScroll, contentWidthPx, points, color }) {
+    return (
+        <div
+            ref={register(index)}
+            onScroll={onScroll(index)}
+            style={{ overflowX: 'auto', overflowY: 'hidden', background: '#fff', border: '1px solid #eeece6', borderRadius: 10 }}
+        >
+            <svg
+                viewBox={`0 0 ${Math.max(1, contentWidthPx)} 100`}
+                preserveAspectRatio="none"
+                style={{ display: 'block', width: contentWidthPx, height: SCROLL_CHART_HEIGHT }}
+            >
+                <polyline points={points} fill="none" stroke={color} strokeWidth="2" />
+            </svg>
+        </div>
+    )
+}
+
+export default function TelemetryTab({ drivers, selected, onSelectDriver, speedPolyBig, throttleScrollPoly, brakeScrollPoly, scrollContentWidthPx, topSpeed, avgSpeed, drsCount, currentGear }) {
     const [driverListWidth, onDriverListResize] = useResizableWidth(260, { min: 200, max: 420, edge: 'right' })
+    const { following, register, onScroll, jumpToLive } = useFollowScroll(scrollContentWidthPx ?? 0)
 
     return (
         <div style={{ display: 'grid', gridTemplateColumns: `${driverListWidth}px 10px 1fr`, gridTemplateRows: 'minmax(0, 1fr)', flex: 1, minHeight: 0 }}>
@@ -50,17 +72,42 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedP
                 </svg>
 
                 <div style={{ marginTop: 14 }}>
-                    <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 8 }}>THROTTLE %</div>
-                    <svg viewBox="0 0 600 70" preserveAspectRatio="none" style={{ width: '100%', height: 80, background: '#fff', border: '1px solid #eeece6', borderRadius: 10 }}>
-                        <polyline points={throttlePolyBig} fill="none" stroke="oklch(48% .13 155)" strokeWidth="2" />
-                    </svg>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                        <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>THROTTLE % · SCROLL TO REWIND</div>
+                        {following ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10.5, fontWeight: 600, color: 'oklch(48% .13 155)' }}>
+                                <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'oklch(48% .13 155)' }} />
+                                LIVE
+                            </div>
+                        ) : (
+                            <button
+                                onClick={jumpToLive}
+                                style={{ fontSize: 10.5, fontWeight: 600, color: '#191b1e', background: '#f2f0ea', border: 'none', borderRadius: 10, padding: '4px 10px', cursor: 'pointer' }}
+                            >
+                                Jump to live
+                            </button>
+                        )}
+                    </div>
+                    <ScrollChart
+                        index={0}
+                        register={register}
+                        onScroll={onScroll}
+                        contentWidthPx={scrollContentWidthPx ?? 0}
+                        points={throttleScrollPoly}
+                        color="oklch(48% .13 155)"
+                    />
                 </div>
 
                 <div style={{ marginTop: 14 }}>
                     <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 8 }}>BRAKE %</div>
-                    <svg viewBox="0 0 600 70" preserveAspectRatio="none" style={{ width: '100%', height: 80, background: '#fff', border: '1px solid #eeece6', borderRadius: 10 }}>
-                        <polyline points={brakePolyBig} fill="none" stroke="oklch(55% .18 25)" strokeWidth="2" />
-                    </svg>
+                    <ScrollChart
+                        index={1}
+                        register={register}
+                        onScroll={onScroll}
+                        contentWidthPx={scrollContentWidthPx ?? 0}
+                        points={brakeScrollPoly}
+                        color="oklch(55% .18 25)"
+                    />
                 </div>
             </div>
         </div>
