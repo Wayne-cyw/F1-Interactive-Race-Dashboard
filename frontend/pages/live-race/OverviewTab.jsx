@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import Leaderboard from './Leaderboard'
 import ResizeHandle from './ResizeHandle'
+import TrackMap3D from './TrackMap3D'
 import { useResizableWidth } from './useResizableWidth'
 import { interpolatePosition } from './trackMap'
 import { BEST_SECTOR_COLOR } from './leaderboardData'
@@ -11,17 +12,17 @@ const SECTOR_BOXES = [
     { key: 's3', label: 'SECTOR 3' },
 ]
 
-export default function OverviewTab({ drivers, selected, onSelectDriver, trackPath, positions, elapsedSeconds, telemetry, bestSectors }) {
+export default function OverviewTab({ drivers, selected, onSelectDriver, trackScene, positions, elapsedSeconds, telemetry, bestSectors }) {
     const [leaderboardWidth, onLeaderboardResize] = useResizableWidth(440, { min: 320, max: 640, edge: 'right' })
     const [telemetryWidth, onTelemetryResize] = useResizableWidth(360, { min: 280, max: 520, edge: 'left' })
 
     const carPositions = useMemo(
         () => drivers.filter(d => !d.dnf).map(d => {
             const raw = interpolatePosition(positions[d.id], elapsedSeconds)
-            const svg = raw ? trackPath.toSvgPoint(raw) : { x: 0, y: 0 }
-            return { ...d, mx: svg.x, my: svg.y }
+            const scenePosition = raw ? trackScene.toScenePoint(raw) : { x: 0, y: 0, z: 0 }
+            return { ...d, scenePosition }
         }),
-        [drivers, positions, elapsedSeconds, trackPath]
+        [drivers, positions, elapsedSeconds, trackScene]
     )
 
     const lastPoint = telemetry?.current
@@ -35,12 +36,9 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackPa
 
                 <div style={{ padding: '16px 32px', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                     <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 10 }}>TRACK MAP</div>
-                    <svg viewBox="0 0 560 320" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', flex: 1, minHeight: 0 }}>
-                        <path d={trackPath.pathD} fill="none" stroke="#e3e0d8" strokeWidth="14" strokeLinecap="round" />
-                        {carPositions.map(d => (
-                            <circle key={d.id} cx={d.mx} cy={d.my} r={d.dotR} fill={d.color} stroke="#faf9f6" strokeWidth="2" />
-                        ))}
-                    </svg>
+                    <div style={{ position: 'relative', width: '100%', flex: 1, minHeight: 0 }}>
+                        <TrackMap3D trackPoints={trackScene.points} carPositions={carPositions} onSelectDriver={onSelectDriver} />
+                    </div>
                     <div style={{ display: 'flex', gap: 20, marginTop: 6, fontSize: 12, color: '#8b8880' }}>
                         <div>S1 <b style={{ color: '#403c36' }}>{selected?.s1 ?? '—'}</b></div>
                         <div>S2 <b style={{ color: selected?.s2c === BEST_SECTOR_COLOR ? BEST_SECTOR_COLOR : '#403c36' }}>{selected?.s2 ?? '—'}</b></div>
