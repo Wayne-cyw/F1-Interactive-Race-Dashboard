@@ -16,7 +16,7 @@ function ScrollChart({ index, register, onScroll, contentWidthPx, points, color,
         <div
             ref={register(index)}
             onScroll={onScroll(index)}
-            style={{ flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'hidden', background: '#fff', border: '1px solid #eeece6', borderRadius: 10 }}
+            style={{ flex: 1, minHeight: 0, minWidth: 0, overflowX: 'auto', overflowY: 'hidden', background: '#fff', border: '1px solid #eeece6', borderRadius: 10 }}
         >
             <svg
                 viewBox={`0 0 ${Math.max(1, contentWidthPx)} 100`}
@@ -55,7 +55,7 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedS
     const { following, register, onScroll, jumpToLive } = useFollowScroll(scrollContentWidthPx ?? 0)
 
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: `${driverListWidth}px 10px 1fr`, gridTemplateRows: 'minmax(0, 1fr)', flex: 1, minHeight: 0 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: `${driverListWidth}px 10px minmax(0, 1fr)`, gridTemplateRows: 'minmax(0, 1fr)', flex: 1, minHeight: 0, minWidth: 0 }}>
             <div style={{ padding: '16px 0', overflowY: 'auto', minHeight: 0 }}>
                 <div style={{ padding: '0 32px 8px', fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>SELECT DRIVER</div>
                 {drivers.map(d => (
@@ -72,7 +72,7 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedS
 
             <ResizeHandle onMouseDown={onDriverListResize} />
 
-            <div style={{ padding: '16px 32px', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '16px 32px', minHeight: 0, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
                 <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 6 }}>TELEMETRY DEEP DIVE</div>
                 <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 14 }}>
                     {selected.name} <span style={{ fontSize: 13, color: '#a8a49b', fontWeight: 400 }}>{selected.team}</span>
@@ -90,8 +90,8 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedS
                     <JumpToLiveButton following={following} onClick={jumpToLive} />
                 </div>
 
-                <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+                <div style={{ flex: 1, minHeight: 0, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    <div style={{ flex: 1, minHeight: 0, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
                         <div style={{ marginBottom: 6, fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>SPEED (km/h)</div>
                         <ScrollChart
                             index={0}
@@ -104,7 +104,7 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedS
                         />
                     </div>
 
-                    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ flex: 1, minHeight: 0, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
                         <div style={{ marginBottom: 6, fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>THROTTLE %</div>
                         <ScrollChart
                             index={1}
@@ -116,7 +116,7 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedS
                         />
                     </div>
 
-                    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ flex: 1, minHeight: 0, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
                         <div style={{ marginBottom: 6, fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>BRAKE %</div>
                         <ScrollChart
                             index={2}
