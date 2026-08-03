@@ -12,6 +12,11 @@ const SECTOR_BOXES = [
     { key: 's3', label: 'SECTOR 3' },
 ]
 
+// How far ahead (in seconds) to sample a driver's position to derive
+// their current heading — small enough to track corners responsively,
+// large enough to stay stable at low speed / in the pit lane.
+const HEADING_LOOKAHEAD_SECONDS = 0.15
+
 export default function OverviewTab({ drivers, selected, onSelectDriver, trackScene, positions, elapsedSeconds, telemetry, bestSectors }) {
     const [leaderboardWidth, onLeaderboardResize] = useResizableWidth(440, { min: 320, max: 640, edge: 'right' })
     const [telemetryWidth, onTelemetryResize] = useResizableWidth(360, { min: 280, max: 520, edge: 'left' })
@@ -19,8 +24,13 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackSc
     const carPositions = useMemo(
         () => drivers.filter(d => !d.dnf).map(d => {
             const raw = interpolatePosition(positions[d.id], elapsedSeconds)
+            const ahead = interpolatePosition(positions[d.id], elapsedSeconds + HEADING_LOOKAHEAD_SECONDS)
             const scenePosition = raw ? trackScene.toScenePoint(raw) : { x: 0, y: 0, z: 0 }
-            return { ...d, scenePosition }
+            const sceneAhead = ahead ? trackScene.toScenePoint(ahead) : scenePosition
+            const dx = sceneAhead.x - scenePosition.x
+            const dz = sceneAhead.z - scenePosition.z
+            const heading = (dx !== 0 || dz !== 0) ? Math.atan2(-dz, dx) : 0
+            return { ...d, scenePosition, heading }
         }),
         [drivers, positions, elapsedSeconds, trackScene]
     )

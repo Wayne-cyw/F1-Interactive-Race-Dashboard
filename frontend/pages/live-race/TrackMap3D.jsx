@@ -28,12 +28,13 @@ export default function TrackMap3D({ trackPoints, carPositions, onSelectDriver }
                 <F1Car3D
                     key={d.id}
                     position={d.scenePosition}
+                    heading={d.heading}
                     color={d.color}
                     selected={d.selected}
                     onClick={() => onSelectDriver(d.id)}
                 />
             ))}
-            <OrbitControls enablePan={false} minDistance={4} maxDistance={32} />
+            <OrbitControls enablePan minDistance={4} maxDistance={32} />
         </Canvas>
     )
 }
