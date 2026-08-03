@@ -12,16 +12,3 @@ export function deriveCurrentLap(elapsedSeconds, laps) {
     }
     return maxLap || 1
 }
-
-// A specific driver's own most recently started lap's start time, at or
-// before `elapsedSeconds` — used to slice that driver's telemetry trace to
-// "this lap only, so far" rather than their whole session.
-export function deriveLapStartTime(elapsedSeconds, driverLaps) {
-    let latestStart = 0
-    for (const lap of driverLaps) {
-        if (lap.session_time != null && lap.session_time <= elapsedSeconds && lap.session_time > latestStart) {
-            latestStart = lap.session_time
-        }
-    }
-    return latestStart
-}

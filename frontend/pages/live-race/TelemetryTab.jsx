@@ -1,5 +1,6 @@
 import ResizeHandle from './ResizeHandle'
 import { useResizableWidth } from './useResizableWidth'
+import { useFollowScroll } from './useFollowScroll'
 
 function StatTile({ label, value, unit }) {
     return (
@@ -10,11 +11,51 @@ function StatTile({ label, value, unit }) {
     )
 }
 
-export default function TelemetryTab({ drivers, selected, onSelectDriver, speedPolyBig, throttlePolyBig, brakePolyBig, topSpeed, avgSpeed, drsCount, currentGear }) {
+function ScrollChart({ index, register, onScroll, contentWidthPx, points, color, strokeWidth = 2 }) {
+    return (
+        <div
+            ref={register(index)}
+            onScroll={onScroll(index)}
+            style={{ flex: 1, minHeight: 0, minWidth: 0, overflowX: 'auto', overflowY: 'hidden', background: '#fff', border: '1px solid #eeece6', borderRadius: 10 }}
+        >
+            <svg
+                viewBox={`0 0 ${Math.max(1, contentWidthPx)} 100`}
+                preserveAspectRatio="none"
+                style={{ display: 'block', width: contentWidthPx, height: '100%' }}
+            >
+                <polyline points={points} fill="none" stroke={color} strokeWidth={strokeWidth} />
+            </svg>
+        </div>
+    )
+}
+
+function JumpToLiveButton({ following, onClick }) {
+    return (
+        <button
+            onClick={onClick}
+            disabled={following}
+            style={{
+                fontSize: 10.5,
+                fontWeight: 600,
+                color: following ? '#c9c6bd' : '#191b1e',
+                background: following ? '#faf9f6' : '#f2f0ea',
+                border: '1px solid #eeece6',
+                borderRadius: 10,
+                padding: '4px 10px',
+                cursor: following ? 'default' : 'pointer',
+            }}
+        >
+            Jump to live
+        </button>
+    )
+}
+
+export default function TelemetryTab({ drivers, selected, onSelectDriver, speedScrollPoly, throttleScrollPoly, brakeScrollPoly, scrollContentWidthPx, topSpeed, avgSpeed, drsCount, currentGear }) {
     const [driverListWidth, onDriverListResize] = useResizableWidth(260, { min: 200, max: 420, edge: 'right' })
+    const { following, register, onScroll, jumpToLive } = useFollowScroll(scrollContentWidthPx ?? 0)
 
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: `${driverListWidth}px 10px 1fr`, gridTemplateRows: 'minmax(0, 1fr)', flex: 1, minHeight: 0 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: `${driverListWidth}px 10px minmax(0, 1fr)`, gridTemplateRows: 'minmax(0, 1fr)', flex: 1, minHeight: 0, minWidth: 0 }}>
             <div style={{ padding: '16px 0', overflowY: 'auto', minHeight: 0 }}>
                 <div style={{ padding: '0 32px 8px', fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>SELECT DRIVER</div>
                 {drivers.map(d => (
@@ -31,7 +72,7 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedP
 
             <ResizeHandle onMouseDown={onDriverListResize} />
 
-            <div style={{ padding: '16px 32px', overflowY: 'auto', minHeight: 0 }}>
+            <div style={{ padding: '16px 32px', minHeight: 0, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
                 <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 6 }}>TELEMETRY DEEP DIVE</div>
                 <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 14 }}>
                     {selected.name} <span style={{ fontSize: 13, color: '#a8a49b', fontWeight: 400 }}>{selected.team}</span>
@@ -44,23 +85,47 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedP
                     <StatTile label="CURRENT GEAR" value={currentGear ?? '—'} />
                 </div>
 
-                <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 8 }}>SPEED (km/h) · LAP TRACE</div>
-                <svg viewBox="0 0 600 110" style={{ width: '100%', height: 130, background: '#fff', border: '1px solid #eeece6', borderRadius: 10 }}>
-                    <polyline points={speedPolyBig} fill="none" stroke="oklch(50% .16 230)" strokeWidth="2.5" />
-                </svg>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>TELEMETRY TRACE</div>
+                    <JumpToLiveButton following={following} onClick={jumpToLive} />
+                </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 14 }}>
-                    <div>
-                        <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 8 }}>THROTTLE %</div>
-                        <svg viewBox="0 0 600 70" style={{ width: '100%', height: 80, background: '#fff', border: '1px solid #eeece6', borderRadius: 10 }}>
-                            <polyline points={throttlePolyBig} fill="none" stroke="oklch(48% .13 155)" strokeWidth="2" />
-                        </svg>
+                <div style={{ flex: 1, minHeight: 0, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    <div style={{ flex: 1, minHeight: 0, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ marginBottom: 6, fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>SPEED (km/h)</div>
+                        <ScrollChart
+                            index={0}
+                            register={register}
+                            onScroll={onScroll}
+                            contentWidthPx={scrollContentWidthPx ?? 0}
+                            points={speedScrollPoly}
+                            color="oklch(50% .16 230)"
+                            strokeWidth={2.5}
+                        />
                     </div>
-                    <div>
-                        <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 8 }}>BRAKE %</div>
-                        <svg viewBox="0 0 600 70" style={{ width: '100%', height: 80, background: '#fff', border: '1px solid #eeece6', borderRadius: 10 }}>
-                            <polyline points={brakePolyBig} fill="none" stroke="oklch(55% .18 25)" strokeWidth="2" />
-                        </svg>
+
+                    <div style={{ flex: 1, minHeight: 0, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ marginBottom: 6, fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>THROTTLE %</div>
+                        <ScrollChart
+                            index={1}
+                            register={register}
+                            onScroll={onScroll}
+                            contentWidthPx={scrollContentWidthPx ?? 0}
+                            points={throttleScrollPoly}
+                            color="oklch(48% .13 155)"
+                        />
+                    </div>
+
+                    <div style={{ flex: 1, minHeight: 0, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ marginBottom: 6, fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>BRAKE %</div>
+                        <ScrollChart
+                            index={2}
+                            register={register}
+                            onScroll={onScroll}
+                            contentWidthPx={scrollContentWidthPx ?? 0}
+                            points={brakeScrollPoly}
+                            color="oklch(55% .18 25)"
+                        />
                     </div>
                 </div>
             </div>

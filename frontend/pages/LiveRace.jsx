@@ -11,7 +11,6 @@ import { useDriverTelemetry } from './live-race/useDriverTelemetry'
 import { buildLeaderboardRows, deriveBestSectors } from './live-race/leaderboardData'
 import { buildPitLog, buildTireStints } from './live-race/stints'
 import { buildTrackPath } from './live-race/trackMap'
-import { deriveLapStartTime } from './live-race/raceClock'
 import { sliceTelemetry } from './live-race/telemetrySlice'
 import { computeDnfInfo } from './live-race/dnf'
 import { deriveCurrentTrackStatus } from './live-race/trackStatus'
@@ -116,17 +115,9 @@ export default function LiveRace() {
         [replay.elapsedSeconds, replay.trackStatus]
     )
 
-    const driverLaps = useMemo(
-        () => replay.sessionData ? replay.sessionData.laps.filter(l => l.driver === selectedDriverId) : [],
-        [replay.sessionData, selectedDriverId]
-    )
-    const lapStartTime = useMemo(
-        () => deriveLapStartTime(replay.elapsedSeconds, driverLaps),
-        [replay.elapsedSeconds, driverLaps]
-    )
     const telemetry = useMemo(
-        () => sliceTelemetry(telemetryPoints, replay.elapsedSeconds, lapStartTime),
-        [telemetryPoints, replay.elapsedSeconds, lapStartTime]
+        () => sliceTelemetry(telemetryPoints, replay.elapsedSeconds),
+        [telemetryPoints, replay.elapsedSeconds]
     )
 
     return (
@@ -184,9 +175,10 @@ export default function LiveRace() {
                             drivers={driversWithStints}
                             selected={selected}
                             onSelectDriver={setSelectedDriverId}
-                            speedPolyBig={telemetry?.speedPolyBig ?? ''}
-                            throttlePolyBig={telemetry?.throttlePolyBig ?? ''}
-                            brakePolyBig={telemetry?.brakePolyBig ?? ''}
+                            speedScrollPoly={telemetry?.speedScrollPoly ?? ''}
+                            throttleScrollPoly={telemetry?.throttleScrollPoly ?? ''}
+                            brakeScrollPoly={telemetry?.brakeScrollPoly ?? ''}
+                            scrollContentWidthPx={telemetry?.scrollContentWidthPx ?? 0}
                             topSpeed={telemetry?.topSpeed ?? 0}
                             avgSpeed={telemetry?.avgSpeed ?? 0}
                             drsCount={telemetry?.drsCount ?? 0}
