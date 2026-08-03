@@ -25,6 +25,9 @@ backend/logs
 docs/superpowers/
 .superpowers/
 
+# Local git worktrees
+.worktrees/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
