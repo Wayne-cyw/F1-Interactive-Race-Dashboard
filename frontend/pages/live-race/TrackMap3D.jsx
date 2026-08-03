@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { Suspense, useMemo } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
@@ -29,16 +29,18 @@ export default function TrackMap3D({ trackPoints, carPositions, onSelectDriver }
             <ambientLight intensity={0.6} />
             <directionalLight position={[10, 15, 5]} intensity={0.9} />
             <TrackRibbon points={trackPoints} />
-            {carPositions.map(d => (
-                <F1Car3D
-                    key={d.id}
-                    position={d.scenePosition}
-                    heading={d.heading}
-                    color={d.color}
-                    selected={d.selected}
-                    onClick={() => onSelectDriver(d.id)}
-                />
-            ))}
+            <Suspense fallback={null}>
+                {carPositions.map(d => (
+                    <F1Car3D
+                        key={d.id}
+                        position={d.scenePosition}
+                        heading={d.heading}
+                        color={d.color}
+                        selected={d.selected}
+                        onClick={() => onSelectDriver(d.id)}
+                    />
+                ))}
+            </Suspense>
             <OrbitControls enablePan minDistance={4} maxDistance={32} maxPolarAngle={Math.PI / 2 - 0.05} />
         </Canvas>
     )

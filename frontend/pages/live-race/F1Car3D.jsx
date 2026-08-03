@@ -1,42 +1,71 @@
-const SIZE_SCALE = 2.2
+import { useMemo, useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import { useGLTF } from '@react-three/drei'
 
-const BODY_LENGTH = 0.34
-const BODY_WIDTH = 0.14
-const BODY_HEIGHT = 0.06
-const NOSE_LENGTH = 0.16
-const NOSE_RADIUS = 0.045
-const HALO_RADIUS = 0.05
-const WING_WIDTH = 0.16
-const FRONT_WING_WIDTH = 0.24
-const ENDPLATE_HEIGHT = 0.06
-const WHEEL_RADIUS = 0.045
-const WHEEL_WIDTH = 0.05
-// Sized to roughly the car's own scaled footprint (not the road width,
-// which a bigger radius would exceed — risking overlapping hit-spheres
-// picking the wrong car in tight packs/DRS trains).
+const MODEL_URL = '/models/mcl35m.glb'
+useGLTF.preload(MODEL_URL)
+
+// The source model is ~5.68m long (real-world meters, Z-forward, Y-up).
+// Scaled up well past true-to-track scale for visibility, same rationale
+// as the rest of the 3D map (see trackGeometry3d.js's elevation
+// exaggeration).
+const MODEL_SCALE = 0.13
+// The model's length runs along local +Z; our heading convention treats
+// local +X as "forward" (see OverviewTab.jsx's heading calculation), so
+// the nose is rotated onto +X once, independent of the live heading spin.
+const MODEL_FORWARD_OFFSET = Math.PI / 2
 const HIT_TARGET_RADIUS = 0.2
+const GROUND_OFFSET = 0.05
 
-const WHEEL_POSITIONS = [
-    [BODY_LENGTH / 2 - 0.05, -BODY_HEIGHT / 2, BODY_WIDTH / 2],
-    [BODY_LENGTH / 2 - 0.05, -BODY_HEIGHT / 2, -BODY_WIDTH / 2],
-    [-BODY_LENGTH / 2 + 0.05, -BODY_HEIGHT / 2, BODY_WIDTH / 2],
-    [-BODY_LENGTH / 2 + 0.05, -BODY_HEIGHT / 2, -BODY_WIDTH / 2],
-]
+// How quickly the car's rendered heading eases toward its target heading,
+// in units of "fraction of the gap closed per second" — higher is
+// snappier, lower is smoother. Framerate-independent via delta time.
+const ROTATION_SMOOTHING_RATE = 10
 
-// A stylized, more detailed F1-car silhouette — not a licensed or
-// team-accurate model — with a nose cone, halo, sidepods, front/rear
-// wings with endplates, and four wheels. `heading` (radians, world Y
-// rotation) points the car's nose along its direction of travel.
-// Positioned with its wheels resting on `position` (the track surface
-// height at this point), tinted with the driver's team color. A
-// fully-transparent hit-target sphere surrounds it so the car stays easy
-// to click at any zoom level, without visually growing beyond the model.
+// Materials named here are the car's body/livery — recolored to the
+// driver's team color. Everything else (wheels, tires, steering wheel)
+// keeps the source model's own textured material.
+const BODY_MATERIAL_NAMES = new Set(['mcl35m_m_png', 'mcl35m_png', 'mcl35m_c_png', 'mcl35m_h_png'])
+
+// A real (heavily decimated, ~4k triangle) F1 car model, recolored per
+// team by cloning and tinting only its body materials — wheels/tires keep
+// their own textures. `heading` (radians, world Y rotation) is the car's
+// target direction of travel; the rendered rotation eases toward it every
+// frame rather than snapping, so turns look smooth. Positioned with its
+// wheels resting on `position` (the track surface height at this point).
 export default function F1Car3D({ position, heading, color, selected, onClick }) {
-    const scale = SIZE_SCALE * (selected ? 1.25 : 1)
+    const { scene } = useGLTF(MODEL_URL)
+
+    const carScene = useMemo(() => {
+        const clone = scene.clone(true)
+        clone.traverse(child => {
+            if (child.isMesh && BODY_MATERIAL_NAMES.has(child.material.name)) {
+                child.material = child.material.clone()
+                child.material.color.set(color)
+            }
+        })
+        return clone
+    }, [scene, color])
+
+    const groupRef = useRef()
+    const headingRef = useRef(heading ?? 0)
+
+    useFrame((_, delta) => {
+        if (!groupRef.current) return
+        const current = headingRef.current
+        const target = heading ?? 0
+        const diff = ((target - current + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI
+        const next = current + diff * (1 - Math.exp(-ROTATION_SMOOTHING_RATE * delta))
+        headingRef.current = next
+        groupRef.current.rotation.y = next
+    })
+
+    const scale = MODEL_SCALE * (selected ? 1.25 : 1)
+
     return (
         <group
-            position={[position.x, position.y + (BODY_HEIGHT / 2) * scale, position.z]}
-            rotation={[0, heading ?? 0, 0]}
+            ref={groupRef}
+            position={[position.x, position.y + GROUND_OFFSET * scale, position.z]}
             onClick={onClick}
         >
             <mesh>
@@ -44,77 +73,14 @@ export default function F1Car3D({ position, heading, color, selected, onClick })
                 <meshBasicMaterial transparent opacity={0} depthWrite={false} />
             </mesh>
 
-            <group scale={scale}>
-                {selected && (
-                    <mesh position={[0, -BODY_HEIGHT / 2 - 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                        <ringGeometry args={[BODY_LENGTH * 0.6, BODY_LENGTH * 0.72, 32]} />
-                        <meshBasicMaterial color="#ffffff" transparent opacity={0.8} />
-                    </mesh>
-                )}
+            {selected && (
+                <mesh position={[0, -GROUND_OFFSET * scale, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                    <ringGeometry args={[0.3, 0.36, 32]} />
+                    <meshBasicMaterial color="#ffffff" transparent opacity={0.8} />
+                </mesh>
+            )}
 
-                {/* main tub */}
-                <mesh>
-                    <boxGeometry args={[BODY_LENGTH, BODY_HEIGHT, BODY_WIDTH]} />
-                    <meshStandardMaterial color={color} />
-                </mesh>
-
-                {/* nose cone, tapering forward along +X */}
-                <mesh position={[BODY_LENGTH / 2 + NOSE_LENGTH / 2 - 0.03, -BODY_HEIGHT * 0.1, 0]} rotation={[0, 0, -Math.PI / 2]}>
-                    <cylinderGeometry args={[0.006, NOSE_RADIUS, NOSE_LENGTH, 10]} />
-                    <meshStandardMaterial color={color} />
-                </mesh>
-
-                {/* halo */}
-                <mesh position={[0.01, BODY_HEIGHT * 1.5, 0]} rotation={[0, Math.PI / 2, 0]}>
-                    <torusGeometry args={[HALO_RADIUS, 0.007, 8, 16, Math.PI]} />
-                    <meshStandardMaterial color="#1a1a1a" />
-                </mesh>
-
-                {/* sidepods */}
-                <mesh position={[-0.02, -BODY_HEIGHT * 0.1, BODY_WIDTH * 0.62]}>
-                    <boxGeometry args={[BODY_LENGTH * 0.42, BODY_HEIGHT * 0.7, BODY_WIDTH * 0.22]} />
-                    <meshStandardMaterial color={color} />
-                </mesh>
-                <mesh position={[-0.02, -BODY_HEIGHT * 0.1, -BODY_WIDTH * 0.62]}>
-                    <boxGeometry args={[BODY_LENGTH * 0.42, BODY_HEIGHT * 0.7, BODY_WIDTH * 0.22]} />
-                    <meshStandardMaterial color={color} />
-                </mesh>
-
-                {/* front wing + endplates */}
-                <mesh position={[BODY_LENGTH / 2 + 0.02, -BODY_HEIGHT * 0.35, 0]}>
-                    <boxGeometry args={[0.03, BODY_HEIGHT * 0.25, FRONT_WING_WIDTH]} />
-                    <meshStandardMaterial color={color} />
-                </mesh>
-                <mesh position={[BODY_LENGTH / 2 + 0.02, -BODY_HEIGHT * 0.15, FRONT_WING_WIDTH / 2]}>
-                    <boxGeometry args={[0.03, ENDPLATE_HEIGHT, 0.01]} />
-                    <meshStandardMaterial color={color} />
-                </mesh>
-                <mesh position={[BODY_LENGTH / 2 + 0.02, -BODY_HEIGHT * 0.15, -FRONT_WING_WIDTH / 2]}>
-                    <boxGeometry args={[0.03, ENDPLATE_HEIGHT, 0.01]} />
-                    <meshStandardMaterial color={color} />
-                </mesh>
-
-                {/* rear wing + endplates */}
-                <mesh position={[-BODY_LENGTH / 2 + 0.03, BODY_HEIGHT * 0.6, 0]}>
-                    <boxGeometry args={[0.06, BODY_HEIGHT * 0.5, WING_WIDTH]} />
-                    <meshStandardMaterial color={color} />
-                </mesh>
-                <mesh position={[-BODY_LENGTH / 2 + 0.03, BODY_HEIGHT * 0.35, WING_WIDTH / 2]}>
-                    <boxGeometry args={[0.06, ENDPLATE_HEIGHT, 0.01]} />
-                    <meshStandardMaterial color={color} />
-                </mesh>
-                <mesh position={[-BODY_LENGTH / 2 + 0.03, BODY_HEIGHT * 0.35, -WING_WIDTH / 2]}>
-                    <boxGeometry args={[0.06, ENDPLATE_HEIGHT, 0.01]} />
-                    <meshStandardMaterial color={color} />
-                </mesh>
-
-                {WHEEL_POSITIONS.map((pos, i) => (
-                    <mesh key={i} position={pos} rotation={[0, 0, Math.PI / 2]}>
-                        <cylinderGeometry args={[WHEEL_RADIUS, WHEEL_RADIUS, WHEEL_WIDTH, 12]} />
-                        <meshStandardMaterial color="#1a1a1a" />
-                    </mesh>
-                ))}
-            </group>
+            <primitive object={carScene} scale={scale} rotation={[0, MODEL_FORWARD_OFFSET, 0]} />
         </group>
     )
 }
