@@ -85,9 +85,16 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
         const bestSector2SoFar = Math.min(...driverLaps.map(l => l.sector_2_time).filter(v => v != null), Infinity)
         const bestSector3SoFar = Math.min(...driverLaps.map(l => l.sector_3_time).filter(v => v != null), Infinity)
 
+        // Before a driver's first lap actually completes, `latestLap` is
+        // null (no timing-derived position exists yet) — fall back to
+        // their starting grid slot so the leaderboard still shows a
+        // running order during lap 1, instead of going blank until the
+        // first driver crosses the line.
+        const pos = dnf ? null : (latestLap ? latestLap.position : result?.grid_position ?? null)
+
         rows.push({
             id: driverCode,
-            pos: dnf || !latestLap ? null : latestLap.position,
+            pos,
             color: result?.team_color ?? '#8b8880',
             name: formatDriverName(result?.driver_name),
             team: result?.team ?? '',
@@ -104,7 +111,7 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
             age: latestLap ? latestLap.lap_number - lastPitLap : 0,
             pits: driverPitstops.length,
             inPit,
-            top5: !dnf && latestLap?.position != null && latestLap.position <= 3,
+            top5: pos != null && pos <= 3,
             dnf,
             _revealAtSeconds: dnfEntry?.revealAtSeconds ?? null,
             _lastLapEndSeconds: dnfEntry?.lastLapEndSeconds ?? null,
