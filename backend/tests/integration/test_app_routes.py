@@ -178,7 +178,7 @@ def test_track_route_returns_coordinates(client_factory):
     app = client_factory(session_repo=FakeSessionRepository(track_layout=layout))
     resp = app.test_client().get("/api/track/2026/1")
     assert resp.status_code == 200
-    assert resp.get_json()["track"]["coordinates"] == [{"x": 100.0, "y": 200.0}]
+    assert resp.get_json()["track"]["coordinates"] == [{"x": 100.0, "y": 200.0, "z": 0.0}]
 
 
 def test_track_route_returns_404_when_no_lap_data(client_factory):
@@ -193,7 +193,7 @@ def test_positions_route_returns_driver_points(client_factory):
     app = client_factory(session_repo=FakeSessionRepository(positions=data))
     resp = app.test_client().get("/api/positions/2026/1")
     assert resp.status_code == 200
-    assert resp.get_json()["drivers"][0] == {"driver": "VER", "points": [{"t": 0.0, "x": 100.0, "y": 200.0}]}
+    assert resp.get_json()["drivers"][0] == {"driver": "VER", "points": [{"t": 0.0, "x": 100.0, "y": 200.0, "z": 0.0}]}
 
 
 def test_positions_route_returns_404_when_unavailable(client_factory):

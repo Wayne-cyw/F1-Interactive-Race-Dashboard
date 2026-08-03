@@ -7,7 +7,7 @@ def present_positions(drivers: list[DriverPositions]) -> dict:
         "drivers": [
             {
                 "driver": d.driver,
-                "points": [{"t": p.t, "x": p.x, "y": p.y} for p in d.points],
+                "points": [{"t": p.t, "x": p.x, "y": p.y, "z": p.z} for p in d.points],
             }
             for d in drivers
         ],
