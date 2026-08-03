@@ -16,7 +16,7 @@ import { computeDnfInfo } from './live-race/dnf'
 import { deriveCurrentTrackStatus } from './live-race/trackStatus'
 
 const FONT_LINK_ID = 'race-center-fonts'
-const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap'
+const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;500;600;700;900&display=swap'
 
 function useRaceCenterFonts() {
     useEffect(() => {
@@ -121,7 +121,7 @@ export default function LiveRace() {
     )
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#faf9f6', color: '#191b1e', fontFamily: 'Inter, system-ui, sans-serif' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#faf9f6', color: '#191b1e', fontFamily: "'Inconsolata', system-ui, sans-serif" }}>
             <TopBar
                 seasons={replay.seasons}
                 races={replay.races}

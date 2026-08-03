@@ -21,7 +21,7 @@ export default function TabNav({ activeTab, onChange }) {
                             borderRadius: 10,
                             fontSize: 13,
                             fontWeight: 600,
-                            fontFamily: 'Inter, sans-serif',
+                            fontFamily: "'Inconsolata', sans-serif",
                             background: active ? '#191b1e' : 'transparent',
                             color: active ? '#fff' : '#5c5852',
                         }}
