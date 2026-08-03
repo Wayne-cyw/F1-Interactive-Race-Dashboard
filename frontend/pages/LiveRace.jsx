@@ -175,7 +175,7 @@ export default function LiveRace() {
                             drivers={driversWithStints}
                             selected={selected}
                             onSelectDriver={setSelectedDriverId}
-                            speedPolyBig={telemetry?.speedPolyBig ?? ''}
+                            speedScrollPoly={telemetry?.speedScrollPoly ?? ''}
                             throttleScrollPoly={telemetry?.throttleScrollPoly ?? ''}
                             brakeScrollPoly={telemetry?.brakeScrollPoly ?? ''}
                             scrollContentWidthPx={telemetry?.scrollContentWidthPx ?? 0}

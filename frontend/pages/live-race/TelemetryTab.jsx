@@ -13,7 +13,7 @@ function StatTile({ label, value, unit }) {
     )
 }
 
-function ScrollChart({ index, register, onScroll, contentWidthPx, points, color }) {
+function ScrollChart({ index, register, onScroll, contentWidthPx, points, color, strokeWidth = 2 }) {
     return (
         <div
             ref={register(index)}
@@ -25,13 +25,34 @@ function ScrollChart({ index, register, onScroll, contentWidthPx, points, color 
                 preserveAspectRatio="none"
                 style={{ display: 'block', width: contentWidthPx, height: SCROLL_CHART_HEIGHT }}
             >
-                <polyline points={points} fill="none" stroke={color} strokeWidth="2" />
+                <polyline points={points} fill="none" stroke={color} strokeWidth={strokeWidth} />
             </svg>
         </div>
     )
 }
 
-export default function TelemetryTab({ drivers, selected, onSelectDriver, speedPolyBig, throttleScrollPoly, brakeScrollPoly, scrollContentWidthPx, topSpeed, avgSpeed, drsCount, currentGear }) {
+function JumpToLiveButton({ following, onClick }) {
+    return (
+        <button
+            onClick={onClick}
+            disabled={following}
+            style={{
+                fontSize: 10.5,
+                fontWeight: 600,
+                color: following ? '#c9c6bd' : '#191b1e',
+                background: following ? '#faf9f6' : '#f2f0ea',
+                border: '1px solid #eeece6',
+                borderRadius: 10,
+                padding: '4px 10px',
+                cursor: following ? 'default' : 'pointer',
+            }}
+        >
+            Jump to live
+        </button>
+    )
+}
+
+export default function TelemetryTab({ drivers, selected, onSelectDriver, speedScrollPoly, throttleScrollPoly, brakeScrollPoly, scrollContentWidthPx, topSpeed, avgSpeed, drsCount, currentGear }) {
     const [driverListWidth, onDriverListResize] = useResizableWidth(260, { min: 200, max: 420, edge: 'right' })
     const { following, register, onScroll, jumpToLive } = useFollowScroll(scrollContentWidthPx ?? 0)
 
@@ -66,30 +87,26 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedP
                     <StatTile label="CURRENT GEAR" value={currentGear ?? '—'} />
                 </div>
 
-                <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 8 }}>SPEED (km/h) · RACE TRACE</div>
-                <svg viewBox="0 0 600 110" preserveAspectRatio="none" style={{ width: '100%', height: 130, background: '#fff', border: '1px solid #eeece6', borderRadius: 10 }}>
-                    <polyline points={speedPolyBig} fill="none" stroke="oklch(50% .16 230)" strokeWidth="2.5" />
-                </svg>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>TELEMETRY TRACE · SCROLL TO REWIND</div>
+                    <JumpToLiveButton following={following} onClick={jumpToLive} />
+                </div>
+
+                <div style={{ marginBottom: 8, fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>SPEED (km/h)</div>
+                <ScrollChart
+                    index={0}
+                    register={register}
+                    onScroll={onScroll}
+                    contentWidthPx={scrollContentWidthPx ?? 0}
+                    points={speedScrollPoly}
+                    color="oklch(50% .16 230)"
+                    strokeWidth={2.5}
+                />
 
                 <div style={{ marginTop: 14 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                        <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>THROTTLE % · SCROLL TO REWIND</div>
-                        {following ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10.5, fontWeight: 600, color: 'oklch(48% .13 155)' }}>
-                                <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'oklch(48% .13 155)' }} />
-                                LIVE
-                            </div>
-                        ) : (
-                            <button
-                                onClick={jumpToLive}
-                                style={{ fontSize: 10.5, fontWeight: 600, color: '#191b1e', background: '#f2f0ea', border: 'none', borderRadius: 10, padding: '4px 10px', cursor: 'pointer' }}
-                            >
-                                Jump to live
-                            </button>
-                        )}
-                    </div>
+                    <div style={{ marginBottom: 8, fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>THROTTLE %</div>
                     <ScrollChart
-                        index={0}
+                        index={1}
                         register={register}
                         onScroll={onScroll}
                         contentWidthPx={scrollContentWidthPx ?? 0}
@@ -101,7 +118,7 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedP
                 <div style={{ marginTop: 14 }}>
                     <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 8 }}>BRAKE %</div>
                     <ScrollChart
-                        index={1}
+                        index={2}
                         register={register}
                         onScroll={onScroll}
                         contentWidthPx={scrollContentWidthPx ?? 0}

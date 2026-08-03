@@ -100,18 +100,14 @@ function countDrsActivations(points) {
 
 // Slices a driver's full-session telemetry into what the UI needs "right
 // now" at elapsedSeconds: whole-race-so-far running stats (top speed, avg
-// speed, DRS activation count), a whole-race-so-far speed trace (for the
-// Telemetry tab's "RACE TRACE" chart, time-scaled across the data that
-// exists so far so it always stretches to fill the full chart width —
-// note this does mean an earlier moment's x position shifts left as more
-// laps complete), fixed-scale throttle/brake traces for the Telemetry
-// tab's scrollable rolling window (see SCROLL_PIXELS_PER_SECOND —
-// unlike the speed trace these don't rescale, so the caller can let the
-// user scroll back through them to compare previous laps), and three
-// rolling 15-second-window traces for the Overview tab (speed/throttle/
-// brake), which scroll in real time rather than compressing a variable-
-// length span into a fixed width. Returns null if there's no data yet
-// (e.g. before the driver's first sample).
+// speed, DRS activation count), fixed-scale speed/throttle/brake traces for
+// the Telemetry tab's scrollable rolling window (see
+// SCROLL_PIXELS_PER_SECOND — a second of race time always occupies the same
+// number of pixels, so the caller can let the user scroll back through them
+// to compare previous laps), and three rolling 15-second-window traces for
+// the Overview tab (speed/throttle/brake), which scroll in real time rather
+// than compressing a variable-length span into a fixed width. Returns null
+// if there's no data yet (e.g. before the driver's first sample).
 export function sliceTelemetry(points, elapsedSeconds) {
     if (!points || points.length === 0) return null
     const soFar = points.filter(p => p.t <= elapsedSeconds)
@@ -122,8 +118,6 @@ export function sliceTelemetry(points, elapsedSeconds) {
     const avgSpeed = speeds.length ? Math.round(speeds.reduce((a, b) => a + b, 0) / speeds.length) : 0
     const current = interpolateTelemetryPoint(points, elapsedSeconds)
 
-    const raceWindowSeconds = Math.max(elapsedSeconds, 1)
-
     const windowStart = elapsedSeconds - ROLLING_WINDOW_SECONDS
     const rollingPoints = points.filter(p => p.t >= windowStart && p.t <= elapsedSeconds)
     const rollingWithCurrent = current ? [...rollingPoints, current] : rollingPoints
@@ -133,8 +127,8 @@ export function sliceTelemetry(points, elapsedSeconds) {
         topSpeed,
         avgSpeed,
         drsCount: countDrsActivations(soFar),
-        speedPolyBig: toTimeScaledPolyline(soFar, p => p.speed ?? 0, 600, 110, 0, Math.max(1, topSpeed), 0, raceWindowSeconds),
         scrollContentWidthPx: Math.max(1, elapsedSeconds) * SCROLL_PIXELS_PER_SECOND,
+        speedScrollPoly: toPixelScaledPolyline(soFar, p => p.speed ?? 0, 100, 0, Math.max(1, topSpeed)),
         throttleScrollPoly: toPixelScaledPolyline(soFar, p => p.throttle ?? 0, 100, 0, 100),
         brakeScrollPoly: toPixelScaledPolyline(soFar, p => (p.brake ? 100 : 0), 100, 0, 100),
         speedRollingPoly: toTimeScaledPolyline(rollingWithCurrent, p => p.speed ?? 0, 300, 90, 0, Math.max(1, topSpeed), windowStart, ROLLING_WINDOW_SECONDS),
