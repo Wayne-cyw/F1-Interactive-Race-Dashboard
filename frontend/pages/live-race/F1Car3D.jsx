@@ -11,7 +11,10 @@ const FRONT_WING_WIDTH = 0.24
 const ENDPLATE_HEIGHT = 0.06
 const WHEEL_RADIUS = 0.045
 const WHEEL_WIDTH = 0.05
-const HIT_TARGET_RADIUS = 0.5
+// Sized to roughly the car's own scaled footprint (not the road width,
+// which a bigger radius would exceed — risking overlapping hit-spheres
+// picking the wrong car in tight packs/DRS trains).
+const HIT_TARGET_RADIUS = 0.2
 
 const WHEEL_POSITIONS = [
     [BODY_LENGTH / 2 - 0.05, -BODY_HEIGHT / 2, BODY_WIDTH / 2],
@@ -26,8 +29,8 @@ const WHEEL_POSITIONS = [
 // rotation) points the car's nose along its direction of travel.
 // Positioned with its wheels resting on `position` (the track surface
 // height at this point), tinted with the driver's team color. A larger
-// fully-transparent hit-target sits underneath so the car stays easy to
-// click at any zoom level, without visually growing beyond the model.
+// fully-transparent hit-target sphere surrounds it so the car stays easy
+// to click at any zoom level, without visually growing beyond the model.
 export default function F1Car3D({ position, heading, color, selected, onClick }) {
     const scale = SIZE_SCALE * (selected ? 1.25 : 1)
     return (
