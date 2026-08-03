@@ -49,19 +49,18 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedP
                     <polyline points={speedPolyBig} fill="none" stroke="oklch(50% .16 230)" strokeWidth="2.5" />
                 </svg>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 14 }}>
-                    <div>
-                        <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 8 }}>THROTTLE %</div>
-                        <svg viewBox="0 0 600 70" style={{ width: '100%', height: 80, background: '#fff', border: '1px solid #eeece6', borderRadius: 10 }}>
-                            <polyline points={throttlePolyBig} fill="none" stroke="oklch(48% .13 155)" strokeWidth="2" />
-                        </svg>
-                    </div>
-                    <div>
-                        <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 8 }}>BRAKE %</div>
-                        <svg viewBox="0 0 600 70" style={{ width: '100%', height: 80, background: '#fff', border: '1px solid #eeece6', borderRadius: 10 }}>
-                            <polyline points={brakePolyBig} fill="none" stroke="oklch(55% .18 25)" strokeWidth="2" />
-                        </svg>
-                    </div>
+                <div style={{ marginTop: 14 }}>
+                    <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 8 }}>THROTTLE %</div>
+                    <svg viewBox="0 0 600 70" style={{ width: '100%', height: 80, background: '#fff', border: '1px solid #eeece6', borderRadius: 10 }}>
+                        <polyline points={throttlePolyBig} fill="none" stroke="oklch(48% .13 155)" strokeWidth="2" />
+                    </svg>
+                </div>
+
+                <div style={{ marginTop: 14 }}>
+                    <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 8 }}>BRAKE %</div>
+                    <svg viewBox="0 0 600 70" style={{ width: '100%', height: 80, background: '#fff', border: '1px solid #eeece6', borderRadius: 10 }}>
+                        <polyline points={brakePolyBig} fill="none" stroke="oklch(55% .18 25)" strokeWidth="2" />
+                    </svg>
                 </div>
             </div>
         </div>
