@@ -9,8 +9,9 @@ useGLTF.preload(MODEL_URL)
 // The source model is ~5.68m long (real-world meters, Z-forward, Y-up).
 // Scaled up well past true-to-track scale for visibility, same rationale
 // as the rest of the 3D map (see trackGeometry3d.js's elevation
-// exaggeration).
-const MODEL_SCALE = 0.13
+// exaggeration) — then back down to 0.8x that for a less oversized car
+// relative to the track.
+const MODEL_SCALE = 0.13 * 0.8
 // The model's length runs along local +Z; our heading convention treats
 // local +X as "forward" (see OverviewTab.jsx's heading calculation), so
 // the nose is rotated onto +X once, independent of the live heading spin.
@@ -31,6 +32,15 @@ const GROUND_CLEARANCE = 0.15
 // snappier, lower is smoother. Framerate-independent via delta time.
 const ROTATION_SMOOTHING_RATE = 10
 
+// Heading (yaw) rotates around world up; pitch rotates around the car's
+// own unrotated lateral axis — X-forward/Y-up (see MODEL_FORWARD_OFFSET
+// above) makes that axis Z, by X-forward × Y-up = Z-lateral. Composing
+// yaw * pitch (see useFrame below) applies pitch in that fixed local frame
+// first, then yaw, so the nose tilts to the road's slope without changing
+// which way the car is heading.
+const YAW_AXIS = new THREE.Vector3(0, 1, 0)
+const PITCH_AXIS = new THREE.Vector3(0, 0, 1)
+
 // Materials named here are the car's body/livery — recolored to the
 // driver's team color. Everything else (wheels, tires, steering wheel)
 // keeps the source model's own textured material.
@@ -42,7 +52,7 @@ const BODY_MATERIAL_NAMES = new Set(['mcl35m_m_png', 'mcl35m_png', 'mcl35m_c_png
 // target direction of travel; the rendered rotation eases toward it every
 // frame rather than snapping, so turns look smooth. Positioned with its
 // wheels resting on `position` (the track surface height at this point).
-export default function F1Car3D({ position, heading, color, selected, onClick }) {
+export default function F1Car3D({ position, heading, pitch, color, selected, onClick }) {
     const { scene } = useGLTF(MODEL_URL)
 
     const modelMinY = useMemo(() => new THREE.Box3().setFromObject(scene).min.y, [scene])
@@ -83,15 +93,26 @@ export default function F1Car3D({ position, heading, color, selected, onClick })
 
     const groupRef = useRef()
     const headingRef = useRef(heading ?? 0)
+    const pitchRef = useRef(pitch ?? 0)
+    const yawQuatRef = useRef(new THREE.Quaternion())
+    const pitchQuatRef = useRef(new THREE.Quaternion())
 
     useFrame((_, delta) => {
         if (!groupRef.current) return
+        const smoothing = 1 - Math.exp(-ROTATION_SMOOTHING_RATE * delta)
+
         const current = headingRef.current
         const target = heading ?? 0
         const diff = ((target - current + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI
-        const next = current + diff * (1 - Math.exp(-ROTATION_SMOOTHING_RATE * delta))
-        headingRef.current = next
-        groupRef.current.rotation.y = next
+        const nextHeading = current + diff * smoothing
+        headingRef.current = nextHeading
+
+        const nextPitch = pitchRef.current + ((pitch ?? 0) - pitchRef.current) * smoothing
+        pitchRef.current = nextPitch
+
+        yawQuatRef.current.setFromAxisAngle(YAW_AXIS, nextHeading)
+        pitchQuatRef.current.setFromAxisAngle(PITCH_AXIS, nextPitch)
+        groupRef.current.quaternion.copy(yawQuatRef.current).multiply(pitchQuatRef.current)
     })
 
     const scale = MODEL_SCALE * (selected ? 1.25 : 1)

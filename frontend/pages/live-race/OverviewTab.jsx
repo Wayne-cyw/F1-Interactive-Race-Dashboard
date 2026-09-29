@@ -22,6 +22,7 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackSc
     const [telemetryWidth, onTelemetryResize] = useResizableWidth(360, { min: 280, max: 520, edge: 'left' })
 
     const lastHeadingRef = useRef(new Map())
+    const lastPitchRef = useRef(new Map())
 
     const carPositions = useMemo(
         () => drivers.filter(d => !d.dnf).map(d => {
@@ -38,7 +39,20 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackSc
                 ? Math.atan2(dy, dx)
                 : lastHeadingRef.current.get(d.id) ?? 0
             lastHeadingRef.current.set(d.id, heading)
-            return { ...d, scenePosition, heading }
+
+            // Pitch, unlike heading, does need the post-transform scene point:
+            // elevation is exaggerated relative to the horizontal plane (see
+            // trackGeometry3d.js), so the slope the ribbon actually renders
+            // only shows up once both points have gone through toScenePoint.
+            let pitch = lastPitchRef.current.get(d.id) ?? 0
+            if (ahead) {
+                const sceneAhead = trackScene.toScenePoint(ahead)
+                const horizontal = Math.hypot(sceneAhead.x - scenePosition.x, sceneAhead.z - scenePosition.z)
+                if (horizontal > 1e-6) pitch = Math.atan2(sceneAhead.y - scenePosition.y, horizontal)
+            }
+            lastPitchRef.current.set(d.id, pitch)
+
+            return { ...d, scenePosition, heading, pitch }
         }),
         [drivers, positions, elapsedSeconds, trackScene]
     )

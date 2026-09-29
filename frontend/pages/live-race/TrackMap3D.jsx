@@ -57,6 +57,7 @@ export default function TrackMap3D({ trackPoints, carPositions, onSelectDriver }
                             key={d.id}
                             position={d.scenePosition}
                             heading={d.heading}
+                            pitch={d.pitch}
                             color={d.color}
                             selected={d.selected}
                             onClick={() => onSelectDriver(d.id)}
