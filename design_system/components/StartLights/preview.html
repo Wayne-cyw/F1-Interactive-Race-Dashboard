@@ -1,0 +1,29 @@
+<!-- @dsCard group="Loading" height=230 subtitle="Five-light start sequence with progress" -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;padding:32px;background:var(--surface-000);color:var(--ink);font-family:var(--font-sans);display:flex;flex-direction:column;align-items:center;gap:28px}
+.housing{display:flex;gap:16px;padding:20px 26px;border-radius:var(--radius-xl);background:var(--surface-100);border:1px solid var(--line)}
+.light{width:52px;height:52px;border-radius:50%;background:var(--light-off);border:1px solid var(--line)}
+@keyframes a1{0%,7%{background:var(--light-off);box-shadow:none}8%,58%{background:var(--brand);box-shadow:0 0 34px var(--brand)}60%,100%{background:var(--light-off);box-shadow:none}}
+@keyframes a2{0%,15%{background:var(--light-off);box-shadow:none}16%,58%{background:var(--brand);box-shadow:0 0 34px var(--brand)}60%,100%{background:var(--light-off);box-shadow:none}}
+@keyframes a3{0%,24%{background:var(--light-off);box-shadow:none}25%,58%{background:var(--brand);box-shadow:0 0 34px var(--brand)}60%,100%{background:var(--light-off);box-shadow:none}}
+@keyframes a4{0%,32%{background:var(--light-off);box-shadow:none}33%,58%{background:var(--brand);box-shadow:0 0 34px var(--brand)}60%,100%{background:var(--light-off);box-shadow:none}}
+@keyframes a5{0%,40%{background:var(--light-off);box-shadow:none}41%,58%{background:var(--brand);box-shadow:0 0 34px var(--brand)}60%,100%{background:var(--light-off);box-shadow:none}}
+@keyframes fill{0%{transform:scaleX(0)}60%,92%{transform:scaleX(1)}100%{transform:scaleX(1);opacity:0}}
+.l1{animation:a1 6s linear infinite}.l2{animation:a2 6s linear infinite}.l3{animation:a3 6s linear infinite}.l4{animation:a4 6s linear infinite}.l5{animation:a5 6s linear infinite}
+.track{width:360px;max-width:100%;height:6px;border-radius:3px;background:var(--surface-200);overflow:hidden}
+.fill{height:6px;background:var(--brand);transform-origin:left center;animation:fill 6s cubic-bezier(.5,.1,.3,1) infinite}
+.status{font-family:var(--font-mono);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-muted)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}.l1,.l2,.l3{background:var(--brand)}.fill{transform:scaleX(.6)}}
+</style>
+</head>
+<body>
+<div class="housing" role="img" aria-label="Five start lights lighting in sequence"><div class="light l1"></div><div class="light l2"></div><div class="light l3"></div><div class="light l4"></div><div class="light l5"></div></div>
+<div class="track"><div class="fill" style="width:100%"></div></div>
+<div class="status">Loading dashboard</div>
+</body>
+</html>

@@ -1,0 +1,59 @@
+/* APEX design tokens. Generated from tokens.json. Dark is the default theme. */
+:root, [data-theme="dark"] {
+  --surface-000: #0b0b0d;
+  --surface-100: #131316;
+  --surface-200: #1c1c21;
+  --line: #2a2a31;
+  --ink: #f2f0ec;
+  --ink-muted: #a4a3ac;
+  --brand: #ff3b30;
+  --brand-hover: #ff5a52;
+  --brand-text: #ff6a60;
+  --on-brand: #0b0b0d;
+  --data-a: #ff3b30;
+  --data-b: #7fd1ff;
+  --compound-soft: #ff3b30;
+  --compound-medium: #ffc531;
+  --compound-hard: #f2f0ec;
+  --light-off: #241214;
+  --shadow-panel: 0 40px 90px rgba(0,0,0,0.55);
+  --shadow-glow: 0 14px 40px rgba(255,59,48,0.35);
+}
+[data-theme="light"] {
+  --surface-000: #f4f3f0;
+  --surface-100: #ffffff;
+  --surface-200: #e9e8e4;
+  --line: #d6d5d0;
+  --ink: #141416;
+  --ink-muted: #56555c;
+  --brand: #ff3b30;
+  --brand-hover: #e5291e;
+  --brand-text: #c8261d;
+  --on-brand: #0b0b0d;
+  --data-a: #d92a1f;
+  --data-b: #0a6fa8;
+  --compound-soft: #e0281d;
+  --compound-medium: #c98a00;
+  --compound-hard: #6b6a72;
+  --light-off: #e8d5d3;
+  --shadow-panel: 0 24px 60px rgba(20,20,22,0.14);
+  --shadow-glow: 0 14px 40px rgba(229,41,30,0.30);
+}
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 56px;
+  --space-8: 80px;
+  --radius-xs: 3px;
+  --radius-md: 14px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-pill: 999px;
+  --font-display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --font-sans: "Instrument Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
