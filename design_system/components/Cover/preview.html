@@ -1,0 +1,39 @@
+<!-- @dsCard height=320 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700&family=Instrument+Sans:wght@400&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0}
+body{width:960px;height:320px;position:relative;overflow:hidden;background:var(--surface-000);color:var(--ink)}
+svg{position:absolute;left:0;top:0}
+.brand{fill:var(--brand)}.blue{fill:var(--data-b)}.amber{fill:var(--compound-medium)}.tint{fill:var(--ink)}.chk{fill:var(--on-brand)}
+.slab{rx:var(--radius-lg)}
+.text{position:absolute;left:48px;bottom:40px;width:400px}
+.name{margin:0;font-family:var(--font-display);font-weight:700;font-size:120px;line-height:.95;letter-spacing:-.03em;color:var(--ink)}
+.tag{margin:12px 0 0;font-family:var(--font-sans);font-size:14px;line-height:20px;color:var(--ink-muted)}
+</style>
+</head>
+<body>
+<svg width="960" height="320" viewBox="0 0 960 320" aria-hidden="true">
+<!--
+derivation:
+blocks: brand 464x224 (bleeds top and right), data-b 176x120, compound-medium 96x120, ink 144x120 at the bottom edge.
+arrangement: one tall red slab on top with three satellites below in unequal widths, all bleeding off the edges of the box from x=520.
+pattern: checker (loud, poster, racing) - eight 24px squares in on-brand on the red slab, cut from the checkered-flag motif the loading screen and CTA band share.
+steps and radii: pitch and cells are space-5 (24px); corners are radius-lg (24px).
+-->
+<rect class="brand slab" x="520" y="-24" width="464" height="224"/>
+<rect class="blue slab" x="520" y="224" width="176" height="120"/>
+<rect class="amber slab" x="720" y="224" width="96" height="120"/>
+<rect class="tint slab" x="840" y="224" width="144" height="120"/>
+<g class="chk">
+<rect x="808" y="104" width="24" height="24"/><rect x="856" y="104" width="24" height="24"/><rect x="904" y="104" width="24" height="24"/>
+<rect x="832" y="128" width="24" height="24"/><rect x="880" y="128" width="24" height="24"/>
+<rect x="808" y="152" width="24" height="24"/><rect x="856" y="152" width="24" height="24"/><rect x="904" y="152" width="24" height="24"/>
+</g>
+</svg>
+<div class="text"><h1 class="name">APEX</h1><p class="tag">Race intelligence for the pit wall.</p></div>
+</body>
+</html>

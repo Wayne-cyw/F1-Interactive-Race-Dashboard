@@ -1,9 +1,9 @@
 import { isRevealed } from './dnf'
 
-const TIRE_COLOR = { S: '#c23b3b', M: '#d9a300', H: '#6b6862', I: '#3ecf6e', W: '#3671c6' }
+const TIRE_COLOR = { S: 'var(--compound-soft)', M: 'var(--compound-medium)', H: 'var(--compound-hard)', I: 'var(--data-b)', W: 'var(--data-b)' }
 const COMPOUND_CODES = { SOFT: 'S', MEDIUM: 'M', HARD: 'H', INTERMEDIATE: 'I', WET: 'W' }
-export const BEST_SECTOR_COLOR = 'oklch(52% .18 300)'
-const NORMAL_SECTOR_COLOR = '#d9a300'
+export const BEST_SECTOR_COLOR = 'var(--data-b)'
+const NORMAL_SECTOR_COLOR = 'var(--compound-medium)'
 
 export function formatLapTime(seconds) {
     if (seconds == null) return '—'
@@ -95,7 +95,7 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
         rows.push({
             id: driverCode,
             pos,
-            color: result?.team_color ?? '#8b8880',
+            color: result?.team_color ?? 'var(--ink-muted)',
             name: formatDriverName(result?.driver_name),
             team: result?.team ?? '',
             gap: dnf ? 'DNF' : formatGap(latestLap?.position, latestLap?.gap_to_leader),
@@ -142,10 +142,10 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
         return {
             ...row,
             selected,
-            rowBg: selected ? '#f2f8f4' : 'transparent',
-            rowAccent: selected ? 'oklch(48% .13 155)' : 'transparent',
-            posColor: r.pos === 1 ? 'oklch(48% .13 155)' : '#a8a49b',
-            tireColor: TIRE_COLOR[r.tire] || '#8b8880',
+            rowBg: selected ? 'var(--surface-200)' : 'transparent',
+            rowAccent: selected ? 'var(--brand)' : 'transparent',
+            posColor: selected ? 'var(--brand-text)' : 'var(--ink-muted)',
+            tireColor: TIRE_COLOR[r.tire] || 'var(--ink-muted)',
             s1c: _sector1 != null && _sector1 === bestSector1 ? BEST_SECTOR_COLOR : NORMAL_SECTOR_COLOR,
             s2c: _sector2 != null && _sector2 === bestSector2 ? BEST_SECTOR_COLOR : NORMAL_SECTOR_COLOR,
             s3c: _sector3 != null && _sector3 === bestSector3 ? BEST_SECTOR_COLOR : NORMAL_SECTOR_COLOR,

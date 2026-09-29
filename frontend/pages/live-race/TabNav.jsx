@@ -1,3 +1,5 @@
+import { MONO } from './ui'
+
 const TABS = [
     { key: 'overview', label: 'Overview' },
     { key: 'timing', label: 'Timing' },
@@ -7,23 +9,29 @@ const TABS = [
 
 export default function TabNav({ activeTab, onChange }) {
     return (
-        <div style={{ display: 'flex', gap: 6, padding: '8px 32px', background: '#fff', borderBottom: '1px solid #e6e3dc' }}>
+        <div role="tablist" style={{ display: 'flex', gap: 'var(--space-5)', padding: '0 var(--space-6)', background: 'var(--surface-100)', borderBottom: '1px solid var(--line)' }}>
             {TABS.map(({ key, label }) => {
                 const active = activeTab === key
                 return (
                     <button
                         key={key}
+                        role="tab"
+                        aria-selected={active}
                         onClick={() => onChange(key)}
                         style={{
-                            border: 'none',
+                            ...MONO,
                             cursor: 'pointer',
-                            padding: '8px 18px',
-                            borderRadius: 10,
-                            fontSize: 13,
+                            height: 36,
+                            padding: 0,
+                            marginBottom: -1,
+                            fontSize: 12,
                             fontWeight: 600,
-                            fontFamily: "'Inconsolata', sans-serif",
-                            background: active ? '#191b1e' : 'transparent',
-                            color: active ? '#fff' : '#5c5852',
+                            letterSpacing: '.12em',
+                            textTransform: 'uppercase',
+                            border: 'none',
+                            borderBottom: `2px solid ${active ? 'var(--ink)' : 'transparent'}`,
+                            background: 'transparent',
+                            color: active ? 'var(--ink)' : 'var(--ink-muted)',
                         }}
                     >
                         {label}

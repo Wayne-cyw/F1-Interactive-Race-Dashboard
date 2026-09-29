@@ -26,7 +26,17 @@ class CarModelErrorBoundary extends Component {
     }
 }
 
+// three.js materials can't take CSS var() strings, so resolve the token once.
+function readToken(name, fallback) {
+    try {
+        return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
+    } catch {
+        return fallback
+    }
+}
+
 function TrackRibbon({ points }) {
+    const ribbonColor = useMemo(() => readToken('--ink', '#f2f0ec'), [])
     const geometry = useMemo(() => {
         const vertices = buildRibbonVertices(points)
         if (vertices.length === 0) return null
@@ -39,7 +49,7 @@ function TrackRibbon({ points }) {
     if (!geometry) return null
     return (
         <mesh geometry={geometry}>
-            <meshStandardMaterial color="#e3e0d8" side={THREE.DoubleSide} />
+            <meshBasicMaterial color={ribbonColor} side={THREE.DoubleSide} />
         </mesh>
     )
 }

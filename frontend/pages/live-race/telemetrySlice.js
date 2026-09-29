@@ -84,6 +84,9 @@ export function interpolateTelemetryPoint(points, t) {
     }
 }
 
+// FastF1 DRS codes: 0-1 off, 8 = eligible (detected, not yet open), 10/12/14 = flap open.
+export const DRS_OPEN_MIN = 10
+
 // Counts DRS open->closed->open transitions (activation events), not raw
 // samples where DRS happens to be open — a sample-count would overcount an
 // activation that spans many samples as if it were many activations.
@@ -91,7 +94,7 @@ function countDrsActivations(points) {
     let count = 0
     let wasOn = false
     for (const p of points) {
-        const on = p.drs > 0
+        const on = p.drs >= DRS_OPEN_MIN
         if (on && !wasOn) count++
         wasOn = on
     }

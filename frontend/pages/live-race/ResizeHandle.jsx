@@ -28,12 +28,12 @@ export default function ResizeHandle({ onMouseDown, orientation = 'vertical', si
                 style={
                     isVertical
                         ? {
-                            position: 'absolute', top: 0, bottom: 0, left: lineOffset, width: 2, borderRadius: 10,
-                            background: hover ? '#a8a49b' : '#e6e3dc', transition: 'background 0.15s',
+                            position: 'absolute', top: 0, bottom: 0, left: lineOffset, width: 2, borderRadius: 'var(--radius-pill)',
+                            background: hover ? 'var(--brand)' : 'var(--line)', transition: 'background 0.15s',
                         }
                         : {
-                            position: 'absolute', left: 0, right: 0, top: lineOffset, height: 2, borderRadius: 10,
-                            background: hover ? '#a8a49b' : '#e6e3dc', transition: 'background 0.15s',
+                            position: 'absolute', left: 0, right: 0, top: lineOffset, height: 2, borderRadius: 'var(--radius-pill)',
+                            background: hover ? 'var(--brand)' : 'var(--line)', transition: 'background 0.15s',
                         }
                 }
             />
