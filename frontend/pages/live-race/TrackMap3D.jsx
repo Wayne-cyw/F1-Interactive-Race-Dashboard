@@ -36,7 +36,7 @@ function readToken(name, fallback) {
 }
 
 function TrackRibbon({ points }) {
-    const ribbonColor = useMemo(() => readToken('--line', '#2a2a31'), [])
+    const ribbonColor = useMemo(() => readToken('--ink', '#f2f0ec'), [])
     const geometry = useMemo(() => {
         const vertices = buildRibbonVertices(points)
         if (vertices.length === 0) return null
@@ -49,7 +49,7 @@ function TrackRibbon({ points }) {
     if (!geometry) return null
     return (
         <mesh geometry={geometry}>
-            <meshStandardMaterial color={ribbonColor} side={THREE.DoubleSide} />
+            <meshBasicMaterial color={ribbonColor} side={THREE.DoubleSide} />
         </mesh>
     )
 }

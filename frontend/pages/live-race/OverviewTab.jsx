@@ -94,7 +94,7 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackSc
                     <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 9 }}>
                         <div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', ...LABEL }}><span>Throttle</span><span>{Math.round(lastPoint?.throttle ?? 0)}%</span></div>
-                            <div style={{ height: 6, background: 'var(--surface-200)', borderRadius: 'var(--radius-xs)', marginTop: 4 }}><div style={{ width: `${lastPoint?.throttle ?? 0}%`, height: '100%', background: 'var(--data-b)', borderRadius: 'var(--radius-xs)' }} /></div>
+                            <div style={{ height: 6, background: 'var(--surface-200)', borderRadius: 'var(--radius-xs)', marginTop: 4 }}><div style={{ width: `${lastPoint?.throttle ?? 0}%`, height: '100%', background: 'var(--compound-medium)', borderRadius: 'var(--radius-xs)' }} /></div>
                         </div>
                         <div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', ...LABEL }}><span>Brake</span><span>{lastPoint?.brake ? 100 : 0}%</span></div>
@@ -111,7 +111,7 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackSc
                         <div>
                             <div style={{ ...LABEL, marginBottom: 4 }}>Throttle</div>
                             <svg viewBox="0 0 300 60" style={{ width: '100%', height: 46 }}>
-                                <polyline points={telemetry?.throttleRollingPoly ?? ''} fill="none" style={{ stroke: 'var(--data-b)' }} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                                <polyline points={telemetry?.throttleRollingPoly ?? ''} fill="none" style={{ stroke: 'var(--compound-medium)' }} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         </div>
                         <div>

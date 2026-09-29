@@ -35,14 +35,13 @@ function JumpToLiveButton({ following, onClick }) {
         <button
             onClick={onClick}
             disabled={following}
-            className={following ? undefined : 'apex-btn apex-btn-secondary'}
             style={{
                 ...LABEL,
                 color: following ? 'var(--ink-muted)' : 'var(--ink)',
                 background: 'transparent',
                 border: '1px solid var(--line)',
-                borderRadius: 'var(--radius-pill)',
-                minHeight: 44,
+                borderRadius: 10,
+                minHeight: 32,
                 padding: '0 var(--space-4)',
                 cursor: following ? 'default' : 'pointer',
                 opacity: following ? 0.6 : 1,
@@ -115,7 +114,7 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedS
                             onScroll={onScroll}
                             contentWidthPx={scrollContentWidthPx ?? 0}
                             points={throttleScrollPoly}
-                            color="var(--data-b)"
+                            color="var(--compound-medium)"
                         />
                     </div>
 

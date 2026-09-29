@@ -39,8 +39,8 @@ export const SELECT = {
     color: 'var(--ink)',
     background: 'var(--surface-100)',
     border: '1px solid var(--line)',
-    borderRadius: 'var(--radius-pill)',
-    minHeight: 44,
-    padding: '0 var(--space-4)',
+    borderRadius: 10,
+    minHeight: 36,
+    padding: '0 var(--space-3)',
     cursor: 'pointer',
 }

@@ -21,8 +21,7 @@ export default function PlaybackBar({ isPlaying, onPlayPause, elapsedSeconds, to
             <button
                 onClick={onPlayPause}
                 aria-label={isPlaying ? 'Pause replay' : 'Play replay'}
-                className="apex-btn apex-btn-primary"
-                style={{ border: 'none', background: 'var(--brand)', color: 'var(--on-brand)', width: 44, height: 44, borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontSize: 14, flexShrink: 0 }}
+                style={{ border: '1px solid var(--line)', background: 'var(--surface-200)', color: 'var(--ink)', width: 32, height: 32, borderRadius: 10, cursor: 'pointer', fontSize: 11, lineHeight: 1, padding: 0, flexShrink: 0 }}
             >
                 {isPlaying ? '⏸' : '▶'}
             </button>
@@ -34,7 +33,8 @@ export default function PlaybackBar({ isPlaying, onPlayPause, elapsedSeconds, to
                 value={Math.min(elapsedSeconds, totalDurationSeconds)}
                 onChange={e => onSeek(Number(e.target.value))}
                 aria-label="Playback scrubber"
-                style={{ flex: 1, minHeight: 44 }}
+                className="apex-scrubber"
+                style={{ flex: 1, '--progress': `${Math.min(100, (elapsedSeconds / Math.max(1, totalDurationSeconds)) * 100)}%` }}
             />
 
             <div style={{ fontSize: 13, color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '.06em', whiteSpace: 'nowrap' }}>
@@ -45,7 +45,6 @@ export default function PlaybackBar({ isPlaying, onPlayPause, elapsedSeconds, to
                 value={playbackSpeed}
                 onChange={e => onSpeedChange(Number(e.target.value))}
                 aria-label="Playback speed"
-                className="apex-btn apex-btn-secondary"
                 style={{ ...SELECT, flexShrink: 0 }}
             >
                 {SPEED_OPTIONS.map(s => (

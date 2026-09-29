@@ -40,7 +40,6 @@ export default function TopBar({ seasons, races, year, round, onSelectYear, onSe
                     value={year ?? ''}
                     onChange={e => onSelectYear(Number(e.target.value))}
                     aria-label="Select season"
-                    className="apex-btn apex-btn-secondary"
                     style={SELECT}
                 >
                     {seasons.map(s => (
