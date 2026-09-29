@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import TopBar from './live-race/TopBar'
 import TabNav from './live-race/TabNav'
 import OverviewTab from './live-race/OverviewTab'
@@ -22,6 +22,23 @@ export default function LiveRace() {
     const [selectedDriverId, setSelectedDriverId] = useState(null)
 
     const replay = useRaceReplay()
+
+    // Hold the loading screen ~1s after a successful load so its lights-out
+    // finish plays; a failed load drops straight to the error message.
+    const [finishing, setFinishing] = useState(false)
+    const wasLoading = useRef(false)
+    useEffect(() => {
+        if (replay.loading) {
+            wasLoading.current = true
+            setFinishing(false)
+            return
+        }
+        if (!wasLoading.current || replay.error) return
+        wasLoading.current = false
+        setFinishing(true)
+        const t = setTimeout(() => setFinishing(false), 1000)
+        return () => clearTimeout(t)
+    }, [replay.loading, replay.error])
     const { points: telemetryPoints } = useDriverTelemetry(replay.year, replay.round, selectedDriverId)
 
     const positionsByDriver = useMemo(
@@ -111,7 +128,14 @@ export default function LiveRace() {
             />
             <TabNav activeTab={activeTab} onChange={setActiveTab} />
 
-            {replay.loading && <LoadingScreen label={replay.raceName} />}
+            {(replay.loading || finishing) && (
+                <LoadingScreen
+                    label={replay.raceName}
+                    progress={replay.loadProgress.fraction}
+                    stage={replay.loadProgress.stage}
+                    done={!replay.loading}
+                />
+            )}
             {!replay.loading && replay.error && (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-text)' }}>
                     Couldn't load this race: {replay.error}. Pick a different race above.
