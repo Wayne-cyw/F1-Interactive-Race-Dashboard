@@ -14,39 +14,35 @@ import { buildTrackScene } from './live-race/trackGeometry3d'
 import { sliceTelemetry } from './live-race/telemetrySlice'
 import { computeDnfInfo } from './live-race/dnf'
 import { deriveCurrentTrackStatus } from './live-race/trackStatus'
+import LoadingScreen from './live-race/LoadingScreen'
 import { LABEL } from './live-race/ui'
 
-const FONT_LINK_ID = 'race-center-fonts'
-const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap'
-
-function useRaceCenterFonts() {
-    useEffect(() => {
-        if (document.getElementById(FONT_LINK_ID)) return
-        const preconnect = document.createElement('link')
-        preconnect.rel = 'preconnect'
-        preconnect.href = 'https://fonts.googleapis.com'
-        preconnect.id = FONT_LINK_ID
-        document.head.appendChild(preconnect)
-
-        const stylesheet = document.createElement('link')
-        stylesheet.rel = 'stylesheet'
-        stylesheet.href = FONT_HREF
-        document.head.appendChild(stylesheet)
-
-        return () => {
-            preconnect.remove()
-            stylesheet.remove()
-        }
-    }, [])
-}
-
 export default function LiveRace() {
-    useRaceCenterFonts()
-
     const [activeTab, setActiveTab] = useState('overview')
     const [selectedDriverId, setSelectedDriverId] = useState(null)
 
     const replay = useRaceReplay()
+
+    // Hold the loading screen ~1s after a successful load so its lights-out
+    // finish plays; a failed load drops straight to the error message. The
+    // dashboard itself (3D map, leaderboard…) mounts only after that hold:
+    // mounting it is heavy enough to freeze the loading animation mid-finish.
+    // `finishing` is flipped during render (not in an effect) so the
+    // LoadingScreen stays mounted across the loading -> finishing hand-off;
+    // an unmount there would reset its progress bar to 0%.
+    const [finishing, setFinishing] = useState(false)
+    const [prevLoading, setPrevLoading] = useState(replay.loading)
+    if (prevLoading !== replay.loading) {
+        setPrevLoading(replay.loading)
+        setFinishing(prevLoading && !replay.loading && !replay.error)
+    }
+    useEffect(() => {
+        if (!finishing) return
+        const t = setTimeout(() => setFinishing(false), 1000)
+        return () => clearTimeout(t)
+    }, [finishing])
+    const ready = !replay.loading && !finishing
+
     const { points: telemetryPoints } = useDriverTelemetry(replay.year, replay.round, selectedDriverId)
 
     const positionsByDriver = useMemo(
@@ -136,22 +132,25 @@ export default function LiveRace() {
             />
             <TabNav activeTab={activeTab} onChange={setActiveTab} />
 
-            {replay.loading && (
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', ...LABEL }}>
-                    Connecting to timing feed · {replay.raceName || 'race'} · first load can take 30–60s
-                </div>
+            {(replay.loading || finishing) && (
+                <LoadingScreen
+                    label={replay.raceName}
+                    progress={replay.loadProgress.fraction}
+                    stage={replay.loadProgress.stage}
+                    done={!replay.loading}
+                />
             )}
-            {!replay.loading && replay.error && (
+            {ready && replay.error && (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-text)' }}>
                     Couldn't load this race: {replay.error}. Pick a different race above.
                 </div>
             )}
-            {!replay.loading && !replay.error && !selected && (
+            {ready && !replay.error && !selected && (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', ...LABEL }}>
                     No driver data available for this session.
                 </div>
             )}
-            {!replay.loading && !replay.error && selected && (
+            {ready && !replay.error && selected && (
                 <>
                     {activeTab === 'overview' && (
                         <OverviewTab

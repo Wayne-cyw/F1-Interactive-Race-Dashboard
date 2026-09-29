@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react'
 import { fetchJSON } from '../../utils/api'
 import { deriveCurrentLap } from './raceClock'
+import { computeLoadProgress } from './loadProgress'
 
+const DEFAULT_YEAR = 2025
 const RENDER_INTERVAL_MS = 33 // throttle re-renders to ~30Hz
 
-async function loadSessionBundle(year, round) {
+async function loadSessionBundle(year, round, onStep) {
+    const step = (id, promise) => promise.then(body => { onStep(id); return body })
     const [sessionData, pitstopsBody, weatherBody, trackBody, positionsBody, trackStatusBody] = await Promise.all([
-        fetchJSON(`/session/${year}/${round}/R`),
-        fetchJSON(`/pitstops/${year}/${round}`),
-        fetchJSON(`/weather/${year}/${round}`),
-        fetchJSON(`/track/${year}/${round}`),
-        fetchJSON(`/positions/${year}/${round}`),
-        fetchJSON(`/track-status/${year}/${round}`).catch(() => ({ track_status: [] })),
+        step('session', fetchJSON(`/session/${year}/${round}/R`)),
+        step('pitstops', fetchJSON(`/pitstops/${year}/${round}`)),
+        step('weather', fetchJSON(`/weather/${year}/${round}`)),
+        step('track', fetchJSON(`/track/${year}/${round}`)),
+        step('positions', fetchJSON(`/positions/${year}/${round}`)),
+        step('trackStatus', fetchJSON(`/track-status/${year}/${round}`).catch(() => ({ track_status: [] }))),
     ])
     return {
         sessionData,
@@ -37,41 +40,31 @@ export function useRaceReplay() {
     const [bundle, setBundle] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const [doneSteps, setDoneSteps] = useState(() => new Set())
 
     const [elapsedSeconds, setElapsedSeconds] = useState(0)
     const [isPlaying, setIsPlaying] = useState(true)
     const [clockEpoch, setClockEpoch] = useState(0)
     const [playbackSpeed, setPlaybackSpeed] = useState(1)
 
-    // Pick a default race on mount: the latest season's most recently
-    // completed race. If the latest season has no completed races yet
-    // (season not started), fall back one year — a single retry, not a
-    // search loop.
+    // Pick a default race on mount: the DEFAULT_YEAR season's most recently
+    // completed race (its last round once the season is over). If that season
+    // isn't available, fall back to the latest season.
     useEffect(() => {
         let cancelled = false
         async function pickDefault() {
             const seasonsBody = await fetchJSON('/seasons')
             if (cancelled) return
             setSeasons(seasonsBody.seasons)
-            const latestYear = seasonsBody.seasons[0]
+            const defaultYear = seasonsBody.seasons.includes(DEFAULT_YEAR) ? DEFAULT_YEAR : seasonsBody.seasons[0]
 
-            const racesBody = await fetchJSON(`/races/${latestYear}`)
+            const racesBody = await fetchJSON(`/races/${defaultYear}`)
             if (cancelled) return
-            const round = latestRunRound(racesBody.races)
-            if (round != null) {
-                setRaces(racesBody.races)
-                setYear(latestYear)
-                setRound(round)
-                return
-            }
-
-            const fallbackYear = latestYear - 1
-            const fallbackRacesBody = await fetchJSON(`/races/${fallbackYear}`)
-            if (cancelled) return
-            const fallbackRound = latestRunRound(fallbackRacesBody.races) ?? fallbackRacesBody.races[0].round
-            setRaces(fallbackRacesBody.races)
-            setYear(fallbackYear)
-            setRound(fallbackRound)
+            const round = latestRunRound(racesBody.races) ?? racesBody.races[0].round
+            setRaces(racesBody.races)
+            setYear(defaultYear)
+            setRound(round)
+            setDoneSteps(prev => new Set(prev).add('schedule'))
         }
         pickDefault().catch(err => {
             if (!cancelled) {
@@ -88,7 +81,11 @@ export function useRaceReplay() {
         let cancelled = false
         setLoading(true)
         setError(null)
-        loadSessionBundle(year, round)
+        // Keep the schedule step (already done); re-track the per-race fetches.
+        setDoneSteps(prev => new Set([...prev].filter(id => id === 'schedule')))
+        loadSessionBundle(year, round, id => {
+            if (!cancelled) setDoneSteps(prev => new Set(prev).add(id))
+        })
             .then(result => {
                 if (cancelled) return
                 setBundle(result)
@@ -187,6 +184,8 @@ export function useRaceReplay() {
         setClockEpoch(e => e + 1)
     }
 
+    const loadProgress = computeLoadProgress(doneSteps)
+
     const raceName = races.find(r => r.round === round)?.name ?? ''
 
     return {
@@ -198,7 +197,7 @@ export function useRaceReplay() {
         track: bundle?.track ?? null,
         positions: bundle?.positions ?? [],
         trackStatus: bundle?.trackStatus ?? [],
-        loading, error,
+        loading, error, loadProgress,
         currentLap, totalLaps, elapsedSeconds, totalDurationSeconds, isPlaying,
         play, pause, seekToSeconds,
         playbackSpeed, setPlaybackSpeed,
