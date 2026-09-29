@@ -41,7 +41,12 @@ export function buildTrackScene(coordinates, { sceneSize = SCENE_SIZE, elevation
             // mapping mirrors the circuit's real-world winding
             // direction when viewed from above.
             z: -(p.y - centerY) * scale,
-            y: ((p.z ?? 0) - minZ) * scale * elevationExaggeration,
+            // minZ comes from the track outline only (a single fastest
+            // lap), but this same toScenePoint also places car positions
+            // from the full session (pit lane, other laps) — those can
+            // dip below that outline's minimum, so clamp at 0 rather
+            // than let a car render below the ribbon.
+            y: Math.max(0, (p.z ?? 0) - minZ) * scale * elevationExaggeration,
         }
     }
 

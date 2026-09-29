@@ -28,11 +28,14 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackSc
             const raw = interpolatePosition(positions[d.id], elapsedSeconds)
             const ahead = interpolatePosition(positions[d.id], elapsedSeconds + HEADING_LOOKAHEAD_SECONDS)
             const scenePosition = raw ? trackScene.toScenePoint(raw) : { x: 0, y: 0, z: 0 }
-            const sceneAhead = ahead ? trackScene.toScenePoint(ahead) : scenePosition
-            const dx = sceneAhead.x - scenePosition.x
-            const dz = sceneAhead.z - scenePosition.z
-            const heading = (dx !== 0 || dz !== 0)
-                ? Math.atan2(-dz, dx)
+            // toScenePoint is a pure affine map (uniform scale + translation,
+            // no rotation), so the heading angle is identical whether it's
+            // derived before or after the transform — diff the raw
+            // pre-transform points directly instead of transforming twice.
+            const dx = raw && ahead ? ahead.x - raw.x : 0
+            const dy = raw && ahead ? ahead.y - raw.y : 0
+            const heading = (dx !== 0 || dy !== 0)
+                ? Math.atan2(dy, dx)
                 : lastHeadingRef.current.get(d.id) ?? 0
             lastHeadingRef.current.set(d.id, heading)
             return { ...d, scenePosition, heading }

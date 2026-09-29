@@ -1,6 +1,7 @@
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
+import * as THREE from 'three'
 
 const MODEL_URL = '/models/mcl35m.glb'
 useGLTF.preload(MODEL_URL)
@@ -16,14 +17,14 @@ const MODEL_SCALE = 0.13
 const MODEL_FORWARD_OFFSET = Math.PI / 2
 const HIT_TARGET_RADIUS = 0.2
 // The model's own origin isn't at wheel-height — its lowest vertex (the
-// wheels) sits at local Y ≈ -0.56 (measured directly from the loaded
-// geometry's bounding box), well below the origin. Without compensating
-// for that gap the car visually sinks into the track. GROUND_CLEARANCE is
-// the extra lift on top of that compensation, so the wheels rest slightly
-// above the ribbon surface rather than exactly on it (avoids z-fighting).
-const MODEL_MIN_Y = -0.5596
+// wheels) sits below the origin. Without compensating for that gap the car
+// visually sinks into the track. GROUND_CLEARANCE is the extra lift on top
+// of that compensation, so the wheels rest slightly above the ribbon
+// surface rather than exactly on it (avoids z-fighting). The gap itself
+// (modelMinY, below) is measured from the loaded model's actual bounding
+// box at runtime rather than hardcoded, so it stays correct if the model
+// asset is ever swapped or re-exported at a different scale.
 const GROUND_CLEARANCE = 0.15
-const GROUND_LIFT = -MODEL_MIN_Y + GROUND_CLEARANCE
 
 // How quickly the car's rendered heading eases toward its target heading,
 // in units of "fraction of the gap closed per second" — higher is
@@ -44,6 +45,9 @@ const BODY_MATERIAL_NAMES = new Set(['mcl35m_m_png', 'mcl35m_png', 'mcl35m_c_png
 export default function F1Car3D({ position, heading, color, selected, onClick }) {
     const { scene } = useGLTF(MODEL_URL)
 
+    const modelMinY = useMemo(() => new THREE.Box3().setFromObject(scene).min.y, [scene])
+    const groundLift = -modelMinY + GROUND_CLEARANCE
+
     const carScene = useMemo(() => {
         const clone = scene.clone(true)
         let recoloredCount = 0
@@ -59,6 +63,23 @@ export default function F1Car3D({ position, heading, color, selected, onClick })
         }
         return clone
     }, [scene, color])
+
+    // Only the body materials above were actually cloned (scene.clone(true)
+    // deep-clones the Object3D graph but reference-shares materials by
+    // default) — the same BODY_MATERIAL_NAMES check identifies exactly
+    // those clones, so disposal here doesn't touch the wheel/tire materials
+    // still shared with the cached source model. Without this, repeatedly
+    // mounting/unmounting a car (e.g. scrubbing across a DNF reveal point)
+    // leaks a tinted material/GPU program per cycle.
+    useEffect(() => {
+        return () => {
+            carScene.traverse(child => {
+                if (child.isMesh && BODY_MATERIAL_NAMES.has(child.material.name)) {
+                    child.material.dispose()
+                }
+            })
+        }
+    }, [carScene])
 
     const groupRef = useRef()
     const headingRef = useRef(heading ?? 0)
@@ -78,7 +99,7 @@ export default function F1Car3D({ position, heading, color, selected, onClick })
     return (
         <group
             ref={groupRef}
-            position={[position.x, position.y + GROUND_LIFT * scale, position.z]}
+            position={[position.x, position.y + groundLift * scale, position.z]}
             onClick={onClick}
         >
             <mesh>
@@ -87,7 +108,7 @@ export default function F1Car3D({ position, heading, color, selected, onClick })
             </mesh>
 
             {selected && (
-                <mesh position={[0, (MODEL_MIN_Y - 0.02) * scale, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <mesh position={[0, (modelMinY - 0.02) * scale, 0]} rotation={[-Math.PI / 2, 0, 0]}>
                     <ringGeometry args={[scale * 3, scale * 3.6, 32]} />
                     <meshBasicMaterial color="#ffffff" transparent opacity={0.8} />
                 </mesh>
