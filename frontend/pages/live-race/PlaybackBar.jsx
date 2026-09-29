@@ -45,7 +45,7 @@ export default function PlaybackBar({ isPlaying, onPlayPause, elapsedSeconds, to
                 value={playbackSpeed}
                 onChange={e => onSpeedChange(Number(e.target.value))}
                 aria-label="Playback speed"
-                style={{ ...SELECT, flexShrink: 0 }}
+                style={{ ...SELECT, minHeight: 28, fontSize: 12, padding: '0 var(--space-2)', flexShrink: 0 }}
             >
                 {SPEED_OPTIONS.map(s => (
                     <option key={s} value={s}>{s}x</option>
