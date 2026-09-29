@@ -144,7 +144,7 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
             selected,
             rowBg: selected ? 'var(--surface-200)' : 'transparent',
             rowAccent: selected ? 'var(--brand)' : 'transparent',
-            posColor: r.pos === 1 ? 'var(--brand-text)' : 'var(--ink-muted)',
+            posColor: selected ? 'var(--brand-text)' : 'var(--ink-muted)',
             tireColor: TIRE_COLOR[r.tire] || 'var(--ink-muted)',
             s1c: _sector1 != null && _sector1 === bestSector1 ? BEST_SECTOR_COLOR : NORMAL_SECTOR_COLOR,
             s2c: _sector2 != null && _sector2 === bestSector2 ? BEST_SECTOR_COLOR : NORMAL_SECTOR_COLOR,

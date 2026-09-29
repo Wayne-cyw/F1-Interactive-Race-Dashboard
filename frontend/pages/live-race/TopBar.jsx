@@ -59,8 +59,7 @@ export default function TopBar({ seasons, races, year, round, onSelectYear, onSe
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
                 {statusMeta && (
-                    <div style={{ ...TAG, color: statusMeta.color, display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span className="apex-live-dot" style={{ background: statusMeta.color }} />
+                    <div style={{ ...TAG, color: statusMeta.color }}>
                         {statusMeta.label}
                     </div>
                 )}

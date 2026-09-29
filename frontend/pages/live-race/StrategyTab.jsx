@@ -8,7 +8,7 @@ export default function StrategyTab({ drivers, pitLog, currentLap, totalLaps }) 
     return (
         <div style={{ display: 'grid', gridTemplateColumns: `minmax(0, 1fr) 10px ${pitLogWidth}px`, gridTemplateRows: 'minmax(0, 1fr)', flex: 1, minHeight: 0 }}>
             <div style={{ padding: 'var(--space-4) var(--space-6)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                <div style={{ ...LABEL, marginBottom: 'var(--space-4)' }}>03 · Tyre strategy · Lap {currentLap}/{totalLaps}</div>
+                <div style={{ ...LABEL, marginBottom: 'var(--space-4)' }}>Tyre strategy · Lap {currentLap}/{totalLaps}</div>
                 <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
                     {drivers.map(d => (
                         <div key={d.id} style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: 14, alignItems: 'center', marginBottom: 'var(--space-3)' }}>
@@ -38,7 +38,7 @@ export default function StrategyTab({ drivers, pitLog, currentLap, totalLaps }) 
             <ResizeHandle onMouseDown={onPitLogResize} />
 
             <div style={{ padding: 'var(--space-4) var(--space-6)', overflowY: 'auto', minHeight: 0 }}>
-                <div style={{ ...LABEL, marginBottom: 'var(--space-3)' }}>04 · Pit stop log</div>
+                <div style={{ ...LABEL, marginBottom: 'var(--space-3)' }}>Pit stop log</div>
                 {pitLog.map((p, i) => (
                     <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid var(--line)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 600 }}>

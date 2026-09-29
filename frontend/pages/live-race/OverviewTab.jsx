@@ -64,7 +64,7 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackSc
         <>
             <div style={{ position: 'relative', flex: 1, minHeight: 0 }}>
                 <div style={{ position: 'absolute', inset: 0, padding: 'var(--space-4) var(--space-6)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                    <div style={{ ...LABEL, marginBottom: 10 }}>02 · Track map</div>
+                    <div style={{ ...LABEL, marginBottom: 10 }}>Track map</div>
                     <div style={{ position: 'relative', width: '100%', flex: 1, minHeight: 0 }}>
                         <TrackMap3D trackPoints={trackScene.points} carPositions={carPositions} onSelectDriver={onSelectDriver} />
                     </div>
@@ -83,7 +83,7 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackSc
                 </div>
 
                 <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: telemetryWidth, boxSizing: 'border-box', background: 'var(--surface-000)', overflowY: 'auto', padding: 'var(--space-4) var(--space-6)' }}>
-                    <div style={{ ...LABEL, marginBottom: 'var(--space-3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}><span>03 · Telemetry — {selected?.name ?? '—'}</span><span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span className="apex-live-dot" />Live</span></div>
+                    <div style={{ ...LABEL, marginBottom: 'var(--space-3)' }}>Telemetry — {selected?.name ?? '—'}</div>
                     <div style={{ ...DISPLAY, fontSize: 40, lineHeight: 1 }}>{lastPoint?.speed != null ? Math.round(lastPoint.speed) : '—'}<span style={{ ...LABEL, fontSize: 12 }}> km/h</span></div>
                     <div style={{ display: 'flex', gap: 14, marginTop: 14, alignItems: 'center' }}>
                         <div style={{ ...DISPLAY, fontSize: 24, color: 'var(--data-b)' }}>{lastPoint?.gear ?? '—'}</div>
@@ -128,7 +128,7 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackSc
             </div>
 
             <div style={{ padding: 'var(--space-3) var(--space-6) var(--space-4)', background: 'var(--surface-100)', borderTop: '1px solid var(--line)' }}>
-                <div style={{ ...LABEL, marginBottom: 8 }}>04 · Sector deltas</div>
+                <div style={{ ...LABEL, marginBottom: 8 }}>Sector deltas</div>
                 <div style={{ display: 'flex', gap: 12 }}>
                     {SECTOR_BOXES.map(({ key, label }) => (
                         <div key={key} style={{ flex: 1, padding: '10px 14px', borderRadius: 'var(--radius-md)', background: 'var(--surface-200)' }}>

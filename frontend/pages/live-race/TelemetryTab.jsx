@@ -59,7 +59,7 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedS
     return (
         <div style={{ display: 'grid', gridTemplateColumns: `${driverListWidth}px 10px minmax(0, 1fr)`, gridTemplateRows: 'minmax(0, 1fr)', flex: 1, minHeight: 0, minWidth: 0 }}>
             <div style={{ padding: 'var(--space-4) 0', overflowY: 'auto', minHeight: 0 }}>
-                <div style={{ padding: '0 var(--space-6) var(--space-2)', ...LABEL }}>01 · Select driver</div>
+                <div style={{ padding: '0 var(--space-6) var(--space-2)', ...LABEL }}>Select driver</div>
                 {drivers.map(d => (
                     <div
                         key={d.id}
@@ -75,7 +75,7 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedS
             <ResizeHandle onMouseDown={onDriverListResize} />
 
             <div style={{ padding: 'var(--space-4) var(--space-6)', minHeight: 0, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                <div style={{ ...LABEL, marginBottom: 6 }}>02 · Telemetry deep dive</div>
+                <div style={{ ...LABEL, marginBottom: 6 }}>Telemetry deep dive</div>
                 <div style={{ ...DISPLAY, fontSize: 20, marginBottom: 14 }}>
                     {selected.name} <span style={{ ...LABEL, fontSize: 12 }}>{selected.team}</span>
                 </div>
@@ -88,7 +88,7 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedS
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <div style={{ ...LABEL, display: 'flex', alignItems: 'center', gap: 8 }}><span className="apex-live-dot" />Telemetry trace</div>
+                    <div style={LABEL}>Telemetry trace</div>
                     <JumpToLiveButton following={following} onClick={jumpToLive} />
                 </div>
 

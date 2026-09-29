@@ -62,7 +62,7 @@ export default function Leaderboard({ drivers, onSelectDriver, width }) {
 
     return (
         <div style={{ padding: '16px 0', overflowY: 'auto', minHeight: 0 }}>
-            <div style={{ padding: '0 var(--space-6) var(--space-2)', ...LABEL }}>01 · Leaderboard</div>
+            <div style={{ padding: '0 var(--space-6) var(--space-2)', ...LABEL }}>Leaderboard</div>
             {drivers.map(d => (
                 <div
                     key={d.id}
