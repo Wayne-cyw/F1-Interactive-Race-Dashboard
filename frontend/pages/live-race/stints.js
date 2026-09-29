@@ -1,4 +1,4 @@
-const TIRE_COLOR = { S: '#c23b3b', M: '#d9a300', H: '#6b6862', I: '#3ecf6e', W: '#3671c6' }
+const TIRE_COLOR = { S: 'var(--compound-soft)', M: 'var(--compound-medium)', H: 'var(--compound-hard)', I: 'var(--data-b)', W: 'var(--data-b)' }
 const COMPOUND_CODES = { SOFT: 'S', MEDIUM: 'M', HARD: 'H', INTERMEDIATE: 'I', WET: 'W' }
 
 function toTireCode(compound) {
@@ -52,7 +52,7 @@ export function buildTireStints({ pitstops, results, laps, currentLap, totalLaps
                 c: toTireCode(s.compound),
                 from: s.from,
                 to: s.to,
-                clr: TIRE_COLOR[toTireCode(s.compound)] || '#8b8880',
+                clr: TIRE_COLOR[toTireCode(s.compound)] || 'var(--ink-muted)',
                 pct: ((s.to - s.from) / totalLaps) * 100,
                 left: (s.from / totalLaps) * 100,
             }))

@@ -1,3 +1,5 @@
+import { MONO } from './ui'
+
 const TABS = [
     { key: 'overview', label: 'Overview' },
     { key: 'timing', label: 'Timing' },
@@ -7,26 +9,32 @@ const TABS = [
 
 export default function TabNav({ activeTab, onChange }) {
     return (
-        <div style={{ display: 'flex', gap: 6, padding: '8px 32px', background: '#fff', borderBottom: '1px solid #e6e3dc' }}>
-            {TABS.map(({ key, label }) => {
+        <div role="tablist" style={{ display: 'flex', gap: 'var(--space-2)', padding: 'var(--space-2) var(--space-6)', background: 'var(--surface-100)', borderBottom: '1px solid var(--line)' }}>
+            {TABS.map(({ key, label }, i) => {
                 const active = activeTab === key
                 return (
                     <button
                         key={key}
+                        role="tab"
+                        aria-selected={active}
                         onClick={() => onChange(key)}
+                        className={active ? 'apex-btn apex-btn-primary' : 'apex-btn apex-btn-secondary'}
                         style={{
-                            border: 'none',
+                            ...MONO,
                             cursor: 'pointer',
-                            padding: '8px 18px',
-                            borderRadius: 10,
+                            minHeight: 44,
+                            padding: '0 var(--space-5)',
+                            borderRadius: 'var(--radius-pill)',
                             fontSize: 13,
                             fontWeight: 600,
-                            fontFamily: "'Inconsolata', sans-serif",
-                            background: active ? '#191b1e' : 'transparent',
-                            color: active ? '#fff' : '#5c5852',
+                            letterSpacing: '.12em',
+                            textTransform: 'uppercase',
+                            border: active ? '1px solid var(--brand)' : '1px solid var(--line)',
+                            background: active ? 'var(--brand)' : 'transparent',
+                            color: active ? 'var(--on-brand)' : 'var(--ink-muted)',
                         }}
                     >
-                        {label}
+                        {String(i + 1).padStart(2, '0')} · {label}
                     </button>
                 )
             })}

@@ -1,0 +1,32 @@
+/* APEX base layer: page ground, focus ring, live-dot pulse, reduced motion.
+   Tokens live in tokens.css (copied from design_system/). */
+html, body { background: var(--surface-000); color: var(--ink); }
+body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+select option { background: var(--surface-100); color: var(--ink); }
+
+input[type="range"] { accent-color: var(--brand); }
+
+/* Scrollbars stay quiet on the dark ground */
+* { scrollbar-color: var(--line) transparent; scrollbar-width: thin; }
+
+@keyframes apex-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .35; transform: scale(.7); }
+}
+.apex-live-dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--brand); animation: apex-pulse 1.6s ease-in-out infinite;
+}
+
+.apex-btn { transition: transform 250ms cubic-bezier(.2,.7,.2,1), border-color 250ms, box-shadow 250ms, background 250ms; }
+.apex-btn:hover { transform: translateY(-3px); }
+.apex-btn-primary:hover { background: var(--brand-hover) !important; box-shadow: var(--shadow-glow); }
+.apex-btn-secondary:hover { border-color: var(--brand) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .apex-live-dot { animation: none; }
+  .apex-btn, .apex-btn:hover { transition: none; transform: none; }
+}

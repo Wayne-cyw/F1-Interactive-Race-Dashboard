@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef } from 'react'
+import { LABEL, MONO, TAG } from './ui'
 
 // Below this width, only the driver name and gap are shown — position,
 // last-lap time, and tire+age columns drop out to avoid cramming/wrapping.
@@ -61,7 +62,7 @@ export default function Leaderboard({ drivers, onSelectDriver, width }) {
 
     return (
         <div style={{ padding: '16px 0', overflowY: 'auto', minHeight: 0 }}>
-            <div style={{ padding: '0 32px 8px', fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600 }}>LEADERBOARD</div>
+            <div style={{ padding: '0 var(--space-6) var(--space-2)', ...LABEL }}>01 · Leaderboard</div>
             {drivers.map(d => (
                 <div
                     key={d.id}
@@ -70,19 +71,19 @@ export default function Leaderboard({ drivers, onSelectDriver, width }) {
                         else rowRefs.current.delete(d.id)
                     }}
                     onClick={() => onSelectDriver(d.id)}
-                    style={{ display: 'grid', gridTemplateColumns: columns, gap: 10, padding: '7px 16px 7px 32px', alignItems: 'center', cursor: 'pointer', background: d.rowBg, borderLeft: `3px solid ${d.rowAccent}` }}
+                    style={{ display: 'grid', gridTemplateColumns: columns, gap: 10, padding: '7px var(--space-4) 7px var(--space-6)', alignItems: 'center', cursor: 'pointer', background: d.rowBg, borderLeft: `3px solid ${d.rowAccent}` }}
                 >
-                    {!compact && <div style={{ fontWeight: 700, color: d.posColor }}>{d.pos}</div>}
+                    {!compact && <div style={{ ...MONO, fontWeight: 600, fontSize: 13, color: d.posColor }}>{d.pos}</div>}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                        <div style={{ width: 4, height: 16, background: d.color, flexShrink: 0 }} />
-                        <span style={{ fontWeight: 600, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
+                        <div style={{ width: 4, height: 16, background: d.color, borderRadius: 'var(--radius-xs)', flexShrink: 0 }} />
+                        <span style={{ fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
                         {d.inPit && (
-                            <span style={{ padding: '2px 6px', borderRadius: 10, background: '#fdf3e7', fontSize: 10, color: 'oklch(55% .15 70)', fontWeight: 700, flexShrink: 0 }}>PIT</span>
+                            <span style={{ ...TAG, padding: '1px 8px', color: 'var(--compound-medium)', flexShrink: 0 }}>PIT</span>
                         )}
                     </div>
-                    <div style={{ fontSize: 12, color: '#8b8880' }}>{d.gap}</div>
-                    {!compact && <div style={{ fontSize: 12, color: '#403c36', fontFamily: "'Inconsolata', monospace" }}>{d.last}</div>}
-                    {!compact && <div style={{ fontSize: 11, color: d.tireColor }}>{d.tire}·{d.age}</div>}
+                    <div style={{ ...MONO, fontSize: 12, color: 'var(--ink-muted)' }}>{d.gap}</div>
+                    {!compact && <div style={{ ...MONO, fontSize: 12, color: 'var(--ink)' }}>{d.last}</div>}
+                    {!compact && <div style={{ ...MONO, fontSize: 12, color: d.tireColor }}>{d.tire}·{d.age}</div>}
                 </div>
             ))}
         </div>

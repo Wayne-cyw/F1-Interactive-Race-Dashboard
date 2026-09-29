@@ -3,12 +3,12 @@
 // latest-event-at-or-before pattern raceClock.js's deriveCurrentLap uses
 // for laps, applied to /api/track-status's event timeline instead.
 export const STATUS_META = {
-    '1': { label: 'TRACK CLEAR', color: 'oklch(48% .13 155)' },
-    '2': { label: 'YELLOW FLAG', color: 'oklch(75% .18 95)' },
-    '4': { label: 'SAFETY CAR', color: 'oklch(60% .18 50)' },
-    '5': { label: 'RED FLAG', color: 'oklch(55% .18 25)' },
-    '6': { label: 'VSC DEPLOYED', color: 'oklch(60% .18 50)' },
-    '7': { label: 'VSC ENDING', color: 'oklch(75% .18 95)' },
+    '1': { label: 'TRACK CLEAR', color: 'var(--ink)' },
+    '2': { label: 'YELLOW FLAG', color: 'var(--compound-medium)' },
+    '4': { label: 'SAFETY CAR', color: 'var(--compound-medium)' },
+    '5': { label: 'RED FLAG', color: 'var(--brand-text)' },
+    '6': { label: 'VSC DEPLOYED', color: 'var(--compound-medium)' },
+    '7': { label: 'VSC ENDING', color: 'var(--compound-medium)' },
 }
 
 const DEFAULT_STATUS = { status: '1', message: 'AllClear' }

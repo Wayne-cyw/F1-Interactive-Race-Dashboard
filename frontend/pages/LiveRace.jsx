@@ -14,9 +14,10 @@ import { buildTrackScene } from './live-race/trackGeometry3d'
 import { sliceTelemetry } from './live-race/telemetrySlice'
 import { computeDnfInfo } from './live-race/dnf'
 import { deriveCurrentTrackStatus } from './live-race/trackStatus'
+import { LABEL } from './live-race/ui'
 
 const FONT_LINK_ID = 'race-center-fonts'
-const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;500;600;700;900&display=swap'
+const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap'
 
 function useRaceCenterFonts() {
     useEffect(() => {
@@ -121,7 +122,7 @@ export default function LiveRace() {
     )
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#faf9f6', color: '#191b1e', fontFamily: "'Inconsolata', system-ui, sans-serif" }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: 'var(--surface-000)', color: 'var(--ink)', fontFamily: 'var(--font-sans)' }}>
             <TopBar
                 seasons={replay.seasons}
                 races={replay.races}
@@ -136,17 +137,17 @@ export default function LiveRace() {
             <TabNav activeTab={activeTab} onChange={setActiveTab} />
 
             {replay.loading && (
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8b8880' }}>
-                    Loading {replay.raceName || 'race'}… (first load of a race can take 30–60s)
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', ...LABEL }}>
+                    Connecting to timing feed · {replay.raceName || 'race'} · first load can take 30–60s
                 </div>
             )}
             {!replay.loading && replay.error && (
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c23b3b' }}>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-text)' }}>
                     Couldn't load this race: {replay.error}. Pick a different race above.
                 </div>
             )}
             {!replay.loading && !replay.error && !selected && (
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8b8880' }}>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', ...LABEL }}>
                     No driver data available for this session.
                 </div>
             )}

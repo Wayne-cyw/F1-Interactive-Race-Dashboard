@@ -5,6 +5,7 @@ import TrackMap3D from './TrackMap3D'
 import { useResizableWidth } from './useResizableWidth'
 import { interpolatePosition } from './trackMap'
 import { BEST_SECTOR_COLOR } from './leaderboardData'
+import { DISPLAY, LABEL, MONO, TAG } from './ui'
 
 const SECTOR_BOXES = [
     { key: 's1', label: 'SECTOR 1' },
@@ -62,61 +63,61 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackSc
     return (
         <>
             <div style={{ position: 'relative', flex: 1, minHeight: 0 }}>
-                <div style={{ position: 'absolute', inset: 0, padding: '16px 32px', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                    <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 10 }}>TRACK MAP</div>
+                <div style={{ position: 'absolute', inset: 0, padding: 'var(--space-4) var(--space-6)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                    <div style={{ ...LABEL, marginBottom: 10 }}>02 · Track map</div>
                     <div style={{ position: 'relative', width: '100%', flex: 1, minHeight: 0 }}>
                         <TrackMap3D trackPoints={trackScene.points} carPositions={carPositions} onSelectDriver={onSelectDriver} />
                     </div>
-                    <div style={{ display: 'flex', gap: 20, marginTop: 6, fontSize: 12, color: '#8b8880' }}>
-                        <div>S1 <b style={{ color: '#403c36' }}>{selected?.s1 ?? '—'}</b></div>
-                        <div>S2 <b style={{ color: selected?.s2c === BEST_SECTOR_COLOR ? BEST_SECTOR_COLOR : '#403c36' }}>{selected?.s2 ?? '—'}</b></div>
-                        <div>S3 <b style={{ color: '#403c36' }}>{selected?.s3 ?? '—'}</b></div>
+                    <div style={{ display: 'flex', gap: 20, marginTop: 8, ...LABEL }}>
+                        <div>S1 <b style={{ ...MONO, color: 'var(--ink)', fontWeight: 600 }}>{selected?.s1 ?? '—'}</b></div>
+                        <div>S2 <b style={{ ...MONO, color: selected?.s2c === BEST_SECTOR_COLOR ? BEST_SECTOR_COLOR : 'var(--ink)', fontWeight: 600 }}>{selected?.s2 ?? '—'}</b></div>
+                        <div>S3 <b style={{ ...MONO, color: 'var(--ink)', fontWeight: 600 }}>{selected?.s3 ?? '—'}</b></div>
                     </div>
                 </div>
 
-                <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: leaderboardWidth, background: '#faf9f6', display: 'grid', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: leaderboardWidth, background: 'var(--surface-000)', display: 'grid', overflow: 'hidden' }}>
                     <Leaderboard drivers={drivers} onSelectDriver={onSelectDriver} width={leaderboardWidth} />
                 </div>
                 <div style={{ position: 'absolute', top: 0, bottom: 0, left: leaderboardWidth - 5, zIndex: 1 }}>
                     <ResizeHandle onMouseDown={onLeaderboardResize} />
                 </div>
 
-                <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: telemetryWidth, boxSizing: 'border-box', background: '#faf9f6', overflowY: 'auto', padding: '16px 32px' }}>
-                    <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 12 }}>TELEMETRY — {selected?.name ?? '—'}</div>
-                    <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 1 }}>{lastPoint?.speed != null ? Math.round(lastPoint.speed) : '—'}<span style={{ fontSize: 14, color: '#a8a49b' }}> km/h</span></div>
+                <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: telemetryWidth, boxSizing: 'border-box', background: 'var(--surface-000)', overflowY: 'auto', padding: 'var(--space-4) var(--space-6)' }}>
+                    <div style={{ ...LABEL, marginBottom: 'var(--space-3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}><span>03 · Telemetry — {selected?.name ?? '—'}</span><span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span className="apex-live-dot" />Live</span></div>
+                    <div style={{ ...DISPLAY, fontSize: 40, lineHeight: 1 }}>{lastPoint?.speed != null ? Math.round(lastPoint.speed) : '—'}<span style={{ ...LABEL, fontSize: 12 }}> km/h</span></div>
                     <div style={{ display: 'flex', gap: 14, marginTop: 14, alignItems: 'center' }}>
-                        <div style={{ fontSize: 24, fontWeight: 700, color: 'oklch(50% .16 230)' }}>{lastPoint?.gear ?? '—'}</div>
+                        <div style={{ ...DISPLAY, fontSize: 24, color: 'var(--data-b)' }}>{lastPoint?.gear ?? '—'}</div>
                         {lastPoint?.drs > 0
-                            ? <div style={{ padding: '4px 10px', borderRadius: 10, background: '#f2f8f4', fontSize: 11, color: 'oklch(45% .13 155)', fontWeight: 600 }}>DRS ON</div>
-                            : <div style={{ padding: '4px 10px', borderRadius: 10, background: '#f2f0ea', fontSize: 11, color: '#8b8880', fontWeight: 600 }}>DRS OFF</div>}
+                            ? <div style={{ ...TAG, background: 'var(--brand)', borderColor: 'var(--brand)', color: 'var(--on-brand)' }}>DRS on</div>
+                            : <div style={{ ...TAG, color: 'var(--ink-muted)' }}>DRS off</div>}
                     </div>
                     <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 9 }}>
                         <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#a8a49b' }}><span>Throttle</span><span>{Math.round(lastPoint?.throttle ?? 0)}%</span></div>
-                            <div style={{ height: 6, background: '#eeece6', borderRadius: 3, marginTop: 4 }}><div style={{ width: `${lastPoint?.throttle ?? 0}%`, height: '100%', background: 'oklch(48% .13 155)', borderRadius: 3 }} /></div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', ...LABEL }}><span>Throttle</span><span>{Math.round(lastPoint?.throttle ?? 0)}%</span></div>
+                            <div style={{ height: 6, background: 'var(--surface-200)', borderRadius: 'var(--radius-xs)', marginTop: 4 }}><div style={{ width: `${lastPoint?.throttle ?? 0}%`, height: '100%', background: 'var(--data-b)', borderRadius: 'var(--radius-xs)' }} /></div>
                         </div>
                         <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#a8a49b' }}><span>Brake</span><span>{lastPoint?.brake ? 100 : 0}%</span></div>
-                            <div style={{ height: 6, background: '#eeece6', borderRadius: 3, marginTop: 4 }}><div style={{ width: lastPoint?.brake ? '100%' : '0%', height: '100%', background: 'oklch(55% .18 25)', borderRadius: 3 }} /></div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', ...LABEL }}><span>Brake</span><span>{lastPoint?.brake ? 100 : 0}%</span></div>
+                            <div style={{ height: 6, background: 'var(--surface-200)', borderRadius: 'var(--radius-xs)', marginTop: 4 }}><div style={{ width: lastPoint?.brake ? '100%' : '0%', height: '100%', background: 'var(--brand)', borderRadius: 'var(--radius-xs)' }} /></div>
                         </div>
                     </div>
                     <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
                         <div>
-                            <div style={{ fontSize: 10.5, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 4 }}>SPEED</div>
+                            <div style={{ ...LABEL, marginBottom: 4 }}>Speed</div>
                             <svg viewBox="0 0 300 90" style={{ width: '100%', height: 70 }}>
-                                <polyline points={telemetry?.speedRollingPoly ?? ''} fill="none" stroke="oklch(50% .16 230)" strokeWidth="2" />
+                                <polyline points={telemetry?.speedRollingPoly ?? ''} fill="none" style={{ stroke: 'var(--data-b)' }} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         </div>
                         <div>
-                            <div style={{ fontSize: 10.5, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 4 }}>THROTTLE</div>
+                            <div style={{ ...LABEL, marginBottom: 4 }}>Throttle</div>
                             <svg viewBox="0 0 300 60" style={{ width: '100%', height: 46 }}>
-                                <polyline points={telemetry?.throttleRollingPoly ?? ''} fill="none" stroke="oklch(48% .13 155)" strokeWidth="2" />
+                                <polyline points={telemetry?.throttleRollingPoly ?? ''} fill="none" style={{ stroke: 'var(--data-b)' }} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         </div>
                         <div>
-                            <div style={{ fontSize: 10.5, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 4 }}>BRAKE</div>
+                            <div style={{ ...LABEL, marginBottom: 4 }}>Brake</div>
                             <svg viewBox="0 0 300 60" style={{ width: '100%', height: 46 }}>
-                                <polyline points={telemetry?.brakeRollingPoly ?? ''} fill="none" stroke="oklch(55% .18 25)" strokeWidth="2" />
+                                <polyline points={telemetry?.brakeRollingPoly ?? ''} fill="none" style={{ stroke: 'var(--data-a)' }} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         </div>
                     </div>
@@ -126,15 +127,15 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackSc
                 </div>
             </div>
 
-            <div style={{ padding: '10px 32px 16px', background: '#fff' }}>
-                <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 8 }}>SECTOR DELTAS</div>
+            <div style={{ padding: 'var(--space-3) var(--space-6) var(--space-4)', background: 'var(--surface-100)', borderTop: '1px solid var(--line)' }}>
+                <div style={{ ...LABEL, marginBottom: 8 }}>04 · Sector deltas</div>
                 <div style={{ display: 'flex', gap: 12 }}>
                     {SECTOR_BOXES.map(({ key, label }) => (
-                        <div key={key} style={{ flex: 1, padding: '10px 14px', borderRadius: 10, background: '#f7f6f2' }}>
-                            <div style={{ fontSize: 10.5, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 4 }}>{label}</div>
+                        <div key={key} style={{ flex: 1, padding: '10px 14px', borderRadius: 'var(--radius-md)', background: 'var(--surface-200)' }}>
+                            <div style={{ ...LABEL, marginBottom: 4 }}>{label}</div>
                             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                                <span style={{ fontWeight: 700, fontSize: 14 }}>{bestSectors?.[key]?.name ?? '—'}</span>
-                                <span style={{ fontFamily: "'Inconsolata', monospace", fontSize: 13, color: '#403c36' }}>{bestSectors?.[key]?.time ?? '—'}</span>
+                                <span style={{ ...DISPLAY, fontSize: 14 }}>{bestSectors?.[key]?.name ?? '—'}</span>
+                                <span style={{ ...MONO, fontSize: 13, color: 'var(--ink)' }}>{bestSectors?.[key]?.time ?? '—'}</span>
                             </div>
                         </div>
                     ))}
