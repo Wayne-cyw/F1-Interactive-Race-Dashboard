@@ -3,6 +3,7 @@ import { fetchJSON } from '../../utils/api'
 import { deriveCurrentLap } from './raceClock'
 import { computeLoadProgress } from './loadProgress'
 
+const DEFAULT_YEAR = 2025
 const RENDER_INTERVAL_MS = 33 // throttle re-renders to ~30Hz
 
 async function loadSessionBundle(year, round, onStep) {
@@ -46,36 +47,23 @@ export function useRaceReplay() {
     const [clockEpoch, setClockEpoch] = useState(0)
     const [playbackSpeed, setPlaybackSpeed] = useState(1)
 
-    // Pick a default race on mount: the latest season's most recently
-    // completed race. If the latest season has no completed races yet
-    // (season not started), fall back one year — a single retry, not a
-    // search loop.
+    // Pick a default race on mount: the DEFAULT_YEAR season's most recently
+    // completed race (its last round once the season is over). If that season
+    // isn't available, fall back to the latest season.
     useEffect(() => {
         let cancelled = false
         async function pickDefault() {
             const seasonsBody = await fetchJSON('/seasons')
             if (cancelled) return
             setSeasons(seasonsBody.seasons)
-            const latestYear = seasonsBody.seasons[0]
+            const defaultYear = seasonsBody.seasons.includes(DEFAULT_YEAR) ? DEFAULT_YEAR : seasonsBody.seasons[0]
 
-            const racesBody = await fetchJSON(`/races/${latestYear}`)
+            const racesBody = await fetchJSON(`/races/${defaultYear}`)
             if (cancelled) return
-            const round = latestRunRound(racesBody.races)
-            if (round != null) {
-                setRaces(racesBody.races)
-                setYear(latestYear)
-                setRound(round)
-                setDoneSteps(prev => new Set(prev).add('schedule'))
-                return
-            }
-
-            const fallbackYear = latestYear - 1
-            const fallbackRacesBody = await fetchJSON(`/races/${fallbackYear}`)
-            if (cancelled) return
-            const fallbackRound = latestRunRound(fallbackRacesBody.races) ?? fallbackRacesBody.races[0].round
-            setRaces(fallbackRacesBody.races)
-            setYear(fallbackYear)
-            setRound(fallbackRound)
+            const round = latestRunRound(racesBody.races) ?? racesBody.races[0].round
+            setRaces(racesBody.races)
+            setYear(defaultYear)
+            setRound(round)
             setDoneSteps(prev => new Set(prev).add('schedule'))
         }
         pickDefault().catch(err => {
