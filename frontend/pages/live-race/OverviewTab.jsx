@@ -47,7 +47,7 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackSc
 
     return (
         <>
-            <div style={{ display: 'grid', gridTemplateColumns: `${leaderboardWidth}px 10px 1fr 10px ${telemetryWidth}px`, gridTemplateRows: 'minmax(0, 1fr)', flex: 1, minHeight: 0 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: `${leaderboardWidth}px 10px minmax(0, 1fr) 10px ${telemetryWidth}px`, gridTemplateRows: 'minmax(0, 1fr)', flex: 1, minHeight: 0 }}>
                 <Leaderboard drivers={drivers} onSelectDriver={onSelectDriver} width={leaderboardWidth} />
 
                 <ResizeHandle onMouseDown={onLeaderboardResize} />
