@@ -11,7 +11,15 @@ export default function TopBar({ seasons, races, year, round, onSelectYear, onSe
 
     return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-3) var(--space-6)', borderBottom: '1px solid var(--line)', background: 'var(--surface-100)', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 18 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-5)' }}>
+                <div aria-label="APEX" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                    <svg width="22" height="22" viewBox="0 0 30 30" fill="none" strokeWidth="3.5" strokeLinecap="square" strokeLinejoin="miter" aria-hidden="true">
+                        <path d="M4 27 L15 13 L26 27" style={{ stroke: 'var(--ink)' }} />
+                        <path d="M4 16 L15 2 L26 16" style={{ stroke: 'var(--brand)' }} />
+                    </svg>
+                    <span style={{ ...DISPLAY, fontSize: 16, letterSpacing: '.04em' }}>APEX</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 18 }}>
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'baseline', gap: 8 }}>
                     <select
                         value={round ?? ''}
@@ -46,6 +54,7 @@ export default function TopBar({ seasons, races, year, round, onSelectYear, onSe
                         <option key={s} value={s}>{s}</option>
                     ))}
                 </select>
+                </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
