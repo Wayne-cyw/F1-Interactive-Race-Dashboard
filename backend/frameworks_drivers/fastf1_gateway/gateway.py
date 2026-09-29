@@ -69,6 +69,10 @@ class FastF1Gateway(
         return df.groupby(bucket).first()
 
     @staticmethod
+    def _safe_z(value) -> float:
+        return float(value) if pd.notna(value) else 0.0
+
+    @staticmethod
     def _driver_result_from_row(row) -> DriverResult:
         return DriverResult(
             driver=row["Abbreviation"] if "Abbreviation" in row.index else None,
@@ -191,6 +195,7 @@ class FastF1Gateway(
             )
         return TelemetryData(driver=driver_code, points=points)
 
+    @lru_cache(maxsize=50)
     def get_track_layout(self, year: int, race_round: int) -> TrackLayout:
         session = self._load_session(year, race_round, "R")
         fastest_lap = session.laps.pick_fastest()
@@ -199,7 +204,11 @@ class FastF1Gateway(
 
         telemetry = fastest_lap.get_telemetry()
         coordinates = [
-            TrackPoint(x=float(p["X"]), y=float(p["Y"]))
+            TrackPoint(
+                x=float(p["X"]),
+                y=float(p["Y"]),
+                z=self._safe_z(p.get("Z")),
+            )
             for _, p in telemetry.iterrows()
             if pd.notna(p.get("X")) and pd.notna(p.get("Y"))
         ]
@@ -304,12 +313,13 @@ class FastF1Gateway(
             for row in resampled.itertuples():
                 x = getattr(row, "X", None)
                 y = getattr(row, "Y", None)
+                z = getattr(row, "Z", None)
                 if pd.isna(x) or pd.isna(y):
                     continue
                 t = (row.SessionTime - t0).total_seconds()
                 if t < 0:
                     continue
-                points.append(PositionPoint(t=t, x=float(x), y=float(y)))
+                points.append(PositionPoint(t=t, x=float(x), y=float(y), z=self._safe_z(z)))
             result.append(DriverPositions(driver=driver_code, points=points))
         return result
 

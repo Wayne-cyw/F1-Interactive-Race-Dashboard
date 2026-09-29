@@ -10,7 +10,7 @@ import { useRaceReplay } from './live-race/useRaceReplay'
 import { useDriverTelemetry } from './live-race/useDriverTelemetry'
 import { buildLeaderboardRows, deriveBestSectors } from './live-race/leaderboardData'
 import { buildPitLog, buildTireStints } from './live-race/stints'
-import { buildTrackPath } from './live-race/trackMap'
+import { buildTrackScene } from './live-race/trackGeometry3d'
 import { sliceTelemetry } from './live-race/telemetrySlice'
 import { computeDnfInfo } from './live-race/dnf'
 import { deriveCurrentTrackStatus } from './live-race/trackStatus'
@@ -105,8 +105,8 @@ export default function LiveRace() {
         [drivers, stintsByDriver]
     )
 
-    const trackPath = useMemo(
-        () => buildTrackPath(replay.track?.coordinates ?? []),
+    const trackScene = useMemo(
+        () => buildTrackScene(replay.track?.coordinates ?? []),
         [replay.track]
     )
 
@@ -157,7 +157,7 @@ export default function LiveRace() {
                             drivers={driversWithStints}
                             selected={selected}
                             onSelectDriver={setSelectedDriverId}
-                            trackPath={trackPath}
+                            trackScene={trackScene}
                             positions={positionsByDriver}
                             elapsedSeconds={replay.elapsedSeconds}
                             telemetry={telemetry}

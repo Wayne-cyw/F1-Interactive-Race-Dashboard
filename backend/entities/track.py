@@ -5,6 +5,7 @@ from dataclasses import dataclass
 class TrackPoint:
     x: float
     y: float
+    z: float = 0.0
 
 
 @dataclass(frozen=True)

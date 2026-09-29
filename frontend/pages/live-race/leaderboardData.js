@@ -146,7 +146,6 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
             rowAccent: selected ? 'oklch(48% .13 155)' : 'transparent',
             posColor: r.pos === 1 ? 'oklch(48% .13 155)' : '#a8a49b',
             tireColor: TIRE_COLOR[r.tire] || '#8b8880',
-            dotR: selected ? 8 : 6,
             s1c: _sector1 != null && _sector1 === bestSector1 ? BEST_SECTOR_COLOR : NORMAL_SECTOR_COLOR,
             s2c: _sector2 != null && _sector2 === bestSector2 ? BEST_SECTOR_COLOR : NORMAL_SECTOR_COLOR,
             s3c: _sector3 != null && _sector3 === bestSector3 ? BEST_SECTOR_COLOR : NORMAL_SECTOR_COLOR,
