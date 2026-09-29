@@ -19,6 +19,7 @@ export function usePath() {
         const sync = () => setPath(window.location.pathname)
         window.addEventListener('popstate', sync)
         window.addEventListener(NAV_EVENT, sync)
+        sync() // catch a navigation that happened before this effect subscribed
         return () => {
             window.removeEventListener('popstate', sync)
             window.removeEventListener(NAV_EVENT, sync)

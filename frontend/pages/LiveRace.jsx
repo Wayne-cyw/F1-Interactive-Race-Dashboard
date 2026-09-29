@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import TopBar from './live-race/TopBar'
 import TabNav from './live-race/TabNav'
 import OverviewTab from './live-race/OverviewTab'
@@ -24,21 +24,25 @@ export default function LiveRace() {
     const replay = useRaceReplay()
 
     // Hold the loading screen ~1s after a successful load so its lights-out
-    // finish plays; a failed load drops straight to the error message.
+    // finish plays; a failed load drops straight to the error message. The
+    // dashboard itself (3D map, leaderboard…) mounts only after that hold:
+    // mounting it is heavy enough to freeze the loading animation mid-finish.
+    // `finishing` is flipped during render (not in an effect) so the
+    // LoadingScreen stays mounted across the loading -> finishing hand-off;
+    // an unmount there would reset its progress bar to 0%.
     const [finishing, setFinishing] = useState(false)
-    const wasLoading = useRef(false)
+    const [prevLoading, setPrevLoading] = useState(replay.loading)
+    if (prevLoading !== replay.loading) {
+        setPrevLoading(replay.loading)
+        setFinishing(prevLoading && !replay.loading && !replay.error)
+    }
     useEffect(() => {
-        if (replay.loading) {
-            wasLoading.current = true
-            setFinishing(false)
-            return
-        }
-        if (!wasLoading.current || replay.error) return
-        wasLoading.current = false
-        setFinishing(true)
+        if (!finishing) return
         const t = setTimeout(() => setFinishing(false), 1000)
         return () => clearTimeout(t)
-    }, [replay.loading, replay.error])
+    }, [finishing])
+    const ready = !replay.loading && !finishing
+
     const { points: telemetryPoints } = useDriverTelemetry(replay.year, replay.round, selectedDriverId)
 
     const positionsByDriver = useMemo(
@@ -136,17 +140,17 @@ export default function LiveRace() {
                     done={!replay.loading}
                 />
             )}
-            {!replay.loading && replay.error && (
+            {ready && replay.error && (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-text)' }}>
                     Couldn't load this race: {replay.error}. Pick a different race above.
                 </div>
             )}
-            {!replay.loading && !replay.error && !selected && (
+            {ready && !replay.error && !selected && (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', ...LABEL }}>
                     No driver data available for this session.
                 </div>
             )}
-            {!replay.loading && !replay.error && selected && (
+            {ready && !replay.error && selected && (
                 <>
                     {activeTab === 'overview' && (
                         <OverviewTab

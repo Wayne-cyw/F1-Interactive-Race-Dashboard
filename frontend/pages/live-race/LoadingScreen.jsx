@@ -25,7 +25,7 @@ function useSmoothProgress(progress, done, { fillRef, pctRef, lightsRef }) {
             const ceiling = value >= 1
                 ? 1
                 : Math.min(MAX_BEFORE_DONE, value + CREEP_HEADROOM * (1 - Math.exp(-(now - since) / CREEP_TAU_MS)))
-            shown.current += (ceiling - shown.current) * (1 - Math.exp(-(now - last) / 180))
+            shown.current += (ceiling - shown.current) * (1 - Math.exp(-(now - last) / (value >= 1 ? 70 : 180)))
             last = now
             const p = value >= 1 && ceiling - shown.current < 0.002 ? 1 : shown.current
             if (fillRef.current) fillRef.current.style.transform = `scaleX(${p})`
