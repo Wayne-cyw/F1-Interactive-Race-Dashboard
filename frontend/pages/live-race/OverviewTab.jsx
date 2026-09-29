@@ -4,8 +4,12 @@ import ResizeHandle from './ResizeHandle'
 import TrackMap3D from './TrackMap3D'
 import { useResizableWidth } from './useResizableWidth'
 import { interpolatePosition } from './trackMap'
+import { DRS_OPEN_MIN } from './telemetrySlice'
 import { BEST_SECTOR_COLOR } from './leaderboardData'
 import { DISPLAY, LABEL, MONO, TAG } from './ui'
+
+// Fixed size so the on/off states never shift the row.
+const DRS_TAG = { borderRadius: 10, minWidth: 72, height: 28, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }
 
 const SECTOR_BOXES = [
     { key: 's1', label: 'SECTOR 1' },
@@ -86,10 +90,10 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackSc
                     <div style={{ ...LABEL, marginBottom: 'var(--space-3)' }}>Telemetry — {selected?.name ?? '—'}</div>
                     <div style={{ ...DISPLAY, fontSize: 40, lineHeight: 1 }}>{lastPoint?.speed != null ? Math.round(lastPoint.speed) : '—'}<span style={{ ...LABEL, fontSize: 12 }}> km/h</span></div>
                     <div style={{ display: 'flex', gap: 14, marginTop: 14, alignItems: 'center' }}>
-                        <div style={{ ...DISPLAY, fontSize: 24, color: 'var(--data-b)' }}>{lastPoint?.gear ?? '—'}</div>
-                        {lastPoint?.drs > 0
-                            ? <div style={{ ...TAG, borderRadius: 10, background: 'var(--brand)', borderColor: 'var(--brand)', color: 'var(--on-brand)' }}>DRS on</div>
-                            : <div style={{ ...TAG, borderRadius: 10, color: 'var(--ink-muted)' }}>DRS off</div>}
+                        <div style={{ ...DISPLAY, fontSize: 24, color: 'var(--ink)' }}>{lastPoint?.gear ?? '—'}</div>
+                        {lastPoint?.drs >= DRS_OPEN_MIN
+                            ? <div style={{ ...TAG, ...DRS_TAG, background: 'var(--brand)', borderColor: 'var(--brand)', color: 'var(--on-brand)' }}>DRS on</div>
+                            : <div style={{ ...TAG, ...DRS_TAG, color: 'var(--ink-muted)' }}>DRS off</div>}
                     </div>
                     <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 9 }}>
                         <div>
