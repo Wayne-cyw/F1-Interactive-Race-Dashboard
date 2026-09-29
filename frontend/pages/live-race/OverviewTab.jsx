@@ -18,7 +18,7 @@ const SECTOR_BOXES = [
 const HEADING_LOOKAHEAD_SECONDS = 0.15
 
 export default function OverviewTab({ drivers, selected, onSelectDriver, trackScene, positions, elapsedSeconds, telemetry, bestSectors }) {
-    const [leaderboardWidth, onLeaderboardResize] = useResizableWidth(440, { min: 320, max: 640, edge: 'right' })
+    const [leaderboardWidth, onLeaderboardResize] = useResizableWidth(440, { min: 272, max: 640, edge: 'right' })
     const [telemetryWidth, onTelemetryResize] = useResizableWidth(360, { min: 280, max: 520, edge: 'left' })
 
     const lastHeadingRef = useRef(new Map())
@@ -61,12 +61,8 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackSc
 
     return (
         <>
-            <div style={{ display: 'grid', gridTemplateColumns: `${leaderboardWidth}px 10px minmax(0, 1fr) 10px ${telemetryWidth}px`, gridTemplateRows: 'minmax(0, 1fr)', flex: 1, minHeight: 0 }}>
-                <Leaderboard drivers={drivers} onSelectDriver={onSelectDriver} width={leaderboardWidth} />
-
-                <ResizeHandle onMouseDown={onLeaderboardResize} />
-
-                <div style={{ padding: '16px 32px', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            <div style={{ position: 'relative', flex: 1, minHeight: 0 }}>
+                <div style={{ position: 'absolute', inset: 0, padding: '16px 32px', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                     <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 10 }}>TRACK MAP</div>
                     <div style={{ position: 'relative', width: '100%', flex: 1, minHeight: 0 }}>
                         <TrackMap3D trackPoints={trackScene.points} carPositions={carPositions} onSelectDriver={onSelectDriver} />
@@ -78,9 +74,14 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackSc
                     </div>
                 </div>
 
-                <ResizeHandle onMouseDown={onTelemetryResize} />
+                <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: leaderboardWidth, background: '#faf9f6', display: 'grid', overflow: 'hidden' }}>
+                    <Leaderboard drivers={drivers} onSelectDriver={onSelectDriver} width={leaderboardWidth} />
+                </div>
+                <div style={{ position: 'absolute', top: 0, bottom: 0, left: leaderboardWidth - 5, zIndex: 1 }}>
+                    <ResizeHandle onMouseDown={onLeaderboardResize} />
+                </div>
 
-                <div style={{ padding: '16px 32px', overflowY: 'auto', minHeight: 0 }}>
+                <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: telemetryWidth, boxSizing: 'border-box', background: '#faf9f6', overflowY: 'auto', padding: '16px 32px' }}>
                     <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 12 }}>TELEMETRY — {selected?.name ?? '—'}</div>
                     <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 1 }}>{lastPoint?.speed != null ? Math.round(lastPoint.speed) : '—'}<span style={{ fontSize: 14, color: '#a8a49b' }}> km/h</span></div>
                     <div style={{ display: 'flex', gap: 14, marginTop: 14, alignItems: 'center' }}>
@@ -119,6 +120,9 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackSc
                             </svg>
                         </div>
                     </div>
+                </div>
+                <div style={{ position: 'absolute', top: 0, bottom: 0, right: telemetryWidth - 5, zIndex: 1 }}>
+                    <ResizeHandle onMouseDown={onTelemetryResize} />
                 </div>
             </div>
 

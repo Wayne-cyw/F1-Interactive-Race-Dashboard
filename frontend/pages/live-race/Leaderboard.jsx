@@ -70,7 +70,7 @@ export default function Leaderboard({ drivers, onSelectDriver, width }) {
                         else rowRefs.current.delete(d.id)
                     }}
                     onClick={() => onSelectDriver(d.id)}
-                    style={{ display: 'grid', gridTemplateColumns: columns, gap: 10, padding: '7px 32px', alignItems: 'center', cursor: 'pointer', background: d.rowBg, borderLeft: `3px solid ${d.rowAccent}` }}
+                    style={{ display: 'grid', gridTemplateColumns: columns, gap: 10, padding: '7px 16px 7px 32px', alignItems: 'center', cursor: 'pointer', background: d.rowBg, borderLeft: `3px solid ${d.rowAccent}` }}
                 >
                     {!compact && <div style={{ fontWeight: 700, color: d.posColor }}>{d.pos}</div>}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
