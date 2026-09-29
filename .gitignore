@@ -41,3 +41,5 @@ docs/superpowers/
 
 CLAUDE.md
 .claude/
+# Design system assets (local only)
+design_system/
