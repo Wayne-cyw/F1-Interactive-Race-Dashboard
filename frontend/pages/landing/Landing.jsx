@@ -98,9 +98,6 @@ export default function Landing({ onEnter }) {
                         <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, letterSpacing: '.06em' }}>APEX</span>
                     </a>
                     <nav className="apex-ld-navlinks">
-                        <a className="apex-ld-navlink" href="#features">Live timing</a>
-                        <a className="apex-ld-navlink" href="#features">Strategy</a>
-                        <a className="apex-ld-navlink" href="#features">Telemetry</a>
                         <button type="button" className="apex-ld-btn apex-ld-btn-sm" onClick={enter}>Enter the pit wall</button>
                     </nav>
                 </header>

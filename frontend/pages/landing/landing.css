@@ -23,6 +23,8 @@
   border-radius: var(--ld-radius); background: var(--brand); color: var(--on-brand);
   transition: background .2s; }
 .apex-ld-btn:hover { background: var(--brand-hover); }
+.apex-ld-btn:hover .apex-ld-arrow { transform: translateX(6px); }
+.apex-ld-arrow { transition: transform .25s cubic-bezier(.2, .7, .2, 1); }
 .apex-ld-btn-sm { padding: 12px 22px; font-size: 15px; min-height: 44px; }
 .apex-ld-btn-lg { padding: 20px 30px; font-size: 17px; }
 .apex-ld-btn-dark { background: var(--surface-000); color: var(--ink); padding: 22px 34px; font-size: 18px; }
