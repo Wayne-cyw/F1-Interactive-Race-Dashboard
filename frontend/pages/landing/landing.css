@@ -1,0 +1,130 @@
+/* APEX landing page (from the design_system Landing board). Colors, fonts and
+   radii are tokens from design/tokens.css. Responsive: hero stacks below 1000px,
+   feature cards stack below 900px. */
+.apex-ld { height: 100%; overflow-y: auto; overflow-x: hidden; background: var(--surface-000); color: var(--ink); font-family: var(--font-sans); }
+.apex-ld a { color: inherit; text-decoration: none; }
+.apex-ld-inner { max-width: 1440px; margin: 0 auto; }
+.apex-ld-pad { padding-left: clamp(20px, 5.5vw, 80px); padding-right: clamp(20px, 5.5vw, 80px); }
+
+.apex-ld-mono { font-family: var(--font-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-muted); font-weight: 500; }
+.apex-ld-mono-lg { font-size: 13px; letter-spacing: .16em; }
+.apex-ld-tag { color: var(--brand-text); letter-spacing: .16em; }
+.apex-ld-display { font-family: var(--font-display); font-weight: 700; margin: 0; }
+
+/* NAV */
+.apex-ld-nav { height: 88px; display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 3; }
+.apex-ld-brand { display: flex; align-items: center; gap: 12px; }
+.apex-ld-navlinks { display: flex; align-items: center; gap: 40px; font-size: 15px; font-weight: 500; color: var(--ink-muted); }
+.apex-ld-navlink { transition: color .2s; }
+.apex-ld-navlink:hover { color: var(--ink); }
+
+/* BUTTONS */
+.apex-ld-btn { display: inline-flex; align-items: center; gap: 14px; border: 0; cursor: pointer; font-family: var(--font-sans); font-weight: 600;
+  border-radius: var(--radius-pill); background: var(--brand); color: var(--on-brand);
+  transition: transform .25s cubic-bezier(.2, .7, .2, 1), background .25s, box-shadow .25s; }
+.apex-ld-btn:hover { transform: translateY(-3px); background: var(--brand-hover); box-shadow: var(--shadow-glow); }
+.apex-ld-btn:hover .apex-ld-arrow { transform: translateX(6px); }
+.apex-ld-arrow { transition: transform .25s cubic-bezier(.2, .7, .2, 1); }
+.apex-ld-btn-sm { padding: 12px 22px; font-size: 15px; min-height: 44px; }
+.apex-ld-btn-lg { padding: 20px 30px; font-size: 17px; }
+.apex-ld-btn-dark { background: var(--surface-000); color: var(--ink); padding: 22px 34px; font-size: 18px; }
+.apex-ld-btn-dark:hover { background: var(--surface-000); }
+
+/* HERO */
+.apex-ld-hero { position: relative; display: flex; align-items: flex-start; justify-content: space-between; gap: 48px; padding-top: 40px; padding-bottom: 72px; }
+.apex-ld-herogrid { position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+  background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 80px 80px; opacity: .55;
+  -webkit-mask-image: linear-gradient(180deg, #000 10%, transparent 92%); mask-image: linear-gradient(180deg, #000 10%, transparent 92%); pointer-events: none; }
+.apex-ld-lapline-wrap { position: absolute; left: 0; bottom: 0; right: 0; height: 2px; overflow: hidden; }
+.apex-ld-lapline { width: 420px; height: 2px; background: var(--brand); animation: apex-ld-lap 5s cubic-bezier(.6, 0, .4, 1) infinite; }
+.apex-ld-copy { position: relative; width: 640px; max-width: 100%; display: flex; flex-direction: column; gap: 32px; padding-top: 56px; }
+.apex-ld-eyebrow { display: flex; align-items: center; gap: 12px; }
+.apex-ld-h1 { font-size: clamp(44px, 5.4vw, 78px); line-height: 1.02; letter-spacing: -.03em; }
+.apex-ld-lede { margin: 0; max-width: 520px; font-size: 20px; line-height: 1.55; color: var(--ink-muted); text-wrap: pretty; }
+.apex-ld-actions { display: flex; align-items: center; gap: 28px; margin-top: 8px; flex-wrap: wrap; }
+.apex-ld-underlink { font-size: 16px; font-weight: 500; color: var(--ink-muted); border-bottom: 1px solid var(--line); padding-bottom: 3px; transition: color .2s; }
+.apex-ld-underlink:hover { color: var(--ink); }
+
+/* Telemetry card */
+.apex-ld-card-hero { position: relative; width: 620px; max-width: 100%; box-sizing: border-box; padding: 24px 28px; border-radius: var(--radius-lg);
+  background: var(--surface-100); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow-panel); }
+.apex-ld-cardhead { display: flex; align-items: center; justify-content: space-between; }
+.apex-ld-rec { display: flex; align-items: center; gap: 8px; color: var(--brand-text); }
+.apex-ld-divider { height: 1px; background: var(--line); }
+.apex-ld-legend { display: flex; align-items: center; gap: 24px; }
+.apex-ld-legend span { display: flex; align-items: center; gap: 8px; }
+.apex-ld-legend i { width: 18px; height: 3px; display: block; }
+.apex-ld-svg { width: 100%; height: auto; display: block; }
+
+/* MARQUEE */
+.apex-ld-marquee-wrap { height: 72px; overflow: hidden; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); display: flex; align-items: center; background: var(--surface-100); }
+.apex-ld-marquee { display: flex; width: max-content; align-items: center; animation: apex-ld-marquee 26s linear infinite;
+  font-family: var(--font-display); font-weight: 500; font-size: 20px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-muted); white-space: nowrap; }
+.apex-ld-marquee-set { display: flex; align-items: center; gap: 40px; padding-right: 40px; }
+.apex-ld-diamond { width: 8px; height: 8px; background: var(--brand); transform: rotate(45deg); display: block; }
+
+/* FEATURES */
+.apex-ld-features { padding-top: 104px; padding-bottom: 104px; display: flex; flex-direction: column; gap: 56px; }
+.apex-ld-features-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+.apex-ld-h2 { max-width: 700px; font-size: clamp(30px, 3.1vw, 44px); line-height: 1.1; letter-spacing: -.025em; }
+.apex-ld-grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.apex-ld-card { box-sizing: border-box; padding: 32px; border-radius: var(--radius-lg); background: var(--surface-100); border: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 20px; transition: transform .35s cubic-bezier(.2, .7, .2, 1), border-color .35s; }
+.apex-ld-card:hover { transform: translateY(-8px); border-color: var(--brand); }
+.apex-ld-preview { height: 170px; border-radius: var(--radius-md); background: var(--surface-000); border: 1px solid var(--line); box-sizing: border-box; padding: 18px;
+  display: flex; flex-direction: column; justify-content: space-between; }
+.apex-ld-h3 { margin: 0; font-family: var(--font-display); font-weight: 500; font-size: 24px; line-height: 1.2; letter-spacing: -.015em; }
+.apex-ld-p { margin: 0; font-size: 16px; line-height: 1.55; color: var(--ink-muted); text-wrap: pretty; }
+.apex-ld-barrow { display: flex; align-items: center; gap: 12px; }
+.apex-ld-barrow .apex-ld-mono { width: 24px; letter-spacing: 0; }
+.apex-ld-bartrack { flex-grow: 1; height: 8px; border-radius: 4px; background: var(--surface-200); }
+.apex-ld-bar { height: 8px; border-radius: 4px; transform-origin: left center; animation: apex-ld-bar 3.2s ease-in-out infinite; }
+.apex-ld-stintrow { display: flex; height: 16px; gap: 3px; }
+.apex-ld-stint { border-radius: var(--radius-xs); transform-origin: left center; animation: apex-ld-stint 6s ease-in-out infinite; }
+
+/* CTA */
+.apex-ld-cta { box-sizing: border-box; border-radius: var(--radius-xl); background: var(--brand); color: var(--on-brand); position: relative; overflow: hidden;
+  padding: 64px; display: flex; align-items: center; justify-content: space-between; gap: 32px; flex-wrap: wrap; }
+.apex-ld-checker { position: absolute; right: -40px; top: 0; width: 360px; height: 100%;
+  background-image: repeating-conic-gradient(var(--on-brand) 0% 25%, transparent 0% 50%); background-size: 60px 60px; opacity: .12; }
+.apex-ld-cta-copy { position: relative; display: flex; flex-direction: column; gap: 20px; max-width: 640px; }
+.apex-ld-cta h2 { font-size: clamp(30px, 3.2vw, 46px); line-height: 1.08; letter-spacing: -.03em; }
+.apex-ld-cta p { margin: 0; font-size: 18px; line-height: 1.5; font-weight: 500; }
+.apex-ld-cta .apex-ld-btn { position: relative; }
+
+/* FOOTER */
+.apex-ld-footer { min-height: 100px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-top: 24px; padding-bottom: 24px; }
+.apex-ld-footer .apex-ld-mono { letter-spacing: .12em; }
+
+.apex-ld-rise { opacity: 0; animation: apex-ld-rise .9s cubic-bezier(.2, .7, .2, 1) forwards; }
+.apex-ld-pulse { display: block; border-radius: 50%; background: var(--brand); animation: apex-pulse 1.6s ease-in-out infinite; }
+.apex-ld-trace { stroke-dasharray: 1; stroke-dashoffset: 1; animation: apex-ld-draw 8s cubic-bezier(.45, .05, .4, 1) infinite; }
+.apex-ld-cursor { animation: apex-ld-sweep 8s cubic-bezier(.45, .05, .4, 1) infinite; }
+.apex-ld-dashed { stroke-dasharray: 6 6; animation: apex-ld-dash 1.4s linear infinite; }
+
+@keyframes apex-ld-rise { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes apex-ld-draw { 0% { stroke-dashoffset: 1; opacity: 1; } 70% { stroke-dashoffset: 0; opacity: 1; } 92% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes apex-ld-sweep { 0% { transform: translateX(0); opacity: 1; } 70% { transform: translateX(564px); opacity: 1; } 72%, 100% { transform: translateX(564px); opacity: 0; } }
+@keyframes apex-ld-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes apex-ld-lap { 0% { transform: translateX(-30%); } 100% { transform: translateX(340%); } }
+@keyframes apex-ld-bar { 0%, 100% { transform: scaleX(.55); } 50% { transform: scaleX(1); } }
+@keyframes apex-ld-stint { 0% { transform: scaleX(0); } 35%, 85% { transform: scaleX(1); } 100% { transform: scaleX(0); } }
+@keyframes apex-ld-dash { to { stroke-dashoffset: -40; } }
+
+@media (max-width: 1000px) {
+  .apex-ld-hero { flex-direction: column; align-items: stretch; }
+  .apex-ld-copy { padding-top: 24px; width: 100%; }
+  .apex-ld-card-hero { width: 100%; }
+}
+@media (max-width: 900px) {
+  .apex-ld-grid3 { grid-template-columns: minmax(0, 1fr); }
+  .apex-ld-navlinks a.apex-ld-navlink { display: none; }
+  .apex-ld-cta { padding: 40px 28px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .apex-ld *, .apex-ld *::before, .apex-ld *::after { animation: none !important; transition: none !important; }
+  .apex-ld-rise { opacity: 1; }
+  .apex-ld-trace { stroke-dashoffset: 0; }
+}
