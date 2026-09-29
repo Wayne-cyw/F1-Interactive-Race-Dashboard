@@ -1,11 +1,14 @@
-import { useState } from 'react'
 import Landing from './pages/landing/Landing'
 import LiveRace from './pages/LiveRace'
 import { useAppFonts } from './utils/fonts'
+import { ROUTES, navigate, usePath } from './utils/navigation'
 
 export default function App() {
     useAppFonts()
-    const [entered, setEntered] = useState(false)
+    const path = usePath()
 
-    return entered ? <LiveRace /> : <Landing onEnter={() => setEntered(true)} />
+    // Landing lives at "/", the Race Center at "/race"; unknown paths get the landing page.
+    return path.replace(/\/+$/, '') === ROUTES.race
+        ? <LiveRace />
+        : <Landing onEnter={() => navigate(ROUTES.race)} />
 }
