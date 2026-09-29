@@ -5,7 +5,7 @@ export default function StrategyTab({ drivers, pitLog, currentLap, totalLaps }) 
     const [pitLogWidth, onPitLogResize] = useResizableWidth(340, { min: 260, max: 480, edge: 'left' })
 
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: `1fr 10px ${pitLogWidth}px`, gridTemplateRows: 'minmax(0, 1fr)', flex: 1, minHeight: 0 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: `minmax(0, 1fr) 10px ${pitLogWidth}px`, gridTemplateRows: 'minmax(0, 1fr)', flex: 1, minHeight: 0 }}>
             <div style={{ padding: '16px 32px', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                 <div style={{ fontSize: 11, letterSpacing: '.06em', color: '#a8a49b', fontWeight: 600, marginBottom: 16 }}>TIRE STRATEGY · LAP {currentLap}/{totalLaps}</div>
                 <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
