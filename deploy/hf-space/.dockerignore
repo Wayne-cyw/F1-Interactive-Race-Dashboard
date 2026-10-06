@@ -1,0 +1,6 @@
+.git
+**/__pycache__
+**/*.pyc
+backend/cache
+backend/logs
+backend/tests
