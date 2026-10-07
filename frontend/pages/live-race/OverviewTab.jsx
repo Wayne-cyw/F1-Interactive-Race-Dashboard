@@ -94,7 +94,7 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackSc
                     <div style={{ display: 'flex', gap: 14, marginTop: 14, alignItems: 'center' }}>
                         <div style={{ ...DISPLAY, fontSize: 24, color: 'var(--ink)', width: '1.5ch', minWidth: 28, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{lastPoint?.gear ?? '—'}</div>
                         {lastPoint?.drs >= DRS_OPEN_MIN
-                            ? <div style={{ ...TAG, ...DRS_TAG, background: 'var(--brand)', borderColor: 'var(--brand)', color: 'var(--on-brand)' }}>DRS on</div>
+                            ? <div style={{ ...TAG, ...DRS_TAG, background: 'var(--brand)', border: '1px solid var(--brand)', color: 'var(--on-brand)' }}>DRS on</div>
                             : <div style={{ ...TAG, ...DRS_TAG, color: 'var(--ink-muted)' }}>DRS off</div>}
                     </div>
                     <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 9 }}>
