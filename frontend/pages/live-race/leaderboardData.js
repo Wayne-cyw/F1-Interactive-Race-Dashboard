@@ -4,6 +4,12 @@ const TIRE_COLOR = { S: 'var(--compound-soft)', M: 'var(--compound-medium)', H: 
 const COMPOUND_CODES = { SOFT: 'S', MEDIUM: 'M', HARD: 'H', INTERMEDIATE: 'I', WET: 'W' }
 export const BEST_SECTOR_COLOR = 'var(--data-b)'
 const NORMAL_SECTOR_COLOR = 'var(--compound-medium)'
+const SECTOR_NUMBERS = [1, 2, 3]
+
+function fastestSectorTime(laps, field) {
+    const times = laps.map(lap => lap[field]).filter(time => time != null)
+    return times.length ? Math.min(...times) : null
+}
 
 export function formatLapTime(seconds) {
     if (seconds == null) return '—'
@@ -81,9 +87,12 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
         const dnfEntry = dnfInfo?.get(driverCode)
         const dnf = dnfInfo ? isRevealed(dnfInfo, driverCode, elapsedSeconds) : false
 
-        const bestSector1SoFar = Math.min(...driverLaps.map(l => l.sector_1_time).filter(v => v != null), Infinity)
-        const bestSector2SoFar = Math.min(...driverLaps.map(l => l.sector_2_time).filter(v => v != null), Infinity)
-        const bestSector3SoFar = Math.min(...driverLaps.map(l => l.sector_3_time).filter(v => v != null), Infinity)
+        const bestSectorTimes = SECTOR_NUMBERS.map(n => fastestSectorTime(driverLaps, `sector_${n}_time`))
+        const sectorFields = {}
+        SECTOR_NUMBERS.forEach((n, i) => {
+            sectorFields[`s${n}`] = formatSectorTime(latestLap?.[`sector_${n}_time`] ?? null)
+            sectorFields[`s${n}Best`] = formatSectorTime(bestSectorTimes[i])
+        })
 
         // Before a driver's first lap actually completes, `latestLap` is
         // null (no timing-derived position exists yet) — fall back to
@@ -101,12 +110,7 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
             gap: dnf ? 'DNF' : formatGap(latestLap?.position, latestLap?.gap_to_leader),
             best: formatLapTime(bestTime),
             last: formatLapTime(latestLap?.lap_time ?? null),
-            s1: formatSectorTime(latestLap?.sector_1_time ?? null),
-            s2: formatSectorTime(latestLap?.sector_2_time ?? null),
-            s3: formatSectorTime(latestLap?.sector_3_time ?? null),
-            s1Best: formatSectorTime(bestSector1SoFar === Infinity ? null : bestSector1SoFar),
-            s2Best: formatSectorTime(bestSector2SoFar === Infinity ? null : bestSector2SoFar),
-            s3Best: formatSectorTime(bestSector3SoFar === Infinity ? null : bestSector3SoFar),
+            ...sectorFields,
             tire: compoundToTireCode(latestLap?.compound),
             age: latestLap ? latestLap.lap_number - lastPitLap : 0,
             pits: driverPitstops.length,
@@ -115,9 +119,7 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
             dnf,
             _revealAtSeconds: dnfEntry?.revealAtSeconds ?? null,
             _lastLapEndSeconds: dnfEntry?.lastLapEndSeconds ?? null,
-            _sector1: bestSector1SoFar === Infinity ? null : bestSector1SoFar,
-            _sector2: bestSector2SoFar === Infinity ? null : bestSector2SoFar,
-            _sector3: bestSector3SoFar === Infinity ? null : bestSector3SoFar,
+            _bestSectorTimes: bestSectorTimes,
         })
     }
 
@@ -132,13 +134,19 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
     })
 
     const activeRows = rows.filter(r => !r.dnf)
-    const bestSector1 = Math.min(...activeRows.map(r => r._sector1).filter(v => v != null), Infinity)
-    const bestSector2 = Math.min(...activeRows.map(r => r._sector2).filter(v => v != null), Infinity)
-    const bestSector3 = Math.min(...activeRows.map(r => r._sector3).filter(v => v != null), Infinity)
+    const fieldBestSectorTimes = SECTOR_NUMBERS.map((_, i) => {
+        const times = activeRows.map(r => r._bestSectorTimes[i]).filter(time => time != null)
+        return times.length ? Math.min(...times) : null
+    })
 
     return rows.map(r => {
         const selected = r.id === selectedDriverId
-        const { _sector1, _sector2, _sector3, _revealAtSeconds, _lastLapEndSeconds, ...row } = r
+        const { _bestSectorTimes, _revealAtSeconds, _lastLapEndSeconds, ...row } = r
+        const sectorColors = {}
+        SECTOR_NUMBERS.forEach((n, i) => {
+            const isFieldBest = _bestSectorTimes[i] != null && _bestSectorTimes[i] === fieldBestSectorTimes[i]
+            sectorColors[`s${n}c`] = isFieldBest ? BEST_SECTOR_COLOR : NORMAL_SECTOR_COLOR
+        })
         return {
             ...row,
             selected,
@@ -146,9 +154,7 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
             rowAccent: selected ? 'var(--brand)' : 'transparent',
             posColor: selected ? 'var(--brand-text)' : 'var(--ink-muted)',
             tireColor: TIRE_COLOR[r.tire] || 'var(--ink-muted)',
-            s1c: _sector1 != null && _sector1 === bestSector1 ? BEST_SECTOR_COLOR : NORMAL_SECTOR_COLOR,
-            s2c: _sector2 != null && _sector2 === bestSector2 ? BEST_SECTOR_COLOR : NORMAL_SECTOR_COLOR,
-            s3c: _sector3 != null && _sector3 === bestSector3 ? BEST_SECTOR_COLOR : NORMAL_SECTOR_COLOR,
+            ...sectorColors,
         }
     })
 }
@@ -159,12 +165,9 @@ export function buildLeaderboardRows({ laps, results, pitstops, currentLap, sele
 // sector's best time) rather than recomputing raw sector times again.
 // Returns null for a sector nobody has posted a time in yet (early race).
 export function deriveBestSectors(rows) {
-    const s1Row = rows.find(r => !r.dnf && r.s1c === BEST_SECTOR_COLOR)
-    const s2Row = rows.find(r => !r.dnf && r.s2c === BEST_SECTOR_COLOR)
-    const s3Row = rows.find(r => !r.dnf && r.s3c === BEST_SECTOR_COLOR)
-    return {
-        s1: s1Row ? { name: s1Row.name, time: s1Row.s1Best } : null,
-        s2: s2Row ? { name: s2Row.name, time: s2Row.s2Best } : null,
-        s3: s3Row ? { name: s3Row.name, time: s3Row.s3Best } : null,
+    const bestSector = n => {
+        const holder = rows.find(r => !r.dnf && r[`s${n}c`] === BEST_SECTOR_COLOR)
+        return holder ? { name: holder.name, time: holder[`s${n}Best`] } : null
     }
+    return { s1: bestSector(1), s2: bestSector(2), s3: bestSector(3) }
 }
