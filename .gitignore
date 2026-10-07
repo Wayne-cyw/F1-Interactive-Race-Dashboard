@@ -43,3 +43,6 @@ CLAUDE.md
 .claude/
 # Design system assets (local only)
 design_system/
+
+# Personal notes
+INTERVIEW_GUIDE.*
