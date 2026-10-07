@@ -1,6 +1,9 @@
 // Shared APEX style fragments. Every value is a design-system token
 // (frontend/design/tokens.css) — never hard-code colors, radii or fonts here.
 
+// Standard 1px divider/border.
+export const HAIRLINE = '1px solid var(--line)'
+
 // Uppercase mono label with wide tracking; 12px is the design system's floor.
 export const LABEL = {
     fontFamily: 'var(--font-mono)',
@@ -26,7 +29,7 @@ export const TAG = {
     padding: '3px 10px',
     borderRadius: 'var(--radius-pill)',
     background: 'var(--surface-200)',
-    border: '1px solid var(--line)',
+    border: HAIRLINE,
     whiteSpace: 'nowrap',
 }
 
@@ -38,7 +41,7 @@ export const SELECT = {
     letterSpacing: '.04em',
     color: 'var(--ink)',
     background: 'var(--surface-100)',
-    border: '1px solid var(--line)',
+    border: HAIRLINE,
     borderRadius: 10,
     minHeight: 36,
     padding: '0 var(--space-3)',

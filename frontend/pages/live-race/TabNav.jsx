@@ -1,4 +1,4 @@
-import { MONO } from './ui'
+import { HAIRLINE, MONO } from './ui'
 
 const TABS = [
     { key: 'overview', label: 'Overview' },
@@ -9,7 +9,7 @@ const TABS = [
 
 export default function TabNav({ activeTab, onChange }) {
     return (
-        <div role="tablist" style={{ display: 'flex', gap: 'var(--space-5)', padding: '0 var(--space-6)', background: 'var(--surface-100)', borderBottom: '1px solid var(--line)' }}>
+        <div role="tablist" style={{ display: 'flex', gap: 'var(--space-5)', padding: '0 var(--space-6)', background: 'var(--surface-100)', borderBottom: HAIRLINE }}>
             {TABS.map(({ key, label }) => {
                 const active = activeTab === key
                 return (

@@ -1,4 +1,4 @@
-import { SELECT } from './ui'
+import { HAIRLINE, SELECT } from './ui'
 
 const SPEED_OPTIONS = [1, 2, 4, 8]
 
@@ -17,11 +17,11 @@ function formatClock(totalSeconds, showHours) {
 
 export default function PlaybackBar({ isPlaying, onPlayPause, elapsedSeconds, totalDurationSeconds, currentLap, totalLaps, onSeek, playbackSpeed, onSpeedChange }) {
     return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', padding: 'var(--space-2) var(--space-6)', borderTop: '1px solid var(--line)', background: 'var(--surface-100)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', padding: 'var(--space-2) var(--space-6)', borderTop: HAIRLINE, background: 'var(--surface-100)', flexShrink: 0 }}>
             <button
                 onClick={onPlayPause}
                 aria-label={isPlaying ? 'Pause replay' : 'Play replay'}
-                style={{ border: '1px solid var(--line)', background: 'var(--surface-200)', color: 'var(--ink)', width: 32, height: 32, borderRadius: 10, cursor: 'pointer', fontSize: 11, lineHeight: 1, padding: 0, flexShrink: 0 }}
+                style={{ border: HAIRLINE, background: 'var(--surface-200)', color: 'var(--ink)', width: 32, height: 32, borderRadius: 10, cursor: 'pointer', fontSize: 11, lineHeight: 1, padding: 0, flexShrink: 0 }}
             >
                 {isPlaying ? '⏸' : '▶'}
             </button>

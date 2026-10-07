@@ -6,7 +6,7 @@ import { useResizableWidth } from './useResizableWidth'
 import { interpolatePosition } from './trackMap'
 import { DRS_OPEN_MIN } from './telemetrySlice'
 import { BEST_SECTOR_COLOR } from './leaderboardData'
-import { DISPLAY, LABEL, MONO, TAG } from './ui'
+import { DISPLAY, HAIRLINE, LABEL, MONO, TAG } from './ui'
 
 // Fixed size so the on/off states never shift the row.
 const DRS_TAG = { borderRadius: 10, minWidth: 72, height: 28, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }
@@ -133,7 +133,7 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackSc
                 </div>
             </div>
 
-            <div style={{ padding: 'var(--space-3) var(--space-6) var(--space-4)', background: 'var(--surface-100)', borderTop: '1px solid var(--line)' }}>
+            <div style={{ padding: 'var(--space-3) var(--space-6) var(--space-4)', background: 'var(--surface-100)', borderTop: HAIRLINE }}>
                 <div style={{ ...LABEL, marginBottom: 8 }}>Sector deltas</div>
                 <div style={{ display: 'flex', gap: 12 }}>
                     {SECTOR_BOXES.map(({ key, label }) => (

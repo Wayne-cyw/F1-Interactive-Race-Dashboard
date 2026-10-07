@@ -1,6 +1,6 @@
 import ResizeHandle from './ResizeHandle'
 import { useResizableWidth } from './useResizableWidth'
-import { LABEL, MONO } from './ui'
+import { HAIRLINE, LABEL, MONO } from './ui'
 
 export default function StrategyTab({ drivers, pitLog, currentLap, totalLaps }) {
     const [pitLogWidth, onPitLogResize] = useResizableWidth(340, { min: 260, max: 480, edge: 'left' })
@@ -40,7 +40,7 @@ export default function StrategyTab({ drivers, pitLog, currentLap, totalLaps }) 
             <div style={{ padding: 'var(--space-4) var(--space-6)', overflowY: 'auto', minHeight: 0 }}>
                 <div style={{ ...LABEL, marginBottom: 'var(--space-3)' }}>Pit stop log</div>
                 {pitLog.map((p, i) => (
-                    <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid var(--line)' }}>
+                    <div key={i} style={{ padding: '10px 0', borderBottom: HAIRLINE }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 600 }}>
                             {p.driver}
                             <span style={{ ...MONO, fontSize: 13, color: 'var(--ink)' }}>{p.dur}s</span>

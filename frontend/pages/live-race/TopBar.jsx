@@ -1,6 +1,6 @@
 import { STATUS_META } from './trackStatus'
 import { ROUTES, linkTo } from '../../utils/navigation'
-import { DISPLAY, LABEL, MONO, SELECT, TAG } from './ui'
+import { DISPLAY, HAIRLINE, LABEL, MONO, SELECT, TAG } from './ui'
 
 const WEATHER_LABEL = (rainfall) => rainfall
     ? { color: 'var(--data-b)', text: 'WET' }
@@ -11,7 +11,7 @@ export default function TopBar({ seasons, races, year, round, onSelectYear, onSe
     const statusMeta = trackStatus ? (STATUS_META[trackStatus.status] ?? { label: trackStatus.message || 'UNKNOWN', color: 'var(--ink-muted)' }) : null
 
     return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-3) var(--space-6)', borderBottom: '1px solid var(--line)', background: 'var(--surface-100)', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-3) var(--space-6)', borderBottom: HAIRLINE, background: 'var(--surface-100)', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-5)' }}>
                 <a href={ROUTES.landing} onClick={linkTo(ROUTES.landing)} aria-label="APEX home" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', color: 'inherit', textDecoration: 'none' }}>
                     <svg width="22" height="22" viewBox="0 0 30 30" fill="none" strokeWidth="3.5" strokeLinecap="square" strokeLinejoin="miter" aria-hidden="true">
