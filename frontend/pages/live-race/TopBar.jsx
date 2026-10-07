@@ -6,7 +6,7 @@ const WEATHER_LABEL = (rainfall) => rainfall
     ? { color: 'var(--data-b)', text: 'WET' }
     : { color: 'var(--ink)', text: 'DRY' }
 
-export default function TopBar({ seasons, races, year, round, onSelectYear, onSelectRace, weather, raceName, trackStatus }) {
+export default function TopBar({ seasons, races, year, round, onSelectYear, onSelectRace, weather, trackStatus }) {
     const weatherInfo = weather ? WEATHER_LABEL(weather.rainfall) : null
     const statusMeta = trackStatus ? (STATUS_META[trackStatus.status] ?? { label: trackStatus.message || 'UNKNOWN', color: 'var(--ink-muted)' }) : null
 

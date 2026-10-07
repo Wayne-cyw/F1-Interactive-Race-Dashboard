@@ -72,21 +72,7 @@ def create_app(
 
     @app.route("/")
     def home():
-        return jsonify({
-            "message": "F1 Dashboard API Ultimate Edition",
-            "status": "running",
-            "version": "3.0",
-            "features": [
-                "Gzip compression",
-                "Full season coverage (2018+)",
-                "Weather data",
-                "Telemetry data",
-                "Qualifying & Sprint sessions",
-                "Pit stop tracking",
-                "Race control messages",
-                "Track status",
-            ],
-        })
+        return jsonify({"message": "F1 Dashboard API", "status": "running"})
 
     seasons_use_case = GetSeasonsUseCase(clock)
     app.add_url_rule(
