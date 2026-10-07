@@ -35,6 +35,25 @@ _SESSION_TYPE_NAMES = {
     "R": "Race",
 }
 
+# Derived per-race payloads (positions, track, status) are much smaller than a session.
+_DERIVED_CACHE_SIZE = 50
+
+
+def _clean(value, cast=None, default=None):
+    """`value` passed through `cast`, or `default` when it is missing/NaN/NaT."""
+    if value is None or pd.isna(value):
+        return default
+    return cast(value) if cast else value
+
+
+def _field(row, column, cast=None, default=None):
+    """`_clean` applied to `row[column]`; `default` also covers an absent column."""
+    return _clean(row[column], cast, default) if column in row.index else default
+
+
+def _seconds(timedelta):
+    return timedelta.total_seconds()
+
 
 class FastF1Gateway(
     SeasonRepository,
@@ -70,18 +89,18 @@ class FastF1Gateway(
 
     @staticmethod
     def _safe_z(value) -> float:
-        return float(value) if pd.notna(value) else 0.0
+        return _clean(value, float, default=0.0)
 
     @staticmethod
     def _driver_result_from_row(row) -> DriverResult:
         return DriverResult(
-            driver=row["Abbreviation"] if "Abbreviation" in row.index else None,
-            driver_name=row["FullName"] if "FullName" in row.index else None,
-            team=row["TeamName"] if "TeamName" in row.index else "Unknown",
-            position=int(row["Position"]) if "Position" in row.index and pd.notna(row["Position"]) else None,
-            points=float(row["Points"]) if "Points" in row.index and pd.notna(row["Points"]) else 0.0,
-            status=row["Status"] if "Status" in row.index else "Unknown",
-            grid_position=int(row["GridPosition"]) if "GridPosition" in row.index and pd.notna(row["GridPosition"]) else None,
+            driver=_field(row, "Abbreviation"),
+            driver_name=_field(row, "FullName"),
+            team=_field(row, "TeamName", default="Unknown"),
+            position=_field(row, "Position", int),
+            points=_field(row, "Points", float, default=0.0),
+            status=_field(row, "Status", default="Unknown"),
+            grid_position=_field(row, "GridPosition", int),
         )
 
     def get_races(self, year: int) -> list[RaceEvent]:
@@ -135,16 +154,16 @@ class FastF1Gateway(
         for _, lap in laps_subset.iterrows():
             laps.append(
                 Lap(
-                    driver=lap["Driver"] if "Driver" in lap.index else None,
-                    lap_number=int(lap["LapNumber"]) if "LapNumber" in lap.index and pd.notna(lap["LapNumber"]) else None,
-                    lap_time=lap["LapTime"].total_seconds() if "LapTime" in lap.index and pd.notna(lap["LapTime"]) else None,
-                    position=int(lap["Position"]) if "Position" in lap.index and pd.notna(lap["Position"]) else None,
-                    compound=(lap["Compound"] if pd.notna(lap["Compound"]) else "UNKNOWN") if "Compound" in lap.index else None,
-                    team=lap["Team"] if "Team" in lap.index else None,
-                    sector_1_time=lap["Sector1Time"].total_seconds() if "Sector1Time" in lap.index and pd.notna(lap["Sector1Time"]) else None,
-                    sector_2_time=lap["Sector2Time"].total_seconds() if "Sector2Time" in lap.index and pd.notna(lap["Sector2Time"]) else None,
-                    sector_3_time=lap["Sector3Time"].total_seconds() if "Sector3Time" in lap.index and pd.notna(lap["Sector3Time"]) else None,
-                    session_time=(lap["LapStartTime"] - t0).total_seconds() if "LapStartTime" in lap.index and pd.notna(lap["LapStartTime"]) else None,
+                    driver=_field(lap, "Driver"),
+                    lap_number=_field(lap, "LapNumber", int),
+                    lap_time=_field(lap, "LapTime", _seconds),
+                    position=_field(lap, "Position", int),
+                    compound=_field(lap, "Compound", default="UNKNOWN"),
+                    team=_field(lap, "Team"),
+                    sector_1_time=_field(lap, "Sector1Time", _seconds),
+                    sector_2_time=_field(lap, "Sector2Time", _seconds),
+                    sector_3_time=_field(lap, "Sector3Time", _seconds),
+                    session_time=_field(lap, "LapStartTime", lambda start: _seconds(start - t0)),
                 )
             )
 
@@ -173,29 +192,23 @@ class FastF1Gateway(
         resampled = self._resample_half_second(car, "SessionTime")
         points = []
         for row in resampled.itertuples():
-            t = (row.SessionTime - t0).total_seconds()
+            t = _seconds(row.SessionTime - t0)
             if t < 0:
                 continue
-            speed = getattr(row, "Speed", None)
-            throttle = getattr(row, "Throttle", None)
-            brake = getattr(row, "Brake", None)
-            gear = getattr(row, "nGear", None)
-            rpm = getattr(row, "RPM", None)
-            drs = getattr(row, "DRS", None)
             points.append(
                 TelemetryPoint(
                     t=t,
-                    speed=float(speed) if pd.notna(speed) else None,
-                    throttle=float(throttle) if pd.notna(throttle) else None,
-                    brake=bool(brake) if pd.notna(brake) else False,
-                    gear=int(gear) if pd.notna(gear) else None,
-                    rpm=float(rpm) if pd.notna(rpm) else None,
-                    drs=int(drs) if pd.notna(drs) else 0,
+                    speed=_clean(getattr(row, "Speed", None), float),
+                    throttle=_clean(getattr(row, "Throttle", None), float),
+                    brake=_clean(getattr(row, "Brake", None), bool, default=False),
+                    gear=_clean(getattr(row, "nGear", None), int),
+                    rpm=_clean(getattr(row, "RPM", None), float),
+                    drs=_clean(getattr(row, "DRS", None), int, default=0),
                 )
             )
         return TelemetryData(driver=driver_code, points=points)
 
-    @lru_cache(maxsize=50)
+    @lru_cache(maxsize=_DERIVED_CACHE_SIZE)
     def get_track_layout(self, year: int, race_round: int) -> TrackLayout:
         session = self._load_session(year, race_round, "R")
         fastest_lap = session.laps.pick_fastest()
@@ -222,13 +235,13 @@ class FastF1Gateway(
             raise SessionNotFoundError("No weather data available")
         latest = weather_df.iloc[-1]
         return WeatherData(
-            air_temp=float(latest["AirTemp"]) if pd.notna(latest.get("AirTemp")) else None,
-            track_temp=float(latest["TrackTemp"]) if pd.notna(latest.get("TrackTemp")) else None,
-            humidity=float(latest["Humidity"]) if pd.notna(latest.get("Humidity")) else None,
-            pressure=float(latest["Pressure"]) if pd.notna(latest.get("Pressure")) else None,
-            rainfall=bool(latest["Rainfall"]) if pd.notna(latest.get("Rainfall")) else False,
-            wind_speed=float(latest["WindSpeed"]) if pd.notna(latest.get("WindSpeed")) else None,
-            wind_direction=float(latest["WindDirection"]) if pd.notna(latest.get("WindDirection")) else None,
+            air_temp=_field(latest, "AirTemp", float),
+            track_temp=_field(latest, "TrackTemp", float),
+            humidity=_field(latest, "Humidity", float),
+            pressure=_field(latest, "Pressure", float),
+            rainfall=_field(latest, "Rainfall", bool, default=False),
+            wind_speed=_field(latest, "WindSpeed", float),
+            wind_direction=_field(latest, "WindDirection", float),
         )
 
     def get_pitstops(self, year: int, race_round: int) -> list[PitStopEvent]:
@@ -252,8 +265,8 @@ class FastF1Gateway(
                             from_compound=prev_compound,
                             to_compound=current_compound,
                             pit_duration=None,
-                            pit_in_time=(pit_in_time - t0).total_seconds() if pd.notna(pit_in_time) else None,
-                            pit_out_time=(pit_out_time - t0).total_seconds() if pd.notna(pit_out_time) else None,
+                            pit_in_time=_clean(pit_in_time, lambda time: _seconds(time - t0)),
+                            pit_out_time=_clean(pit_out_time, lambda time: _seconds(time - t0)),
                         )
                     )
                 prev_compound = current_compound
@@ -291,7 +304,7 @@ class FastF1Gateway(
             for _, r in results.iterrows()
         ]
 
-    @lru_cache(maxsize=50)
+    @lru_cache(maxsize=_DERIVED_CACHE_SIZE)
     def get_race_positions(self, year: int, race_round: int) -> list[DriverPositions]:
         session = self._load_session(year, race_round, "R")
         if session.pos_data is None or len(session.pos_data) == 0:
@@ -316,14 +329,14 @@ class FastF1Gateway(
                 z = getattr(row, "Z", None)
                 if pd.isna(x) or pd.isna(y):
                     continue
-                t = (row.SessionTime - t0).total_seconds()
+                t = _seconds(row.SessionTime - t0)
                 if t < 0:
                     continue
                 points.append(PositionPoint(t=t, x=float(x), y=float(y), z=self._safe_z(z)))
             result.append(DriverPositions(driver=driver_code, points=points))
         return result
 
-    @lru_cache(maxsize=50)
+    @lru_cache(maxsize=_DERIVED_CACHE_SIZE)
     def get_track_status(self, year: int, race_round: int) -> list[TrackStatusEvent]:
         session = self._load_session(year, race_round, "R")
         status_df = getattr(session, "track_status", None)
@@ -335,7 +348,7 @@ class FastF1Gateway(
         for row in status_df.sort_values("Time").itertuples():
             events.append(
                 TrackStatusEvent(
-                    t=(row.Time - t0).total_seconds(),
+                    t=_seconds(row.Time - t0),
                     status=str(row.Status),
                     message=str(row.Message) if pd.notna(row.Message) else "",
                 )
