@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useMemo } from 'react'
 import Leaderboard from './Leaderboard'
 import ResizeHandle from './ResizeHandle'
 import TrackMap3D from './TrackMap3D'
@@ -22,43 +22,45 @@ const SECTOR_BOXES = [
 // large enough to stay stable at low speed / in the pit lane.
 const HEADING_LOOKAHEAD_SECONDS = 0.15
 
+// Below this scene-space distance the slope is numerical noise, not a pitch.
+const MIN_HORIZONTAL_SCENE_DISTANCE = 1e-6
+
+// Returns the car's scene position plus its heading and pitch (radians).
+// heading/pitch are null when they can't be derived (no position data, or
+// the car is stationary) so the 3D car can keep its last orientation.
+function deriveCarPose(driverPositions, elapsedSeconds, trackScene) {
+    const raw = interpolatePosition(driverPositions, elapsedSeconds)
+    const ahead = interpolatePosition(driverPositions, elapsedSeconds + HEADING_LOOKAHEAD_SECONDS)
+    if (!raw) return { scenePosition: { x: 0, y: 0, z: 0 }, heading: null, pitch: null }
+
+    const scenePosition = trackScene.toScenePoint(raw)
+    if (!ahead) return { scenePosition, heading: null, pitch: null }
+
+    // toScenePoint is a pure affine map (uniform scale + translation, no
+    // rotation), so heading is identical before or after the transform.
+    const dx = ahead.x - raw.x
+    const dy = ahead.y - raw.y
+    const heading = dx !== 0 || dy !== 0 ? Math.atan2(dy, dx) : null
+
+    // Pitch, unlike heading, needs the post-transform points: elevation is
+    // exaggerated relative to the ground plane (see trackGeometry3d.js).
+    const sceneAhead = trackScene.toScenePoint(ahead)
+    const horizontal = Math.hypot(sceneAhead.x - scenePosition.x, sceneAhead.z - scenePosition.z)
+    const pitch = horizontal > MIN_HORIZONTAL_SCENE_DISTANCE
+        ? Math.atan2(sceneAhead.y - scenePosition.y, horizontal)
+        : null
+
+    return { scenePosition, heading, pitch }
+}
+
 export default function OverviewTab({ drivers, selected, onSelectDriver, trackScene, positions, elapsedSeconds, telemetry, bestSectors }) {
     const [leaderboardWidth, onLeaderboardResize] = useResizableWidth(440, { min: 272, max: 640, edge: 'right' })
     const [telemetryWidth, onTelemetryResize] = useResizableWidth(360, { min: 280, max: 520, edge: 'left' })
 
-    const lastHeadingRef = useRef(new Map())
-    const lastPitchRef = useRef(new Map())
-
     const carPositions = useMemo(
-        () => drivers.filter(d => !d.dnf).map(d => {
-            const raw = interpolatePosition(positions[d.id], elapsedSeconds)
-            const ahead = interpolatePosition(positions[d.id], elapsedSeconds + HEADING_LOOKAHEAD_SECONDS)
-            const scenePosition = raw ? trackScene.toScenePoint(raw) : { x: 0, y: 0, z: 0 }
-            // toScenePoint is a pure affine map (uniform scale + translation,
-            // no rotation), so the heading angle is identical whether it's
-            // derived before or after the transform — diff the raw
-            // pre-transform points directly instead of transforming twice.
-            const dx = raw && ahead ? ahead.x - raw.x : 0
-            const dy = raw && ahead ? ahead.y - raw.y : 0
-            const heading = (dx !== 0 || dy !== 0)
-                ? Math.atan2(dy, dx)
-                : lastHeadingRef.current.get(d.id) ?? 0
-            lastHeadingRef.current.set(d.id, heading)
-
-            // Pitch, unlike heading, does need the post-transform scene point:
-            // elevation is exaggerated relative to the horizontal plane (see
-            // trackGeometry3d.js), so the slope the ribbon actually renders
-            // only shows up once both points have gone through toScenePoint.
-            let pitch = lastPitchRef.current.get(d.id) ?? 0
-            if (ahead) {
-                const sceneAhead = trackScene.toScenePoint(ahead)
-                const horizontal = Math.hypot(sceneAhead.x - scenePosition.x, sceneAhead.z - scenePosition.z)
-                if (horizontal > 1e-6) pitch = Math.atan2(sceneAhead.y - scenePosition.y, horizontal)
-            }
-            lastPitchRef.current.set(d.id, pitch)
-
-            return { ...d, scenePosition, heading, pitch }
-        }),
+        () => drivers
+            .filter(d => !d.dnf)
+            .map(d => ({ ...d, ...deriveCarPose(positions[d.id], elapsedSeconds, trackScene) })),
         [drivers, positions, elapsedSeconds, trackScene]
     )
 

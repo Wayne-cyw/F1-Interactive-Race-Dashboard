@@ -43,7 +43,7 @@ export default function LiveRace() {
     }, [finishing])
     const ready = !replay.loading && !finishing
 
-    const { points: telemetryPoints } = useDriverTelemetry(replay.year, replay.round, selectedDriverId)
+    const telemetryPoints = useDriverTelemetry(replay.year, replay.round, selectedDriverId)
 
     const positionsByDriver = useMemo(
         () => Object.fromEntries((replay.positions ?? []).map(d => [d.driver, d.points])),
@@ -76,13 +76,11 @@ export default function LiveRace() {
 
     // Default the selected driver to the race leader once data first loads,
     // and re-default if a season switch drops the previously-selected driver
-    // (e.g. they didn't race in the newly selected year).
-    useEffect(() => {
-        if (drivers.length === 0) return
-        if (!selectedDriverId || !drivers.some(d => d.id === selectedDriverId)) {
-            setSelectedDriverId(drivers[0].id)
-        }
-    }, [drivers, selectedDriverId])
+    // (e.g. they didn't race in the newly selected year). Set during render
+    // so the first frame already has a valid selection.
+    if (drivers.length > 0 && !drivers.some(d => d.id === selectedDriverId)) {
+        setSelectedDriverId(drivers[0].id)
+    }
 
     const selected = drivers.find(d => d.id === selectedDriverId) ?? null
 
