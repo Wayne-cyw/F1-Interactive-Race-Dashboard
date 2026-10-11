@@ -1,420 +1,194 @@
-# F1 Dashboard - Final Multi-Page Structure
+# APEX — F1 Interactive Race Dashboard
 
-## 📁 Complete Project Structure
+A full-stack race analytics dashboard that replays real Formula 1 sessions second-by-second — real GPS car positions on a 3D track, live telemetry, tire strategy, and track status, all derived from historical race data via [FastF1](https://github.com/theOehrly/Fast-F1).
 
-```
-f1-dashboard-final/
-├── backend/
-│   ├── app.py                 # Enhanced Flask API
-│   ├── requirements.txt       # Python dependencies
-│   └── logs/                  # Auto-created (logging)
-│       ├── api.log
-│       └── user_activity.log
-│
-└── frontend/
-    ├── index.html            # Main page (Race Analysis)
-    ├── styles.css            # Global CSS (black/red theme)
-    │
-    ├── utils/
-    │   └── helpers.js        # Utility functions (formatLapTime, API_URL)
-    │
-    ├── components/
-    │   └── Charts.js         # Shared chart components
-    │
-    └── pages/
-        ├── dashboard.js      # Race Analysis logic
-        ├── standings.html    # Standings page
-        ├── standings.js      # Standings logic
-        ├── teams.html        # Teams page
-        ├── teams.js          # Teams logic
-        ├── live.html         # Live Race page
-        └── live.js           # Live Race logic
-```
+**Stack:** React 19 + Vite + Three.js, a hand-built dark design system (frontend) · Flask + FastF1 + pandas, Clean Architecture (backend).
+
+[![Live demo](https://img.shields.io/badge/demo-watch_below-e4254a)](#demo) [![Tests](https://img.shields.io/badge/backend_tests-71_passing-2e7d32)](#getting-started) [![React](https://img.shields.io/badge/React-19-149eca)](https://react.dev) [![Three.js](https://img.shields.io/badge/Three.js-0.185-049ef4)](https://threejs.org)
 
 ---
 
-## ✅ All Features Implemented
+## Demo
 
-### Backend:
-- [x] Gzip compression (60% faster)
-- [x] All seasons (2018-2024)
-- [x] Backend logging system
-- [x] User activity tracking
-- [x] Team colors & information
-- [x] Fixed "DriverNumber" error
-- [x] 7 API endpoints
+![APEX Race Center replaying the 2025 Abu Dhabi Grand Prix — 3D track map, live leaderboard, and real-time telemetry](.github/readme/race-center-demo.gif)
 
-### Frontend:
-- [x] Multi-page structure with separate files
-- [x] Sidebar navigation
-- [x] 4 distinct pages
-- [x] Cleaner black (#000) / red (#DC0000) UI
-- [x] Smooth animations & transitions
-- [x] Lap times in MM:SS.mmm format
-- [x] Team colors for drivers
-- [x] Professional Orbitron font
-- [x] Responsive design
+*2025 Abu Dhabi Grand Prix at 8x replay speed: leaderboard, 3D track map, and telemetry all driven by one shared clock.*
 
----
+<details>
+<summary>Landing page</summary>
 
-## 🚀 Installation & Setup
+![APEX landing page — dark hero with an animated circuit map and overlaid speed traces](.github/readme/landing-page.jpg)
 
-### 1. Install Backend Dependencies
+</details>
+
+## Why this project
+
+Most "F1 dashboard" tutorials stop at a table of lap times. This one reconstructs an actual race as a real-time replay: a 90-minute race plays back in 90 minutes (or faster, with variable playback speed), with every car's position on a 3D track model driven by real GPS telemetry rather than a schematic approximation. That constraint — keeping dozens of derived views (leaderboard order, tire stints, DNF reveals, sector deltas, rolling telemetry windows) perfectly in sync with a single scrubbable clock — is what most of the engineering here is about. On top of that sits a from-scratch dark UI system (**APEX**) with its own landing page, loading sequence, and component library, built the same way a product team would: tokens first, components second.
+
+## Features
+
+- **Landing page → loading sequence → replay.** A marketing-style landing page (`pages/landing/Landing.jsx`) hands off to a start-light-themed loading screen that reports real progress across each in-flight API request, not a fake spinner — then drops you into the Race Center.
+- **Real-time race replay** — play, pause, scrub, and change playback speed (1x–8x) against a single `elapsedSeconds` clock that every visualization derives from.
+- **3D track map** — a Three.js scene (`@react-three/fiber` + `@react-three/drei`) rendering the circuit as a textured ribbon with real elevation, a rotate/zoom/pan camera (`OrbitControls`), and a real, per-team-recolored F1 car model (decimated GLTF) at each driver's live GPS position, pitched to match the track's slope under it — click a car to select that driver.
+- **Live telemetry panel** — speed, throttle, brake, gear, RPM, and DRS for the selected driver, interpolated between FastF1's ~2Hz samples for smooth 30Hz rendering, with paired throttle/brake charts that auto-follow the live edge and pause the moment you scroll back to inspect an earlier lap.
+- **Dynamic leaderboard** — position, gaps, tire compound & age, computed live from lap and pit data, with animated reordering and correct DNF handling (including lap-1 retirements).
+- **Strategy tab** — pit stop log and tire stint history per driver.
+- **Track status awareness** — safety car, VSC, yellow/red flag periods surfaced from FastF1's timeline.
+- **Resizable layout** — drag-to-resize panels across every tab, built on a shared resize primitive rather than one-off implementations.
+- **Season/race picker** — every F1 season from 2018 to present.
+
+## Architecture
+
+### Backend — Clean Architecture (`backend/`)
+
+The API is deliberately layered so that business logic has zero dependency on Flask or FastF1:
+
+```
+entities/              Plain dataclasses (Driver, Session, Standing, Team, Weather, PitStop, Track, RaceEvent)
+use_cases/              One class per operation (GetTelemetryUseCase, GetStandingsUseCase, ...)
+interface_adapters/
+  gateways/               Repository interfaces (ABCs) — the only contract use cases depend on
+  controllers/            Thin HTTP-facing controllers, one per use case
+  presenters/             Entity → JSON shaping (incl. team color lookup)
+frameworks_drivers/
+  web/app.py              Flask app factory + dependency injection + error handlers
+  fastf1_gateway/         The only module that imports fastf1; implements every gateway interface,
+                          with session-level LRU caching plus FastF1's own disk cache
+```
+
+This means the entire domain (`entities/` + `use_cases/`) is tested with hand-written fakes — no FastF1, no Flask, no network calls (71 tests total). Swapping FastF1 for a different data source would touch exactly one directory.
 
 ```bash
-cd f1-dashboard-final/backend
-pip3 install -r requirements.txt
+backend/tests/unit/         # use cases vs. fakes
+backend/tests/integration/  # Flask test client vs. the real app factory, fake repos injected
 ```
 
-**Dependencies:**
-- fastf1==3.3.0
-- Flask==3.0.0
-- flask-cors==4.0.0
-- flask-compress==1.14 (NEW - for gzip)
-- pandas==2.2.0
+### Frontend — single-page React app (`frontend/`)
 
-### 2. Start Backend Server
+No router library — a ~30-line custom path hook (`utils/navigation.js`) switches between two screens: the landing page at `/` and the Race Center at `/race`. The Race Center itself has no further navigation: one page with four tabs (Overview / Timing / Strategy / Telemetry), because the whole point is one continuously-running replay, not navigation between static views.
+
+```
+pages/landing/Landing.jsx          Marketing landing page — hero, feature cards, CTA
+pages/live-race/LoadingScreen.jsx  Start-light-themed loading screen, driven by real request progress
+pages/LiveRace.jsx                 Page-level state: active tab, selected driver, session clock
+pages/live-race/
+  useRaceReplay.js                 Season/race selection, session data fetching, playback state machine
+  loadProgress.js                   Weighted progress model across the 7 requests a session load waits on
+  useDriverTelemetry.js            Raw per-driver telemetry fetch (once per driver selection)
+  interpolation.js                  Shared lerp + binary-search bracket lookup used by telemetry and car position
+  telemetrySlice.js                Derives current-instant stats + rolling 15s traces from raw samples
+  leaderboardData.js               Session/pit data → display-ready, DNF-aware leaderboard rows
+  dnf.js                           Retirement detection + reveal timing from session results
+  stints.js                        Tire stint + pit log derivation
+  raceClock.js                     Bridges the real-time clock to lap-based derivations
+  trackGeometry3d.js               GPS → Three.js scene-space (centering, scaling, elevation zeroing/clamping)
+  trackStatus.js                   Track-status timeline lookups (green/yellow/VSC/SC/red)
+  TrackMap3D.jsx                   The Overview tab's Three.js <Canvas> — ribbon geometry, camera, car layer
+  F1Car3D.jsx                      Per-driver GLTF car model, team-color tinting, eased heading + slope-pitch rotation
+  useFollowScroll.js               Auto-follow-the-live-edge scrolling for paired telemetry charts
+  {Overview,Timing,Strategy,Telemetry}Tab.jsx   One component per tab
+  PlaybackBar.jsx, Leaderboard.jsx, ResizeHandle.jsx, useResizableWidth.js, ui.js
+```
+
+Every derived view — leaderboard order, DNF visibility, current lap, telemetry window, track status — is a pure function of `elapsedSeconds`. Scrubbing the playback bar backward doesn't just move a video frame; it correctly un-reveals DNFs, recomputes standings, and re-slices telemetry for that point in time.
+
+### Design system (`design_system/`)
+
+The UI runs on **APEX**, a small dark design system built for this project rather than an off-the-shelf component kit: design tokens (`tokens.css`/`tokens.json`), content and visual-language rules (`README.md`), a motion spec (`motion.md`), and per-component docs under `components/`. Carbon-black surfaces, one signal-red accent used only as a fill, three typefaces with fixed jobs (Unbounded for display, Instrument Sans for body text, JetBrains Mono for every label and readout), and a `prefers-reduced-motion`-aware motion layer. The frontend never hardcodes a color, radius, or font — everything resolves through CSS custom properties (`var(--brand)`, `var(--radius-md)`, …), with the one exception being Three.js materials, which can't consume `var()` and so resolve tokens at runtime via `getComputedStyle`.
+
+### Data flow
+
+```
+FastF1 (F1's timing API, cached to disk)
+   → fastf1_gateway (the only fastf1-aware code)
+   → use_cases (pure business logic)
+   → controllers/presenters (JSON shaping)
+   → Flask routes (gzip-compressed)
+   → useRaceReplay / useDriverTelemetry (fetch once per race/driver)
+   → telemetrySlice / leaderboardData / dnf / stints / trackStatus (derive per-instant view state)
+   → Overview / Timing / Strategy / Telemetry tabs (render)
+```
+
+## API
+
+All responses are JSON, gzip-compressed. Base URL: `http://localhost:5000/api` (proxied to `/api` by Vite in dev).
+
+| Endpoint | Returns |
+|---|---|
+| `GET /api/seasons` | Available seasons (2018–present) |
+| `GET /api/races/<year>` | Race schedule for a season |
+| `GET /api/session/<year>/<round>/<type>` | Full session data — laps, results, pit stops |
+| `GET /api/session-types/<year>/<round>` | Which sessions exist (R / Q / S / FP1-3) |
+| `GET /api/telemetry/<year>/<round>/<type>/<driver>` | Full-session speed/throttle/brake/gear/RPM/DRS, each sample timestamped relative to green flag |
+| `GET /api/positions/<year>/<round>` | Per-driver `{t, x, y, z}` GPS position timeline, 2Hz (`z` is real elevation, absolute altitude) |
+| `GET /api/track-status/<year>/<round>` | Green/yellow/VSC/safety car/red flag timeline |
+| `GET /api/track/<year>/<round>` | Track outline as `{x, y, z}` coordinates |
+| `GET /api/standings/<year>` | Driver & constructor championship standings |
+| `GET /api/teams/<year>` | Team rosters with driver codes |
+| `GET /api/weather/<year>/<round>` | Air/track temperature, humidity, rainfall |
+| `GET /api/pitstops/<year>/<round>` | Pit stop history |
+
+The Race Center UI currently drives the session/telemetry/positions/track/pit-stop/weather/track-status endpoints; standings/teams/drivers/session-types are implemented and tested but not yet wired into a view.
+
+## Getting started
+
+**Prerequisites:** Python 3.11, Node.js, and a virtualenv tool.
 
 ```bash
-python3 app.py
+# Backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r backend/requirements.txt
+python3 backend/run.py              # → http://localhost:5000
+
+# Frontend (separate terminal)
+npm install
+npm run dev                         # → http://localhost:3000 (proxies /api to Flask)
 ```
 
-**You'll see:**
-```
-============================================================
-F1 Dashboard API v2.0 - Enhanced Edition
-============================================================
-Features:
-  ✓ Gzip compression
-  ✓ Request logging
-  ✓ User activity tracking
-  ✓ Team information
-  ✓ Season standings
-  ✓ Track data
-============================================================
-Backend running on http://localhost:5000
-============================================================
-```
+Open `http://localhost:3000`, click **Enter the pit wall**, pick a season and race, and hit play.
 
-### 3. Start Frontend Server
+> **First load of any session takes 30–60 seconds** — FastF1 is fetching from the official F1 timing API, and the loading screen's progress bar tracks that fetch in real time. Every subsequent load of that session reads from `backend/cache/` and is near-instant.
+
+### Other commands
 
 ```bash
-cd f1-dashboard-final/frontend
-python3 -m http.server 8000
+npm run build          # Production build → dist/
+npm run lint            # ESLint
+
+cd backend && python -m pytest -q    # 71 unit + integration tests, fakes only — no live FastF1 calls
 ```
 
-### 4. Open Browser
+## Notable engineering decisions
 
-Visit: **http://localhost:8000**
+- **Real telemetry over schematics.** The first version of the replay moved cars lap-by-lap with approximated positions. It was rebuilt to use FastF1's raw ~2Hz GPS samples (`/api/positions`) with binary-search interpolation, because lap-level progression didn't actually answer "where is this car right now."
+- **One clock, many pure derivations.** Rather than each tab tracking its own playback state, every visual is a function of a single `elapsedSeconds` value. This makes scrubbing, speed changes, and race switching consistent by construction instead of by careful synchronization.
+- **Correcting FastF1's data for 3D.** FastF1's `Z` field is absolute altitude (meters above sea level), not track-relative height — using it directly would place the 3D track geometry far outside any sane camera bounds. `trackGeometry3d.js` zeroes it against the track's own minimum before mapping to scene space.
+- **Composing rotations in a fixed order.** Each car needs to yaw toward its direction of travel *and* pitch to match the track's local slope, independently. `F1Car3D.jsx` keeps these as separate quaternions and always composes `yaw * pitch`, so pitch is applied in the car's own local frame before yaw rotates it — reversing the order would make the car tilt toward world-space up/down instead of nose-up/down along its own heading.
+- **A real progress bar, not a fake one.** The loading screen's progress is driven by `loadProgress.js`, which weights each of the 7 requests a session load waits on by how long it actually takes (the full FastF1 session fetch dominates), rather than animating a spinner for an arbitrary duration.
+- **Layered backend for testability.** Because `use_cases/` never imports `fastf1` or `flask`, the entire business-logic layer is tested against hand-written fakes — fast, deterministic tests with no network dependency, while integration tests still exercise the real Flask app factory end-to-end.
+
+## Project structure
+
+```
+backend/          Flask API — entities / use_cases / interface_adapters / frameworks_drivers (see Architecture above)
+frontend/         Vite + React SPA — landing page + "Race Center" (see Architecture above)
+design_system/    APEX design system — tokens, content rules, motion spec, per-component docs
+docs/             Design specs and plans for each feature, written before implementation
+```
+
+## Roadmap
+
+- Wire up the standings/teams endpoints to a view (currently backend-only)
+- Qualifying and sprint session replay (endpoints already support any session type)
+- Driver-to-driver telemetry comparison overlay
+
+## Tech stack
+
+**Frontend:** React 19, Vite 7, Three.js, @react-three/fiber, @react-three/drei
+**Backend:** Flask 3, FastF1 3.7, pandas, flask-compress, flask-cors
+**Tooling:** ESLint, pytest
 
 ---
 
-## 📄 Pages Overview
-
-### 1. Race Analysis (index.html)
-**URL:** `http://localhost:8000`
-**Features:**
-- Select season (2018-2024)
-- Select race
-- Choose drivers to compare
-- View position chart
-- View lap time chart (with MM:SS.mmm format)
-- See race statistics
-
-**Files:**
-- `index.html` - Page structure
-- `pages/dashboard.js` - React logic
-- `components/Charts.js` - Chart components
-- `utils/helpers.js` - Utilities
-
-### 2. Standings (standings.html)
-**URL:** `http://localhost:8000/pages/standings.html`
-**Features:**
-- Driver championship standings
-- Constructor championship standings
-- Select any season (2018-2024)
-- Color-coded team indicators
-- Podium positions highlighted
-
-**Files:**
-- `pages/standings.html` - Page structure
-- `pages/standings.js` - React logic
-
-### 3. Teams (teams.html)
-**URL:** `http://localhost:8000/pages/teams.html`
-**Features:**
-- Browse all F1 teams
-- View drivers per team
-- Team color-coded cards
-- Historical team lineups
-
-**Files:**
-- `pages/teams.html` - Page structure
-- `pages/teams.js` - React logic
-
-### 4. Live Race (live.html)
-**URL:** `http://localhost:8000/pages/live.html`
-**Features:**
-- Load track map
-- Visualize circuit layout
-- SVG-based track rendering
-- Select year and race round
-
-**Files:**
-- `pages/live.html` - Page structure
-- `pages/live.js` - React logic
-
----
-
-## 🎨 Design Highlights
-
-### Color Scheme:
-- Background: Pure Black (#000000)
-- Primary: Racing Red (#DC0000)
-- Cards: Dark (#0a0a0a)
-- Text: White (#ffffff)
-- Secondary Text: Gray (#888888)
-
-### Typography:
-- Headers: Orbitron (tech/racing font)
-- Body: Rajdhani (clean, modern)
-
-### Animations:
-- Page load: Fade-in
-- Card hover: Glow effect
-- Driver selection: Pulse animation
-- Sidebar: Smooth transitions
-- Charts: 750ms render animation
-
----
-
-## 🔧 How It Works
-
-### Navigation:
-Each page has its own HTML file with:
-1. Sidebar navigation (consistent across all pages)
-2. Links to required scripts
-3. Separate React logic file
-
-### Code Organization:
-
-**Shared Files:**
-- `utils/helpers.js` - Used by all pages
-- `components/Charts.js` - Used by dashboard
-- `styles.css` - Global styles
-
-**Page-Specific Files:**
-- Each page has its own `.html` and `.js` file
-- Clean separation of concerns
-- Easy to maintain and extend
-
-### Data Flow:
-```
-User clicks navigation
-    ↓
-Browser loads new HTML page
-    ↓
-Page loads required JS files
-    ↓
-React renders page content
-    ↓
-Fetches data from Flask API
-    ↓
-Displays results
-```
-
----
-
-## 🌐 API Endpoints
-
-All endpoints return JSON with gzip compression:
-
-1. **GET /api/seasons**
-   - Returns: List of available seasons (2018-2024)
-
-2. **GET /api/races/<year>**
-   - Returns: All races for a season
-
-3. **GET /api/race/<year>/<round>**
-   - Returns: Detailed race data (laps, results, teams)
-
-4. **GET /api/drivers/<year>/<round>**
-   - Returns: Drivers in a specific race
-
-5. **GET /api/standings/<year>**
-   - Returns: Driver & constructor championships
-
-6. **GET /api/teams/<year>**
-   - Returns: All teams and their drivers
-
-7. **GET /api/track/<year>/<round>**
-   - Returns: Track coordinates for visualization
-
----
-
-## 📊 Time Formatting
-
-### Before:
-```
-Fastest Lap: 92.456 seconds
-```
-
-### After:
-```
-Fastest Lap: 1:32.456
-```
-
-**Implementation:**
-```javascript
-// utils/helpers.js
-function formatLapTime(seconds) {
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${minutes}:${secs.toFixed(3).padStart(6, '0')}`;
-}
-```
-
----
-
-## 📝 Logging System
-
-### Backend Request Logs:
-**File:** `backend/logs/api.log`
-```
-2024-02-05 14:30:12 INFO: GET /api/races/2024 - 200 - 0.123s - IP: 127.0.0.1
-```
-
-### User Activity Logs:
-**File:** `backend/logs/user_activity.log`
-```json
-{"timestamp": "2024-02-05T14:30:12", "endpoint": "races", "ip": "127.0.0.1", "params": {"year": 2024}}
-```
-
-**View Logs:**
-```bash
-# Watch backend logs
-tail -f backend/logs/api.log
-
-# Watch user activity
-tail -f backend/logs/user_activity.log
-```
-
----
-
-## 🐛 Troubleshooting
-
-### Issue: Pages won't load
-**Check:**
-1. Are you using a local server? (not double-clicking HTML)
-2. Is the backend running?
-3. Check browser console for errors (F12)
-
-### Issue: Sidebar navigation doesn't work
-**Cause:** You double-clicked the HTML file
-**Solution:** Use `python3 -m http.server 8000`
-
-### Issue: Styles not loading on sub-pages
-**Check:** CSS path in pages folder should be `../styles.css`
-
-### Issue: Charts don't appear
-**Check:**
-1. Is `components/Charts.js` loaded?
-2. Is Chart.js CDN accessible?
-3. Check browser console for errors
-
----
-
-## ⚡ Performance
-
-- **Gzip Compression:** 60% smaller responses
-- **Cached Sessions:** 1-2 second load times (after first)
-- **Optimized Charts:** 750ms animations
-- **Clean Code:** Easy to maintain
-
----
-
-## 🎯 Key Improvements Over v1
-
-### v1.0 Issues:
-- ❌ Single-page app (all code in one file)
-- ❌ No navigation
-- ❌ White background on resize
-- ❌ Moving yellow bar distraction
-- ❌ Laggy performance
-- ❌ Limited seasons
-- ❌ No team information
-- ❌ Lap times in seconds only
-
-### v2.0 Solutions:
-- ✅ Multi-page structure (separate files)
-- ✅ Sidebar navigation
-- ✅ Fixed black background
-- ✅ Clean, professional UI
-- ✅ Optimized performance
-- ✅ All seasons (2018-2024)
-- ✅ Team colors & information
-- ✅ Lap times in MM:SS.mmm format
-
----
-
-## 📱 Next Steps
-
-### To Add More Features:
-
-**1. Create a new page:**
-```bash
-# Create HTML
-touch frontend/pages/newpage.html
-
-# Create JS
-touch frontend/pages/newpage.js
-```
-
-**2. Add to sidebar:**
-Edit all HTML files to add navigation link
-
-**3. Implement logic:**
-Write React component in newpage.js
-
-### Suggested Features:
-- Qualifying analysis page
-- Driver comparison page
-- Tire strategy visualization
-- Weather data integration
-- Telemetry overlay
-
----
-
-## ✅ Final Checklist
-
-- [ ] Backend installed (`pip3 install -r requirements.txt`)
-- [ ] Backend running (`python3 app.py`)
-- [ ] Frontend server running (`python3 -m http.server 8000`)
-- [ ] Can navigate between pages
-- [ ] Charts displaying correctly
-- [ ] Lap times showing MM:SS.mmm format
-- [ ] Team colors visible
-- [ ] Logging working (check logs folder)
-
----
-
-**Your multi-page F1 Dashboard is complete! 🏎️🎉**
-
-Navigate using the sidebar to explore all 4 pages!
-
-#to dos: add data from beofre 2020
- side bar where you can navigate to different page 
- real map
-  buy domain 
-  how to change the location of assets files 
-  change faastest lap to minute and seconds 
-  Error: 'DriverNumber' 
-  get slide bar multiple pages live map and season standing 
-  how to organize webapp files 
-  upload to github 
-  cleaner black and red UI 
-  more animations 
-  backend log and track user system 
-  teams for drivers 
-  how to write read me 
-  more features:
+Built by [Wayne Chiu](https://github.com/Wayne-cyw). Unofficial fan project — not affiliated with Formula 1 or any team.
