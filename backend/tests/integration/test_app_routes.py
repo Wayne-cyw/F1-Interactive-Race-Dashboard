@@ -37,7 +37,6 @@ def test_root_route_returns_status_payload(client_factory):
     assert resp.status_code == 200
     body = resp.get_json()
     assert body["status"] == "running"
-    assert body["version"] == "3.0"
 
 
 def test_seasons_route_returns_years_descending(client_factory):

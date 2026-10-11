@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useMemo } from 'react'
 import Leaderboard from './Leaderboard'
 import ResizeHandle from './ResizeHandle'
 import TrackMap3D from './TrackMap3D'
@@ -6,7 +6,7 @@ import { useResizableWidth } from './useResizableWidth'
 import { interpolatePosition } from './trackMap'
 import { DRS_OPEN_MIN } from './telemetrySlice'
 import { BEST_SECTOR_COLOR } from './leaderboardData'
-import { DISPLAY, LABEL, MONO, TAG } from './ui'
+import { DISPLAY, HAIRLINE, LABEL, MONO, TAG } from './ui'
 
 // Fixed size so the on/off states never shift the row.
 const DRS_TAG = { borderRadius: 10, minWidth: 72, height: 28, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }
@@ -22,43 +22,45 @@ const SECTOR_BOXES = [
 // large enough to stay stable at low speed / in the pit lane.
 const HEADING_LOOKAHEAD_SECONDS = 0.15
 
+// Below this scene-space distance the slope is numerical noise, not a pitch.
+const MIN_HORIZONTAL_SCENE_DISTANCE = 1e-6
+
+// Returns the car's scene position plus its heading and pitch (radians).
+// heading/pitch are null when they can't be derived (no position data, or
+// the car is stationary) so the 3D car can keep its last orientation.
+function deriveCarPose(driverPositions, elapsedSeconds, trackScene) {
+    const raw = interpolatePosition(driverPositions, elapsedSeconds)
+    const ahead = interpolatePosition(driverPositions, elapsedSeconds + HEADING_LOOKAHEAD_SECONDS)
+    if (!raw) return { scenePosition: { x: 0, y: 0, z: 0 }, heading: null, pitch: null }
+
+    const scenePosition = trackScene.toScenePoint(raw)
+    if (!ahead) return { scenePosition, heading: null, pitch: null }
+
+    // toScenePoint is a pure affine map (uniform scale + translation, no
+    // rotation), so heading is identical before or after the transform.
+    const dx = ahead.x - raw.x
+    const dy = ahead.y - raw.y
+    const heading = dx !== 0 || dy !== 0 ? Math.atan2(dy, dx) : null
+
+    // Pitch, unlike heading, needs the post-transform points: elevation is
+    // exaggerated relative to the ground plane (see trackGeometry3d.js).
+    const sceneAhead = trackScene.toScenePoint(ahead)
+    const horizontal = Math.hypot(sceneAhead.x - scenePosition.x, sceneAhead.z - scenePosition.z)
+    const pitch = horizontal > MIN_HORIZONTAL_SCENE_DISTANCE
+        ? Math.atan2(sceneAhead.y - scenePosition.y, horizontal)
+        : null
+
+    return { scenePosition, heading, pitch }
+}
+
 export default function OverviewTab({ drivers, selected, onSelectDriver, trackScene, positions, elapsedSeconds, telemetry, bestSectors }) {
     const [leaderboardWidth, onLeaderboardResize] = useResizableWidth(440, { min: 272, max: 640, edge: 'right' })
     const [telemetryWidth, onTelemetryResize] = useResizableWidth(360, { min: 280, max: 520, edge: 'left' })
 
-    const lastHeadingRef = useRef(new Map())
-    const lastPitchRef = useRef(new Map())
-
     const carPositions = useMemo(
-        () => drivers.filter(d => !d.dnf).map(d => {
-            const raw = interpolatePosition(positions[d.id], elapsedSeconds)
-            const ahead = interpolatePosition(positions[d.id], elapsedSeconds + HEADING_LOOKAHEAD_SECONDS)
-            const scenePosition = raw ? trackScene.toScenePoint(raw) : { x: 0, y: 0, z: 0 }
-            // toScenePoint is a pure affine map (uniform scale + translation,
-            // no rotation), so the heading angle is identical whether it's
-            // derived before or after the transform — diff the raw
-            // pre-transform points directly instead of transforming twice.
-            const dx = raw && ahead ? ahead.x - raw.x : 0
-            const dy = raw && ahead ? ahead.y - raw.y : 0
-            const heading = (dx !== 0 || dy !== 0)
-                ? Math.atan2(dy, dx)
-                : lastHeadingRef.current.get(d.id) ?? 0
-            lastHeadingRef.current.set(d.id, heading)
-
-            // Pitch, unlike heading, does need the post-transform scene point:
-            // elevation is exaggerated relative to the horizontal plane (see
-            // trackGeometry3d.js), so the slope the ribbon actually renders
-            // only shows up once both points have gone through toScenePoint.
-            let pitch = lastPitchRef.current.get(d.id) ?? 0
-            if (ahead) {
-                const sceneAhead = trackScene.toScenePoint(ahead)
-                const horizontal = Math.hypot(sceneAhead.x - scenePosition.x, sceneAhead.z - scenePosition.z)
-                if (horizontal > 1e-6) pitch = Math.atan2(sceneAhead.y - scenePosition.y, horizontal)
-            }
-            lastPitchRef.current.set(d.id, pitch)
-
-            return { ...d, scenePosition, heading, pitch }
-        }),
+        () => drivers
+            .filter(d => !d.dnf)
+            .map(d => ({ ...d, ...deriveCarPose(positions[d.id], elapsedSeconds, trackScene) })),
         [drivers, positions, elapsedSeconds, trackScene]
     )
 
@@ -92,7 +94,7 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackSc
                     <div style={{ display: 'flex', gap: 14, marginTop: 14, alignItems: 'center' }}>
                         <div style={{ ...DISPLAY, fontSize: 24, color: 'var(--ink)', width: '1.5ch', minWidth: 28, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{lastPoint?.gear ?? '—'}</div>
                         {lastPoint?.drs >= DRS_OPEN_MIN
-                            ? <div style={{ ...TAG, ...DRS_TAG, background: 'var(--brand)', borderColor: 'var(--brand)', color: 'var(--on-brand)' }}>DRS on</div>
+                            ? <div style={{ ...TAG, ...DRS_TAG, background: 'var(--brand)', border: '1px solid var(--brand)', color: 'var(--on-brand)' }}>DRS on</div>
                             : <div style={{ ...TAG, ...DRS_TAG, color: 'var(--ink-muted)' }}>DRS off</div>}
                     </div>
                     <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 9 }}>
@@ -131,7 +133,7 @@ export default function OverviewTab({ drivers, selected, onSelectDriver, trackSc
                 </div>
             </div>
 
-            <div style={{ padding: 'var(--space-3) var(--space-6) var(--space-4)', background: 'var(--surface-100)', borderTop: '1px solid var(--line)' }}>
+            <div style={{ padding: 'var(--space-3) var(--space-6) var(--space-4)', background: 'var(--surface-100)', borderTop: HAIRLINE }}>
                 <div style={{ ...LABEL, marginBottom: 8 }}>Sector deltas</div>
                 <div style={{ display: 'flex', gap: 12 }}>
                     {SECTOR_BOXES.map(({ key, label }) => (

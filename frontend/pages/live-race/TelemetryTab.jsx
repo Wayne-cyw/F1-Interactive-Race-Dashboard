@@ -1,11 +1,14 @@
 import ResizeHandle from './ResizeHandle'
 import { useResizableWidth } from './useResizableWidth'
 import { useFollowScroll } from './useFollowScroll'
-import { DISPLAY, LABEL, MONO } from './ui'
+import { DISPLAY, HAIRLINE, LABEL, MONO } from './ui'
+
+// Fills the available height and may shrink below its content (see CLAUDE.md fixed-layout notes).
+const COLUMN_FILL = { flex: 1, minHeight: 0, minWidth: 0, display: 'flex', flexDirection: 'column' }
 
 function StatTile({ label, value, unit }) {
     return (
-        <div style={{ flex: 1, background: 'var(--surface-100)', border: '1px solid var(--line)', borderRadius: 'var(--radius-md)', padding: '14px 18px' }}>
+        <div style={{ flex: 1, background: 'var(--surface-100)', border: HAIRLINE, borderRadius: 'var(--radius-md)', padding: '14px 18px' }}>
             <div style={LABEL}>{label}</div>
             <div style={{ ...DISPLAY, fontSize: 26, marginTop: 4 }}>{value}{unit && <span style={{ ...LABEL, fontSize: 12 }}> {unit}</span>}</div>
         </div>
@@ -17,7 +20,7 @@ function ScrollChart({ index, register, onScroll, contentWidthPx, points, color,
         <div
             ref={register(index)}
             onScroll={onScroll(index)}
-            style={{ flex: 1, minHeight: 0, minWidth: 0, overflowX: 'auto', overflowY: 'hidden', background: 'var(--surface-100)', border: '1px solid var(--line)', borderRadius: 'var(--radius-md)' }}
+            style={{ flex: 1, minHeight: 0, minWidth: 0, overflowX: 'auto', overflowY: 'hidden', background: 'var(--surface-100)', border: HAIRLINE, borderRadius: 'var(--radius-md)' }}
         >
             <svg
                 viewBox={`0 0 ${Math.max(1, contentWidthPx)} 100`}
@@ -39,7 +42,7 @@ function JumpToLiveButton({ following, onClick }) {
                 ...LABEL,
                 color: following ? 'var(--ink-muted)' : 'var(--ink)',
                 background: 'transparent',
-                border: '1px solid var(--line)',
+                border: HAIRLINE,
                 borderRadius: 10,
                 minHeight: 32,
                 padding: '0 var(--space-4)',
@@ -55,6 +58,11 @@ function JumpToLiveButton({ following, onClick }) {
 export default function TelemetryTab({ drivers, selected, onSelectDriver, speedScrollPoly, throttleScrollPoly, brakeScrollPoly, scrollContentWidthPx, topSpeed, avgSpeed, drsCount, currentGear }) {
     const [driverListWidth, onDriverListResize] = useResizableWidth(260, { min: 200, max: 420, edge: 'right' })
     const { following, register, onScroll, jumpToLive } = useFollowScroll(scrollContentWidthPx ?? 0)
+    const traces = [
+        { label: 'Speed (km/h)', points: speedScrollPoly, color: 'var(--data-b)', strokeWidth: 2.5 },
+        { label: 'Throttle %', points: throttleScrollPoly, color: 'var(--compound-medium)' },
+        { label: 'Brake %', points: brakeScrollPoly, color: 'var(--data-a)' },
+    ]
 
     return (
         <div style={{ display: 'grid', gridTemplateColumns: `${driverListWidth}px 10px minmax(0, 1fr)`, gridTemplateRows: 'minmax(0, 1fr)', flex: 1, minHeight: 0, minWidth: 0 }}>
@@ -92,43 +100,21 @@ export default function TelemetryTab({ drivers, selected, onSelectDriver, speedS
                     <JumpToLiveButton following={following} onClick={jumpToLive} />
                 </div>
 
-                <div style={{ flex: 1, minHeight: 0, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    <div style={{ flex: 1, minHeight: 0, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ marginBottom: 6, ...LABEL }}>Speed (km/h)</div>
-                        <ScrollChart
-                            index={0}
-                            register={register}
-                            onScroll={onScroll}
-                            contentWidthPx={scrollContentWidthPx ?? 0}
-                            points={speedScrollPoly}
-                            color="var(--data-b)"
-                            strokeWidth={2.5}
-                        />
-                    </div>
-
-                    <div style={{ flex: 1, minHeight: 0, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ marginBottom: 6, ...LABEL }}>Throttle %</div>
-                        <ScrollChart
-                            index={1}
-                            register={register}
-                            onScroll={onScroll}
-                            contentWidthPx={scrollContentWidthPx ?? 0}
-                            points={throttleScrollPoly}
-                            color="var(--compound-medium)"
-                        />
-                    </div>
-
-                    <div style={{ flex: 1, minHeight: 0, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ marginBottom: 6, ...LABEL }}>Brake %</div>
-                        <ScrollChart
-                            index={2}
-                            register={register}
-                            onScroll={onScroll}
-                            contentWidthPx={scrollContentWidthPx ?? 0}
-                            points={brakeScrollPoly}
-                            color="var(--data-a)"
-                        />
-                    </div>
+                <div style={{ ...COLUMN_FILL, gap: 14 }}>
+                    {traces.map(({ label, points, color, strokeWidth }, index) => (
+                        <div key={label} style={COLUMN_FILL}>
+                            <div style={{ marginBottom: 6, ...LABEL }}>{label}</div>
+                            <ScrollChart
+                                index={index}
+                                register={register}
+                                onScroll={onScroll}
+                                contentWidthPx={scrollContentWidthPx ?? 0}
+                                points={points}
+                                color={color}
+                                strokeWidth={strokeWidth}
+                            />
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>

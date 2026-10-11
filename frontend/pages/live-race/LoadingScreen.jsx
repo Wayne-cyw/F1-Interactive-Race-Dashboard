@@ -10,7 +10,7 @@ const MAX_BEFORE_DONE = 0.97
 const LIGHTS = 5
 
 function useSmoothProgress(progress, done, { fillRef, pctRef, lightsRef }) {
-    const target = useRef({ value: progress, since: performance.now() })
+    const target = useRef({ value: progress, since: 0 })
     const shown = useRef(0)
 
     useEffect(() => {

@@ -102,12 +102,12 @@ export default function F1Car3D({ position, heading, pitch, color, selected, onC
         const smoothing = 1 - Math.exp(-ROTATION_SMOOTHING_RATE * delta)
 
         const current = headingRef.current
-        const target = heading ?? 0
+        const target = heading ?? current
         const diff = ((target - current + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI
         const nextHeading = current + diff * smoothing
         headingRef.current = nextHeading
 
-        const nextPitch = pitchRef.current + ((pitch ?? 0) - pitchRef.current) * smoothing
+        const nextPitch = pitchRef.current + ((pitch ?? pitchRef.current) - pitchRef.current) * smoothing
         pitchRef.current = nextPitch
 
         yawQuatRef.current.setFromAxisAngle(YAW_AXIS, nextHeading)

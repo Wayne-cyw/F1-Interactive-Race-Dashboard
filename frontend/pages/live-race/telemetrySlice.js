@@ -1,49 +1,49 @@
+import { findBracket, lerp } from './interpolation'
+
 const ROLLING_WINDOW_SECONDS = 15
 
-// Builds a time-scaled SVG polyline: x is mapped by real elapsed-time
-// offset from `windowStart` over a `windowSeconds`-wide span (not sample
-// index, which is what made the old Overview speed graph "compress" a
-// variable-length lap into a fixed width) — so a given moment in time
-// always lands at the same x position and never rescales as more data
-// arrives. Before the window is full, the trace simply occupies less than
-// the full width instead of stretching to fill it.
-function toTimeScaledPolyline(points, valueFn, w, h, min, max, windowStart, windowSeconds) {
-    if (points.length === 0) return ''
-    const range = max - min || 1
-    return points
-        .map(p => {
-            const x = ((p.t - windowStart) / windowSeconds) * w
-            const y = h - ((valueFn(p) - min) / range) * h
-            return `${x.toFixed(1)},${y.toFixed(1)}`
-        })
-        .join(' ')
-}
+// Overview rolling traces are drawn into a fixed 300-unit-wide SVG viewBox
+// (see OverviewTab.jsx); heights differ per chart.
+const ROLLING_VIEWBOX_WIDTH = 300
+const ROLLING_SPEED_HEIGHT = 90
+const ROLLING_PEDAL_HEIGHT = 60
 
 // Pixels-per-second scale for the Telemetry tab's scrollable throttle/brake
 // charts — chosen so a typical ~90-second lap spans roughly one panel width,
 // giving "scroll back to see the previous lap" a natural feel.
 export const SCROLL_PIXELS_PER_SECOND = 14
+const SCROLL_CHART_HEIGHT = 100
 
-// Builds a fixed-scale SVG polyline: x = t * SCROLL_PIXELS_PER_SECOND, not
-// normalized to a viewBox width — so a second of race time always occupies
-// the same number of pixels regardless of how much data exists. The caller
-// renders an SVG exactly as wide as the data (see scrollContentWidthPx)
-// inside a horizontally-scrolling container, rather than squeezing all of
-// it into a fixed box.
-function toPixelScaledPolyline(points, valueFn, h, min, max) {
-    if (points.length === 0) return ''
-    const range = max - min || 1
-    return points
-        .map(p => {
-            const x = p.t * SCROLL_PIXELS_PER_SECOND
-            const y = h - ((valueFn(p) - min) / range) * h
-            return `${x.toFixed(1)},${y.toFixed(1)}`
-        })
-        .join(' ')
+const speedOf = p => p.speed ?? 0
+const throttleOf = p => p.throttle ?? 0
+const brakeOf = p => (p.brake ? 100 : 0)
+
+// SVG polyline "x,y x,y …" from per-point x and y mappers.
+function toPolyline(points, toX, toY) {
+    return points.map(p => `${toX(p).toFixed(1)},${toY(p).toFixed(1)}`).join(' ')
 }
 
-function lerp(a, b, frac) {
-    return a != null && b != null ? a + (b - a) * frac : (a ?? b)
+// Maps a channel value in [min, max] onto an SVG y (0 = top) for `height`.
+function toScaledY(valueOf, height, min, max) {
+    const range = max - min || 1
+    return p => height - ((valueOf(p) - min) / range) * height
+}
+
+// Fixed-scale x: a second of race time always occupies the same number of
+// pixels regardless of how much data exists. The caller renders an SVG
+// exactly as wide as the data (see scrollContentWidthPx) inside a
+// horizontally-scrolling container rather than squeezing it into a fixed box.
+function scrollPolyline(points, valueOf, max) {
+    return toPolyline(points, p => p.t * SCROLL_PIXELS_PER_SECOND, toScaledY(valueOf, SCROLL_CHART_HEIGHT, 0, max))
+}
+
+// Time-scaled x: position is the real offset from `windowStart` over the
+// 15-second window (not sample index), so a given moment always lands at the
+// same x and never rescales as data arrives. Before the window is full the
+// trace simply occupies less than the full width.
+function rollingPolyline(points, windowStart, valueOf, height, max) {
+    const toX = p => ((p.t - windowStart) / ROLLING_WINDOW_SECONDS) * ROLLING_VIEWBOX_WIDTH
+    return toPolyline(points, toX, toScaledY(valueOf, height, 0, max))
 }
 
 // Linearly interpolates a driver's telemetry sample at time `t` (seconds
@@ -57,21 +57,8 @@ function lerp(a, b, frac) {
 // first/last sample outside the recorded range.
 export function interpolateTelemetryPoint(points, t) {
     if (!points || points.length === 0) return null
-    if (t <= points[0].t) return points[0]
-    const last = points[points.length - 1]
-    if (t >= last.t) return last
-
-    let lo = 0
-    let hi = points.length - 1
-    while (lo < hi) {
-        const mid = (lo + hi) >> 1
-        if (points[mid].t <= t) lo = mid + 1
-        else hi = mid
-    }
-    const after = points[lo]
-    const before = points[lo - 1]
-    const span = after.t - before.t || 1
-    const frac = (t - before.t) / span
+    const { before, after, frac } = findBracket(points, t)
+    if (before === after) return before
 
     return {
         t,
@@ -121,6 +108,7 @@ export function sliceTelemetry(points, elapsedSeconds) {
     const avgSpeed = speeds.length ? Math.round(speeds.reduce((a, b) => a + b, 0) / speeds.length) : 0
     const current = interpolateTelemetryPoint(points, elapsedSeconds)
 
+    const speedAxisMax = Math.max(1, topSpeed)
     const windowStart = elapsedSeconds - ROLLING_WINDOW_SECONDS
     const rollingPoints = points.filter(p => p.t >= windowStart && p.t <= elapsedSeconds)
     const rollingWithCurrent = current ? [...rollingPoints, current] : rollingPoints
@@ -131,11 +119,11 @@ export function sliceTelemetry(points, elapsedSeconds) {
         avgSpeed,
         drsCount: countDrsActivations(soFar),
         scrollContentWidthPx: Math.max(1, elapsedSeconds) * SCROLL_PIXELS_PER_SECOND,
-        speedScrollPoly: toPixelScaledPolyline(soFar, p => p.speed ?? 0, 100, 0, Math.max(1, topSpeed)),
-        throttleScrollPoly: toPixelScaledPolyline(soFar, p => p.throttle ?? 0, 100, 0, 100),
-        brakeScrollPoly: toPixelScaledPolyline(soFar, p => (p.brake ? 100 : 0), 100, 0, 100),
-        speedRollingPoly: toTimeScaledPolyline(rollingWithCurrent, p => p.speed ?? 0, 300, 90, 0, Math.max(1, topSpeed), windowStart, ROLLING_WINDOW_SECONDS),
-        throttleRollingPoly: toTimeScaledPolyline(rollingWithCurrent, p => p.throttle ?? 0, 300, 60, 0, 100, windowStart, ROLLING_WINDOW_SECONDS),
-        brakeRollingPoly: toTimeScaledPolyline(rollingWithCurrent, p => (p.brake ? 100 : 0), 300, 60, 0, 100, windowStart, ROLLING_WINDOW_SECONDS),
+        speedScrollPoly: scrollPolyline(soFar, speedOf, speedAxisMax),
+        throttleScrollPoly: scrollPolyline(soFar, throttleOf, 100),
+        brakeScrollPoly: scrollPolyline(soFar, brakeOf, 100),
+        speedRollingPoly: rollingPolyline(rollingWithCurrent, windowStart, speedOf, ROLLING_SPEED_HEIGHT, speedAxisMax),
+        throttleRollingPoly: rollingPolyline(rollingWithCurrent, windowStart, throttleOf, ROLLING_PEDAL_HEIGHT, 100),
+        brakeRollingPoly: rollingPolyline(rollingWithCurrent, windowStart, brakeOf, ROLLING_PEDAL_HEIGHT, 100),
     }
 }
