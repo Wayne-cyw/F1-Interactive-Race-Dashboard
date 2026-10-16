@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime
 from functools import lru_cache
 
@@ -55,6 +56,11 @@ def _seconds(timedelta):
     return timedelta.total_seconds()
 
 
+# Each loaded race session holds roughly 300 MB in memory, so deployments with
+# limited RAM lower this via the environment (the Dockerfile sets it to 8).
+_SESSION_CACHE_SIZE = int(os.environ.get("SESSION_CACHE_SIZE", "200"))
+
+
 class FastF1Gateway(
     SeasonRepository,
     SessionRepository,
@@ -63,7 +69,7 @@ class FastF1Gateway(
     StandingsRepository,
     TeamRepository,
 ):
-    @lru_cache(maxsize=200)
+    @lru_cache(maxsize=_SESSION_CACHE_SIZE)
     def _load_session(self, year: int, race_round: int, session_type: str = "R"):
         logger.info(f"Loading session: {year} Round {race_round} ({session_type})")
         session = fastf1.get_session(year, race_round, session_type)
