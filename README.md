@@ -6,11 +6,20 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/license/Wayne-cyw/F1-Interactive-Race-Dashboard" alt="License">
-  <img src="https://img.shields.io/github/languages/top/Wayne-cyw/F1-Interactive-Race-Dashboard" alt="Language">
-  <img src="https://img.shields.io/badge/backend_tests-71_passing-2e7d32" alt="Tests">
-  <img src="https://img.shields.io/badge/React-19-149eca" alt="React">
-  <img src="https://img.shields.io/badge/Three.js-0.185-049ef4" alt="Three.js">
+  <a href="https://apex.waynechiu.com">Live Demo</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/React-19-149eca?logo=react&logoColor=white" alt="React">
+  <img src="https://img.shields.io/badge/Vite-7-646cff?logo=vite&logoColor=white" alt="Vite">
+  <img src="https://img.shields.io/badge/Three.js-0.185-000000?logo=threedotjs&logoColor=white" alt="Three.js">
+  <img src="https://img.shields.io/badge/Python-3.11-3776ab?logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/Flask-3-000000?logo=flask&logoColor=white" alt="Flask">
+  <img src="https://img.shields.io/badge/FastF1-3.7-e10600" alt="FastF1">
+  <img src="https://img.shields.io/badge/pandas-150458?logo=pandas&logoColor=white" alt="pandas">
+  <img src="https://img.shields.io/badge/Clean_Architecture-backend-5c6bc0" alt="Clean Architecture">
+  <img src="https://img.shields.io/badge/pytest-71_passing-0a9edc?logo=pytest&logoColor=white" alt="pytest">
+  <img src="https://img.shields.io/badge/ESLint-4b32c3?logo=eslint&logoColor=white" alt="ESLint">
 </p>
 
 ---
