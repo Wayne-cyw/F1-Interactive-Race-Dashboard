@@ -10,16 +10,16 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/React-19-149eca?logo=react&logoColor=white" alt="React">
-  <img src="https://img.shields.io/badge/Vite-7-646cff?logo=vite&logoColor=white" alt="Vite">
-  <img src="https://img.shields.io/badge/Three.js-0.185-000000?logo=threedotjs&logoColor=white" alt="Three.js">
-  <img src="https://img.shields.io/badge/Python-3.11-3776ab?logo=python&logoColor=white" alt="Python">
-  <img src="https://img.shields.io/badge/Flask-3-000000?logo=flask&logoColor=white" alt="Flask">
-  <img src="https://img.shields.io/badge/FastF1-3.7-e10600" alt="FastF1">
-  <img src="https://img.shields.io/badge/pandas-150458?logo=pandas&logoColor=white" alt="pandas">
-  <img src="https://img.shields.io/badge/Clean_Architecture-backend-5c6bc0" alt="Clean Architecture">
-  <img src="https://img.shields.io/badge/pytest-71_passing-0a9edc?logo=pytest&logoColor=white" alt="pytest">
-  <img src="https://img.shields.io/badge/ESLint-4b32c3?logo=eslint&logoColor=white" alt="ESLint">
+  <img src=".github/readme/badges/react.svg" alt="React">
+  <img src=".github/readme/badges/vite.svg" alt="Vite">
+  <img src=".github/readme/badges/threejs.svg" alt="Three.js">
+  <img src=".github/readme/badges/python.svg" alt="Python">
+  <img src=".github/readme/badges/flask.svg" alt="Flask">
+  <img src=".github/readme/badges/fastf1.svg" alt="FastF1">
+  <img src=".github/readme/badges/pandas.svg" alt="pandas">
+  <img src=".github/readme/badges/clean-architecture.svg" alt="Clean Architecture">
+  <img src=".github/readme/badges/pytest.svg" alt="pytest">
+  <img src=".github/readme/badges/eslint.svg" alt="ESLint">
 </p>
 
 ---
@@ -56,15 +56,49 @@ Most "F1 dashboard" projects stop at a table of lap times, which can't answer "w
 
 ## Architecture
 
+```mermaid
+flowchart LR
+    F1[(FastF1<br/>F1 timing API + disk cache)] --> GW[fastf1_gateway<br/>only fastf1-aware code]
+    GW --> UC[use_cases<br/>pure business logic]
+    UC --> CP[controllers / presenters<br/>JSON shaping]
+    CP --> API[Flask routes<br/>gzip-compressed]
+    API --> HK[useRaceReplay<br/>useDriverTelemetry]
+    HK --> DV[telemetrySlice · leaderboardData<br/>dnf · stints · trackStatus]
+    DV --> UI[Overview · Timing<br/>Strategy · Telemetry tabs]
 ```
-FastF1 (F1 timing API, cached to disk)
-   → fastf1_gateway (the only fastf1-aware code)
-   → use_cases (pure business logic)
-   → controllers / presenters (JSON shaping)
-   → Flask routes (gzip-compressed)
-   → useRaceReplay / useDriverTelemetry (fetch once per race / driver)
-   → telemetrySlice / leaderboardData / dnf / stints / trackStatus (derive per-instant view state)
-   → Overview / Timing / Strategy / Telemetry tabs (render)
+
+#### Backend layers (dependencies point inward)
+
+```mermaid
+flowchart TB
+    subgraph FD[frameworks_drivers]
+        APP[web/app.py<br/>Flask factory + DI]
+        FG[fastf1_gateway<br/>implements gateways]
+    end
+    subgraph IA[interface_adapters]
+        CT[controllers]
+        PR[presenters]
+        GI[gateways<br/>repository ABCs]
+    end
+    UCS[use_cases]
+    EN[entities<br/>dataclasses + domain errors]
+    APP --> CT
+    CT --> UCS
+    PR --> EN
+    UCS --> GI
+    UCS --> EN
+    FG -. implements .-> GI
+```
+
+#### Frontend: one clock drives every view
+
+```mermaid
+flowchart LR
+    PB[PlaybackBar<br/>play · pause · scrub · speed] --> CLK((elapsedSeconds))
+    CLK --> LB[Leaderboard + DNF reveals]
+    CLK --> MAP[3D track map<br/>GPS interpolation]
+    CLK --> TEL[Telemetry slice<br/>rolling 15s windows]
+    CLK --> ST[Strategy + track status]
 ```
 
 The backend follows Clean Architecture: `entities/` and `use_cases/` never import Flask or FastF1, and only `fastf1_gateway/` talks to the data source, so swapping FastF1 would touch one directory. The frontend is a single React page whose tabs all read from one playback clock. The UI runs on the APEX design system in `design_system/` (tokens, motion spec, component docs); nothing hard-codes a color, radius, or font.
